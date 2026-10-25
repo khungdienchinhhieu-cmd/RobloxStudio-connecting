@@ -134,6 +134,37 @@ if sv then sv:Destroy() end
    (trước đây tải lại gói 800 KB mỗi 8 giây kể cả khi không có gì mới).
 3. Script **không đổi thì không ghi lại `Source`** (đã có từ trước) — không biên dịch lại 745 KB Lua.
 
+## 5.2. THÀNH PHỐ SỐNG ĐỘNG (Sync v19) — 50 NPC + 4 xe có tài xế mà **không tụt FPS**
+
+Trước v19 phố chỉ có **14 NPC** đứng loanh quanh 4 cụm, gần như không ai nhìn thấy. v19 nâng lên
+**46 NPC đi bộ rải khắp 7 đại lộ + 4 xe có tài xế NPC**, tổng cộng **50 rig R6**. Đổi lại phải
+xử lý 3 chỗ tốn kém:
+
+| Chỗ tốn kém | Cách xử lý trong v19 | Kết quả |
+|---|---|---|
+| **Xoay khớp cho 50 NPC** | Server **không** xoay `Motor6D`. Server chỉ ghi `attribute "AnimState"` (1 lần mỗi khi đổi tư thế). Client `NPCAnimator.luau` xoay `Motor6D.Transform` ở **24 Hz**, bỏ qua NPC cách camera **> 260 stud** | Băng thông **+0 byte/giây**; 24 Hz đủ mượt, không cần 60 Hz |
+| **4 xe × ~150 part di chuyển** | Neo **1 part duy nhất** (`Chassis`), hàn toàn bộ chi tiết còn lại vào nó bằng `WeldConstraint`, tắt `CanCollide/CanTouch`. Mỗi nhịp chỉ đổi **1 CFrame** | 600 part mà chỉ tốn 1 phép biến đổi/nhịp (thay vì 600) |
+| **46 NPC × `MoveTo` mỗi 0,12 s** | `moveTo()` giữ nguyên cơ chế tiết chế (chỉ gọi lại khi đổi đích > 6 stud hoặc quá 1,1 s). Đích mới chỉ tính khi **tới nơi / kẹt 5 s**, không tính mỗi 4–9 s như trước | Số lần `MoveTo` giảm, NPC không rung lắc |
+
+**Ngân sách part ước tính:** 50 NPC × ~10 part = `~500` part + 4 xe × `~150` = `~600` part
+→ **~1.100 part động**. Với `StreamingEnabled` (bán kính `64/1024`) thì phần lớn trong số này
+được stream theo vùng nhìn, nên vẫn nằm dưới ngưỡng khuyến nghị ~`50.000` instance hoạt động.
+
+**Nếu máy yếu**, hạ 3 con số này ở đầu `src/server/NPCManager.luau` (không cần sửa chỗ khác):
+
+```lua
+local MAX_NPCS = 74          -- trần NPC cùng lúc
+local AMBIENT_COUNT = 46     -- số NPC đi bộ khi khởi động  -> hạ về 24 nếu lag
+local TRAFFIC_COUNT = 4      -- số xe có tài xế NPC          -> hạ về 2 nếu lag
+```
+
+Và hạ `UPDATE_HZ` (24) trong `src/client/NPCAnimator.luau` xuống `16`, hoặc `CULL_DISTANCE`
+(260) xuống `160` để bớt rig phải vẽ animation.
+
+**Lưu ý khi test:** NPC + xe chỉ sinh ra **khi bấm Play** (là script server), không phải lúc sync.
+Mở Output xem 2 dòng `[NPC] Đã dựng … NPC rải khắp vỉa hè thành phố` và
+`[NPC] Đã thả … xe có TÀI XẾ NPC chạy vòng quanh phố`.
+
 ## 6. Các bước tối ưu tiếp theo (chưa làm, xếp theo mức lợi)
 
 1. **Gom cụm tĩnh thành `MeshPart`/Union theo cụm 4×4 stud** cho phần *không phá huỷ*

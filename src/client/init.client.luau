@@ -15,9 +15,13 @@ local VehiclePromptUI = require(script:WaitForChild("UI"):WaitForChild("VehicleP
 local LSCustomsUI = require(script:WaitForChild("UI"):WaitForChild("LSCustomsUI"))
 local WeaponClient = require(script:WaitForChild("WeaponClient"))
 local GtaWeaponWheel = require(script:WaitForChild("UI"):WaitForChild("GtaWeaponWheel"))
+local NPCAnimator = require(script:WaitForChild("NPCAnimator"))
 
 GtaHud.mount(localPlayer, hudRemote)
 VehiclePromptUI.mount(localPlayer)
 LSCustomsUI.mount(localPlayer)
 WeaponClient.mount(localPlayer, weaponRemote)
 GtaWeaponWheel.mount(localPlayer, weaponSync, weaponReload)
+
+-- Dáng đi / đứng / ngồi lái / bắn của NPC: xoay Motor6D ngay trên máy người chơi
+NPCAnimator.mount()

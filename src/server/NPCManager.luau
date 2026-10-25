@@ -21,8 +21,13 @@
 ]]
 
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 local Debris = game:GetService("Debris")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local WorldGrid = require(Shared:WaitForChild("WorldGrid"))
+local VehicleBuilder = require(Shared:WaitForChild("Vehicles"):WaitForChild("VehicleBuilder"))
 
 local NPCManager = {}
 
@@ -155,8 +160,11 @@ local REACTION_COLOR = {
 	MELEE = Color3.fromRGB(251, 146, 60),
 }
 
-local MAX_NPCS = 26
+local MAX_NPCS = 74          -- trần NPC đi bộ (trước là 26)
+local AMBIENT_COUNT = 46     -- số NPC toả khắp thành phố khi khởi động
+local TRAFFIC_COUNT = 4      -- số xe có TÀI XẾ NPC chạy vòng quanh phố
 local NPC_FOLDER_NAME = "LosSantos_NPCs"
+local TRAFFIC_FOLDER_NAME = "LosSantos_Traffic"
 local HEARTBEAT = 0.12
 
 -- ══════════════════════════════════════════════════════════════════════════════
@@ -184,15 +192,30 @@ type NPCState = {
 	gunFlashAt: number,
 	lastGoal: Vector3?,
 	lastMoveAt: number,
+	animState: string,
+	targetAt: number,
+	checkFrom: Vector3,
+	pauseUntil: number,
 }
 
 local states: { [Model]: NPCState } = {}
 local npcFolder: Folder? = nil
+local trafficFolder: Folder? = nil
+local traffic: { any } = {}
 local hudRemote: RemoteEvent? = nil
 local ambientSpawned = false
 
 local function now(): number
 	return os.clock()
+end
+
+-- Tư thế để CLIENT vẽ animation (client tự xoay Motor6D -> mượt 30 FPS, không tốn băng thông)
+local function setAnim(st: NPCState, name: string)
+	if st.animState == name then
+		return
+	end
+	st.animState = name
+	st.model:SetAttribute("AnimState", name)
 end
 
 -- ══════════════════════════════════════════════════════════════════════════════
@@ -600,6 +623,8 @@ local function startReaction(st: NPCState, reaction: string, attacker: Player?)
 	st.attacker = attacker
 	st.gunFlashAt = 0
 
+	setAnim(st, if reaction == "FLEE" then "RUN" else if reaction == "MELEE" then "PUNCH" else if reaction == "CALL_POLICE" then "PHONE" else "SHOOT")
+
 	if reaction == "SHOOT" then
 		equipGun(st)
 		st.reactUntil = now() + math.random(8, 14)
@@ -630,11 +655,14 @@ end
 
 local function calmDown(st: NPCState)
 	st.state = "PATROL"
+	setAnim(st, "IDLE")
 	st.reaction = nil
 	st.attacker = nil
 	stowHands(st)
 	setBubble(st, nil)
 	st.nextPatrolAt = 0
+	st.pauseUntil = 0
+	st.targetAt = 0
 end
 
 -- ══════════════════════════════════════════════════════════════════════════════
@@ -647,6 +675,9 @@ local function rayFilter(): RaycastParams
 	local list: { Instance } = {}
 	if npcFolder then
 		table.insert(list, npcFolder)
+	end
+	if trafficFolder then
+		table.insert(list, trafficFolder)
 	end
 	local deb = Workspace:FindFirstChild("LosSantos_Debris")
 	if deb then
@@ -664,19 +695,82 @@ local function findGround(x: number, z: number): Vector3?
 	return nil
 end
 
+-- ══════════════════════════════════════════════════════════════════════════════
+-- 8.5. ĐIỂM ĐI BỘ TOÀN THÀNH PHỐ (sinh trực tiếp từ WorldGrid)
+-- ══════════════════════════════════════════════════════════════════════════════
+
+-- Trước đây chỉ có 4 cụm quanh vài ô đất. Giờ quét VỈA HÈ CỦA TOÀN BỘ 7 ĐẠI LỘ
+-- -> NPC rải khắp thành phố thay vì dồn cục ở giữa.
+local function buildSidewalkPoints(): { Vector3 }
+	local pts: { Vector3 } = {}
+
+	-- 3 đại lộ Đông–Tây (Vinewood / Olympic / Vespucci): vỉa hè 2 bên
+	for _, r in ipairs(WorldGrid.EW_ROADS) do
+		local off = (r.width / 2) + 5
+		for x = r.min + 14, r.max - 14, 24 do
+			table.insert(pts, Vector3.new(x, 0, r.coord + off))
+			table.insert(pts, Vector3.new(x + 12, 0, r.coord - off))
+		end
+	end
+
+	-- 4 đại lộ Bắc–Nam (Del Perro / San Andreas / Alta / Elgin)
+	for _, r in ipairs(WorldGrid.NS_ROADS) do
+		local off = (r.width / 2) + 5
+		for z = r.min + 14, r.max - 14, 24 do
+			table.insert(pts, Vector3.new(r.coord + off, 0, z))
+			table.insert(pts, Vector3.new(r.coord - off, 0, z + 12))
+		end
+	end
+
+	return pts
+end
+
+-- Cache toạ độ vỉa hè toàn thành phố (dựng 1 lần)
+local sidewalkCache: { Vector3 }? = nil
+local function getSidewalkPoints(): { Vector3 }
+	if not sidewalkCache then
+		sidewalkCache = buildSidewalkPoints()
+	end
+	return sidewalkCache :: { Vector3 }
+end
+
+-- Đích đi bộ MỚI: chọn một điểm vỉa hè CÁCH XA 60–300 stud -> NPC đi xuyên
+-- nhiều đại lộ, thay vì loanh quanh 12–34 stud như trước.
 local function pickPatrolTarget(st: NPCState): Vector3
 	local base = st.hrp.Position
+	local pts = getSidewalkPoints()
+	local flat = Vector3.new(base.X, 0, base.Z)
+
+	if #pts > 0 then
+		for _ = 1, 16 do
+			local p = pts[math.random(1, #pts)]
+			local d = (Vector3.new(p.X, 0, p.Z) - flat).Magnitude
+			if d >= 60 and d <= 300 then
+				local g = findGround(p.X, p.Z)
+				if g and math.abs(g.Y - base.Y) < 8 then
+					return g
+				end
+			end
+		end
+	end
+
+	-- dự phòng: quanh chỗ đang đứng
 	for _ = 1, 8 do
 		local ang = math.random() * math.pi * 2
-		local dist = math.random(12, 34)
-		local gx = base.X + math.cos(ang) * dist
-		local gz = base.Z + math.sin(ang) * dist
-		local g = findGround(gx, gz)
+		local dist = math.random(30, 70)
+		local g = findGround(base.X + math.cos(ang) * dist, base.Z + math.sin(ang) * dist)
 		if g and math.abs(g.Y - base.Y) < 1.6 then
 			return g
 		end
 	end
 	return base
+end
+
+-- Đặt đích mới + ghi mốc để phát hiện kẹt đường
+local function retarget(st: NPCState, t: number)
+	st.patrolTarget = pickPatrolTarget(st)
+	st.targetAt = t
+	st.checkFrom = st.hrp.Position
 end
 
 -- ══════════════════════════════════════════════════════════════════════════════
@@ -708,6 +802,8 @@ local function tickOne(st: NPCState)
 		st.state = "DEAD"
 		setBubble(st, nil)
 		stowHands(st)
+		setAnim(st, "DEAD")
+		st.model:SetAttribute("DeathAt", now())
 		Debris:AddItem(st.model, 8)
 		return
 	end
@@ -722,15 +818,68 @@ local function tickOne(st: NPCState)
 		end
 	end
 
-	if st.state == "PATROL" then
-		if t >= st.nextPatrolAt then
-			st.nextPatrolAt = t + math.random(4, 9)
-			st.patrolTarget = pickPatrolTarget(st)
+	-- TÀI XẾ: ngồi trong xe, không đi bộ; chỉ phản ứng (bong bóng) tại chỗ
+	if st.model:GetAttribute("IsDriver") == true then
+		if st.state == "PATROL" then
+			setAnim(st, "DRIVE")
+			return
 		end
-		if (st.patrolTarget - st.hrp.Position).Magnitude > 2.5 then
-			moveTo(st, st.patrolTarget, t)
-		else
+		if t > st.reactUntil then
+			calmDown(st)
+		end
+		return
+	end
+
+	if st.state == "PATROL" then
+		local delta = st.patrolTarget - st.hrp.Position
+		local flatDist = Vector3.new(delta.X, 0, delta.Z).Magnitude
+		local v = st.hrp.AssemblyLinearVelocity
+		local speed = Vector3.new(v.X, 0, v.Z).Magnitude
+
+		-- 1) ĐANG NGHỈ (vừa tới đích): đứng thở, liếc quanh
+		if st.pauseUntil > 0 then
+			if t < st.pauseUntil then
+				moveTo(st, st.hrp.Position, t)
+				setAnim(st, "IDLE")
+				return
+			end
+			st.pauseUntil = 0
+			retarget(st, t)
+			-- BẮT BUỘC tính lại: nếu dùng flatDist cũ (=0) thì bước 3 bên dưới
+			-- lại tưởng "đã tới nơi" và cho nghỉ tiếp -> NPC đứng im vĩnh viễn.
+			delta = st.patrolTarget - st.hrp.Position
+			flatDist = Vector3.new(delta.X, 0, delta.Z).Magnitude
+		end
+
+		-- 2) KẸT ĐƯỜNG: cứ 6 giây kiểm tra 1 lần, nếu đi được < 8 stud thì đổi đích.
+		-- Đo bằng QUÃNG ĐƯỜNG (vị trí) chứ không dùng vận tốc tức thời — vận tốc
+		-- có thể tụt về ~0 trong 1 khung hình (va chạm nhẹ) và sẽ làm NPC đổi đích liên tục.
+		if st.targetAt > 0 and (t - st.targetAt) > 6 then
+			local moved = (st.hrp.Position - st.checkFrom).Magnitude
+			if moved < 8 then
+				retarget(st, t)
+				delta = st.patrolTarget - st.hrp.Position
+				flatDist = Vector3.new(delta.X, 0, delta.Z).Magnitude
+			else
+				st.targetAt = t
+				st.checkFrom = st.hrp.Position
+			end
+		end
+
+		-- 3) TỚI NƠI -> nghỉ 2–6 giây rồi chọn đích mới ở xa
+		if flatDist <= 3 then
+			st.pauseUntil = t + math.random(2, 6)
 			moveTo(st, st.hrp.Position, t)
+			setAnim(st, "IDLE")
+			return
+		end
+
+		moveTo(st, st.patrolTarget, t)
+		-- chọn animation theo tốc độ thật của nhân vật
+		if speed > 1.5 then
+			setAnim(st, if st.arch.walkSpeed >= 14 then "RUN" else "WALK")
+		else
+			setAnim(st, "WALK") -- đang cố bước: vẫn hiện dáng đi để không "trượt băng"
 		end
 		return
 	end
@@ -812,7 +961,7 @@ end
 -- 11. API CÔNG KHAI
 -- ══════════════════════════════════════════════════════════════════════════════
 
-function NPCManager.spawn(archetypeId: string, position: Vector3): Model?
+function NPCManager.spawn(archetypeId: string, position: Vector3, forceCF: CFrame?): Model?
 	local arch = ARCHETYPES[archetypeId]
 	if not arch then
 		return nil
@@ -835,7 +984,8 @@ function NPCManager.spawn(archetypeId: string, position: Vector3): Model?
 	local baseY = if ground then ground.Y else position.Y
 	-- Rig R6: HumanoidRootPart nằm ngang Torso, chân dài 2 stud ở DƯỚI -> tâm HRP cách đất 3 stud.
 	-- Cộng 0,06 để bàn chân không xuyên vào mặt đường ngay khung hình đầu.
-	local cf = CFrame.new(position.X, baseY + 3.06, position.Z) * CFrame.Angles(0, math.random() * math.pi * 2, 0)
+	local cf = forceCF
+		or (CFrame.new(position.X, baseY + 3.06, position.Z) * CFrame.Angles(0, math.random() * math.pi * 2, 0))
 
 	local model, hum, hrp, head = buildRig(arch, cf)
 	model.Parent = npcFolder
@@ -861,6 +1011,10 @@ function NPCManager.spawn(archetypeId: string, position: Vector3): Model?
 		gunFlashAt = 0,
 		lastGoal = nil,
 		lastMoveAt = 0,
+		animState = "IDLE",
+		targetAt = 0,
+		checkFrom = hrp.Position,
+		pauseUntil = 0,
 	}
 	states[model] = st
 
@@ -914,61 +1068,327 @@ function NPCManager.dispatchTo(attacker: Player)
 	policeDispatch(attacker)
 end
 
-function NPCManager.spawnAmbient(count: number?)
-	local wanted = count or 14
-	-- 3 cụm quanh các ô đất chính
-	local zones = {
-		{ x = 258, z = 96, r = 26 }, -- sân trước LSPD Mission Row
-		{ x = 180, z = 70, r = 30 }, -- vỉa hè Plot_C3 West
-		{ x = 0, z = -60, r = 34 }, -- trước Legion Square / Maze Bank plaza
-		{ x = -210, z = 60, r = 30 }, -- LS Customs
-	}
-	local ids = { "CIVILIAN", "CIVILIAN", "BUSINESS", "TOURIST", "GANGSTER", "BRAWLER" }
+-- ══════════════════════════════════════════════════════════════════════════════
+-- 11. SINH NPC DÂN PHỐ (danh sách điểm vỉa hè nằm ở mục 8.5)
+-- ══════════════════════════════════════════════════════════════════════════════
+
+-- Tỉ lệ tính cách xuất hiện trên đường phố
+local ARCHETYPE_ROLL = {
+	{ id = "CIVILIAN", upTo = 0.34 },
+	{ id = "TOURIST", upTo = 0.50 },
+	{ id = "BUSINESS", upTo = 0.62 },
+	{ id = "COP", upTo = 0.73 },
+	{ id = "GANGSTER", upTo = 0.86 },
+	{ id = "BRAWLER", upTo = 1.00 },
+}
+
+local function rollArchetype(): string
+	local r = math.random()
+	for _, entry in ipairs(ARCHETYPE_ROLL) do
+		if r <= entry.upTo then
+			return entry.id
+		end
+	end
+	return "CIVILIAN"
+end
+
+function NPCManager.spawnAmbient(count: number?): number
+	local target = count or AMBIENT_COUNT
+	local points = buildSidewalkPoints()
+	if #points == 0 then
+		return 0
+	end
 
 	local made = 0
-	for i = 1, wanted do
-		local zone = zones[((i - 1) % #zones) + 1]
-		local got = nil
-		for _ = 1, 10 do
-			local ang = math.random() * math.pi * 2
-			local rad = math.random() * zone.r
-			local gx = zone.x + math.cos(ang) * rad
-			local gz = zone.z + math.sin(ang) * rad
-			local g = findGround(gx, gz)
-			if g then
-				got = g
-				break
+	local tries = 0
+	local maxTries = target * 9
+
+	while made < target and tries < maxTries do
+		tries += 1
+		local pt = points[math.random(1, #points)]
+		local g = findGround(pt.X, pt.Z)
+		if g then
+			-- Không dồn cục: cách NPC khác tối thiểu 9 stud
+			local tooClose = false
+			for _, other in pairs(states) do
+				if other.state ~= "DEAD" and (other.hrp.Position - g).Magnitude < 9 then
+					tooClose = true
+					break
+				end
 			end
-		end
-		if got then
-			-- Cứ 6 NPC thì có 1 cảnh sát tuần tra -> "gọi 911" luôn có người tới
-			local id = if i % 6 == 0 then "COP" else ids[math.random(1, #ids)]
-			if NPCManager.spawn(id, got) then
+			if not tooClose and NPCManager.spawn(rollArchetype(), g) then
 				made += 1
 			end
 		end
 	end
+
 	ambientSpawned = true
 	return made
 end
 
+-- ══════════════════════════════════════════════════════════════════════════════
+-- 12. GIAO THÔNG — NPC LÁI XE CHẠY VÒNG QUANH THÀNH PHỐ
+-- ══════════════════════════════════════════════════════════════════════════════
+
+-- Toạ độ đã canh ĐÚNG LÀN BÊN PHẢI của từng đại lộ trong WorldGrid:
+--   Olympic Fwy (Z=-36) · Vespucci Blvd (Z=148) · San Andreas (X=-110) · Alta St (X=110)
+--   Vinewood Blvd (Z=-224) · Del Perro (X=-324) · Elgin Ave (X=324)
+local TRAFFIC_ROUTES = {
+	{
+		-- vòng trung tâm
+		Vector3.new(-98, 0, -27),
+		Vector3.new(98, 0, -27),
+		Vector3.new(98, 0, 138),
+		Vector3.new(-98, 0, 138),
+	},
+	{
+		-- vòng vành đai ngoài
+		Vector3.new(330, 0, 154),
+		Vector3.new(330, 0, -230),
+		Vector3.new(-330, 0, -230),
+		Vector3.new(-330, 0, 154),
+	},
+}
+
+local TRAFFIC_TRIMS = {
+	VehicleBuilder.PRESETS.CrimsonBanshee,
+	VehicleBuilder.PRESETS.MidnightBanshee,
+	VehicleBuilder.PRESETS.ObsidianGauntlet,
+	VehicleBuilder.PRESETS.SunsetComet,
+}
+
+local function spawnTrafficCar(routeIdx: number, startIdx: number?)
+	if not trafficFolder then
+		return nil
+	end
+	local route = TRAFFIC_ROUTES[routeIdx]
+	if not route then
+		return nil
+	end
+
+	-- startIdx giúp 2 xe cùng tuyến xuất phát lệch nhau, không chồng khít
+	local idx = ((startIdx or math.random(1, #route)) - 1) % #route + 1
+	local from = route[idx]
+	local to = route[(idx % #route) + 1]
+	local ground = findGround(from.X, from.Z)
+	if not ground then
+		return nil
+	end
+
+	local pos = Vector3.new(from.X, ground.Y, from.Z)
+	local dir = Vector3.new(to.X, 0, to.Z) - Vector3.new(from.X, 0, from.Z)
+	if dir.Magnitude < 1 then
+		return nil
+	end
+	dir = dir.Unit
+
+	local cf = CFrame.lookAt(pos, pos + dir)
+	local trim = TRAFFIC_TRIMS[math.random(1, #TRAFFIC_TRIMS)]
+	local car = VehicleBuilder.spawn(trafficFolder, cf, trim)
+	local chassis = car.PrimaryPart
+	if not chassis then
+		car:Destroy()
+		return nil
+	end
+
+	-- Gắn cứng toàn bộ xe vào khung sườn, neo khung sườn lại
+	-- -> mỗi nhịp chỉ cần đổi ĐÚNG 1 CFrame, không tốn CPU cho 150 part
+	chassis.Anchored = true
+	chassis.CanCollide = false
+	chassis.CanTouch = false
+	for _, d in ipairs(car:GetDescendants()) do
+		if d:IsA("BasePart") and d ~= chassis then
+			d.Anchored = false
+			d.CanCollide = false
+			d.CanTouch = false
+			-- VehicleBuilder đã hàn sẵn phần lớn chi tiết vào khung sườn rồi;
+			-- chỉ hàn thêm chi tiết còn rời (nếu có) để tránh 2 mối hàn chồng nhau.
+			if not d:FindFirstChildWhichIsA("WeldConstraint") then
+				local w = Instance.new("WeldConstraint")
+				w.Part0 = chassis
+				w.Part1 = d
+				w.Parent = d
+			end
+		end
+	end
+
+	-- TÀI XẾ NPC ngồi trong xe
+	-- Rig R6: tâm HumanoidRootPart/Torso nằm trên mặt ghế 1,12 stud (nửa thân trên 1 stud
+	-- + 0,12 độ dày ghế) -> đầu không đội mui, chân không xuyên sàn.
+	local seat = car:FindFirstChild("DriverSeat", true)
+	local seatCF: CFrame
+	local seatPos: Vector3
+	if seat and seat:IsA("BasePart") then
+		seatCF = seat.CFrame * CFrame.new(0, 1.12, 0)
+		seatPos = seat.Position
+	else
+		seatCF = chassis.CFrame * CFrame.new(-1.68, 1.1, 0.48)
+		seatPos = seatCF.Position
+	end
+
+	local driverId = if math.random() < 0.15 then "GANGSTER" else rollArchetype()
+	local driver = NPCManager.spawn(driverId, seatPos, seatCF)
+	if driver then
+		driver.Parent = car -- nằm gọn trong xe, dọn xe là dọn luôn tài xế
+		driver:SetAttribute("IsDriver", true)
+		driver:SetAttribute("AnimState", "DRIVE")
+		local st = states[driver]
+		if st then
+			st.animState = "DRIVE"
+			st.folder = trafficFolder :: Folder
+		end
+		local hum = driver:FindFirstChildOfClass("Humanoid")
+		local hrp = driver:FindFirstChild("HumanoidRootPart")
+		if hum then
+			hum.WalkSpeed = 0
+			hum.JumpPower = 0
+			hum.AutoRotate = false
+			hum.PlatformStand = true -- tắt máy trạng thái Humanoid, giữ nguyên tư thế ngồi
+		end
+		if hrp and hrp:IsA("BasePart") then
+			local w = Instance.new("WeldConstraint")
+			w.Part0 = chassis
+			w.Part1 = hrp
+			w.Parent = chassis
+		end
+	end
+
+	local sp = math.random(26, 34)
+	table.insert(traffic, {
+		car = car,
+		chassis = chassis,
+		driver = driver,
+		route = route,
+		idx = (idx % #route) + 1,
+		pos = pos,
+		heading = dir,
+		speed = sp,
+		baseSpeed = sp,
+	})
+	return car
+end
+
+local function stepTraffic(dt: number)
+	for i = #traffic, 1, -1 do
+		local t = traffic[i]
+		local car = t.car
+		local chassis = t.chassis
+		if not car.Parent or not chassis.Parent then
+			table.remove(traffic, i)
+			continue
+		end
+
+		-- Tài xế chết -> xe dừng khựng lại; tài xế hoảng loạn -> tăng tốc bỏ chạy
+		local st = if t.driver then states[t.driver] else nil
+		if st and (st.state == "DEAD" or st.hum.Health <= 0) then
+			t.speed = math.max(0, t.speed - dt * 45)
+		elseif st and st.state == "REACT" and st.reaction == "FLEE" then
+			t.speed = math.min(t.baseSpeed + 18, t.speed + dt * 24)
+		else
+			t.speed = math.min(t.baseSpeed, t.speed + dt * 8)
+		end
+
+		-- Tiến tới điểm mốc kế tiếp
+		local target = Vector3.new(t.route[t.idx].X, t.pos.Y, t.route[t.idx].Z)
+		local to = target - t.pos
+		local dist = to.Magnitude
+		local step = t.speed * dt
+		if dist <= step or dist < 0.6 then
+			t.pos = target
+			t.idx = (t.idx % #t.route) + 1
+		else
+			t.pos = t.pos + to.Unit * step
+		end
+
+		-- Xoay mũi xe mượt về hướng mốc kế tiếp
+		local nextPt = Vector3.new(t.route[t.idx].X, t.pos.Y, t.route[t.idx].Z)
+		local desired = nextPt - t.pos
+		if desired.Magnitude > 0.8 then
+			t.heading = t.heading:Lerp(desired.Unit, math.clamp(dt * 2.6, 0, 1))
+			if t.heading.Magnitude > 0.01 then
+				t.heading = t.heading.Unit
+			end
+		end
+
+		local basePos = t.pos + Vector3.new(0, 2.36, 0)
+		if t.heading.Magnitude > 0.01 then
+			chassis.CFrame = CFrame.lookAt(basePos, basePos + t.heading)
+		end
+	end
+end
+
+function NPCManager.spawnTraffic(count: number?): number
+	local target = count or TRAFFIC_COUNT
+	if not trafficFolder then
+		return 0
+	end
+	local made = 0
+	for i = 1, target do
+		local routeIdx = ((i - 1) % #TRAFFIC_ROUTES) + 1
+		local lap = ((i - 1) // #TRAFFIC_ROUTES) -- xe thứ mấy trên tuyến này
+		if spawnTrafficCar(routeIdx, lap * 2 + 1) then
+			made += 1
+			task.wait(0.15) -- rải đều, tránh dựng 4 xe trong cùng 1 frame
+		end
+	end
+	return made
+end
+
+local trafficRunning = false
+local function startTrafficLoop()
+	if trafficRunning then
+		return
+	end
+	trafficRunning = true
+	task.spawn(function()
+		local last = os.clock()
+		while true do
+			task.wait(0.05)
+			local tNow = os.clock()
+			local dt = math.min(0.25, tNow - last)
+			last = tNow
+			local ok, err = pcall(stepTraffic, dt)
+			if not ok then
+				warn("[NPC] lỗi vòng lặp giao thông:", err)
+			end
+		end
+	end)
+end
+
 function NPCManager.init(hud: RemoteEvent?)
 	hudRemote = hud
-	local existing = Workspace:FindFirstChild(NPC_FOLDER_NAME)
-	if existing then
-		existing:Destroy()
+
+	-- Dọn các lần chạy trước
+	for _, folderName in ipairs({ NPC_FOLDER_NAME, TRAFFIC_FOLDER_NAME }) do
+		local old = Workspace:FindFirstChild(folderName)
+		if old then
+			old:Destroy()
+		end
 	end
+	table.clear(states)
+	table.clear(traffic)
+
 	local folder = Instance.new("Folder")
 	folder.Name = NPC_FOLDER_NAME
 	folder.Parent = Workspace
 	npcFolder = folder
 
+	local tf = Instance.new("Folder")
+	tf.Name = TRAFFIC_FOLDER_NAME
+	tf.Parent = Workspace
+	trafficFolder = tf
+
 	startLoop()
+	startTrafficLoop()
 
 	task.spawn(function()
 		task.wait(2)
-		local n = NPCManager.spawnAmbient(14)
-		print(string.format("[NPC] Đã dựng %d NPC dân thường trên đường phố", n))
+		local n = NPCManager.spawnAmbient(AMBIENT_COUNT)
+		print(string.format("[NPC] Đã dựng %d NPC rải khắp vỉa hè thành phố", n))
+
+		task.wait(1)
+		local cars = NPCManager.spawnTraffic(TRAFFIC_COUNT)
+		print(string.format("[NPC] Đã thả %d xe có TÀI XẾ NPC chạy vòng quanh phố", cars))
 	end)
 
 	return NPCManager
@@ -987,7 +1407,7 @@ function NPCManager.getStats()
 			end
 		end
 	end
-	return { alive = alive, reacting = reacting, byReaction = byReaction, max = MAX_NPCS }
+	return { alive = alive, reacting = reacting, byReaction = byReaction, max = MAX_NPCS, traffic = #traffic }
 end
 
 -- Xuất hàm chọn phản ứng để QA/kiểm thử tự động
