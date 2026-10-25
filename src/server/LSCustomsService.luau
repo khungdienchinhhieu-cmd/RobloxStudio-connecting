@@ -134,18 +134,24 @@ local function insideBay(state: BayState, car: Model): boolean
 	return math.abs(p.X - z.X) <= sx + 1.5 and math.abs(p.Z - z.Z) <= sz + 1.5
 end
 
+-- BỘ NHỚ ĐỆM: tìm thư mục xe 1 lần rồi dùng lại (trước đây đệ quy tìm mỗi 0.35s -> tốn CPU)
+local cachedFleet: Instance? = nil
+local fleetRescanAt = 0
+
 local function collectVehicles(): { Model }
 	local list: { Model } = {}
-	local roots = { workspace:FindFirstChild("LosSantos"), workspace }
-	for _, root in ipairs(roots) do
-		if root then
-			local fleet = root:FindFirstChild("Phase2_Vehicles", true)
-			if fleet then
-				for _, child in ipairs(fleet:GetChildren()) do
-					if child:IsA("Model") and child:GetAttribute("IsGtaVehicle") == true then
-						table.insert(list, child)
-					end
-				end
+	local now = os.clock()
+	local fleet = cachedFleet
+	if not fleet or not fleet.Parent or now > fleetRescanAt then
+		local root = workspace:FindFirstChild("LosSantos")
+		fleet = (if root then root:FindFirstChild("Phase2_Vehicles") else nil) or workspace:FindFirstChild("Phase2_Vehicles")
+		cachedFleet = fleet
+		fleetRescanAt = now + 10 -- chỉ dò lại mỗi 10 giây nếu chưa có
+	end
+	if fleet then
+		for _, child in ipairs(fleet:GetChildren()) do
+			if child:IsA("Model") and child:GetAttribute("IsGtaVehicle") == true then
+				table.insert(list, child)
 			end
 		end
 	end
@@ -166,20 +172,32 @@ local function nearbyPlayers(center: Vector3, radius: number): { Player }
 	return out
 end
 
-local function pushPrompt(state: BayState, bayIndex: number)
+-- Chống SPAM RemoteEvent: chỉ gửi khi trạng thái đổi (trước đây bắn 2 remote/0.35s/người chơi)
+local promptSignature: { [Player]: string } = {}
+
+local function pushPrompt(state: BayState, bayIndex: number, force: boolean?)
 	local remote = customsRemote
 	if not remote then
 		return
 	end
-	for _, player in ipairs(nearbyPlayers(state.center, 46)) do
+	local occupants = nearbyPlayers(state.center, 46)
+	if #occupants == 0 then
+		return
+	end
+	for _, player in ipairs(occupants) do
 		local inCar = vehicleOfPlayer(player) ~= nil
-		remote:FireClient(player, {
-			kind = "prompt",
-			bay = bayIndex,
-			visible = state.car ~= nil,
-			vehicle = if state.car then tostring(state.car:GetAttribute("VehicleDisplayName") or state.car.Name) else "",
-			inCar = inCar,
-		})
+		local vehicleName = if state.car then tostring(state.car:GetAttribute("VehicleDisplayName") or state.car.Name) else ""
+		local signature = string.format("%d|%s|%s", bayIndex, tostring(state.car ~= nil), vehicleName)
+		if force or promptSignature[player] ~= signature then
+			promptSignature[player] = signature
+			remote:FireClient(player, {
+				kind = "prompt",
+				bay = bayIndex,
+				visible = state.car ~= nil,
+				vehicle = vehicleName,
+				inCar = inCar,
+			})
+		end
 	end
 end
 
@@ -400,6 +418,11 @@ function LSCustomsService.init(remotesFolderRef: Instance, hudRemoteRef: RemoteE
 	local remote = customsRemote
 	remote.OnServerEvent:Connect(handleAction)
 
+	Players.PlayerRemoving:Connect(function(player)
+		promptSignature[player] = nil
+		lastActionAt[player] = nil
+	end)
+
 	-- Vòng quét trạng thái khoang (0.35s) — ổn định hơn Touched và không bỏ sót xe đứng yên
 	task.spawn(function()
 		while true do
@@ -416,11 +439,9 @@ function LSCustomsService.init(remotesFolderRef: Instance, hudRemoteRef: RemoteE
 				if newCar ~= state.car then
 					state.car = newCar
 					setBayLights(state, newCar ~= nil)
-					if newCar then
-						pushPrompt(state, i)
-					end
+					pushPrompt(state, i, true)
 				end
-				pushPrompt(state, i)
+				pushPrompt(state, i, false)
 			end
 			-- Chào mừng tài xế vừa lái xe vào khoang
 			for _, state in ipairs(bays) do

@@ -6,6 +6,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local CityFoundation = require(Shared:WaitForChild("World"):WaitForChild("CityFoundation"))
 local DistrictRegistry = require(Shared:WaitForChild("World"):WaitForChild("DistrictRegistry"))
+local PerfOptimizer = require(Shared:WaitForChild("World"):WaitForChild("PerfOptimizer"))
 local VehicleManager = require(script:WaitForChild("VehicleManager"))
 local WeaponManager = require(script:WaitForChild("WeaponManager"))
 local LSCustomsService = require(script:WaitForChild("LSCustomsService"))
@@ -38,6 +39,10 @@ end
 -- 1. Dựng Nền Thành Phố ghép khối có máu ẩn + Tự động nạp mọi Công Trình Đa-Agent trong World/Modules
 local losSantosRoot = CityFoundation.build(false)
 DistrictRegistry.buildAll(losSantosRoot)
+
+-- 1.1. TỐI ƯU HIỆU NĂNG: cắt CanCollide/CanTouch/CanQuery/CastShadow cho part trang trí,
+-- giảm ~9.000 attribute trùng lặp, giới hạn SurfaceGui. Chạy 1 lần duy nhất sau khi dựng xong.
+PerfOptimizer.optimize(losSantosRoot)
 
 -- 2. Khởi chạy Đội Xe Hơi GTA V (vật lý lái + đụng xe trừ máu ẩn PartHealth) & Vũ Khí bắn vỡ khối
 VehicleManager.init()

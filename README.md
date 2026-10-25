@@ -56,6 +56,9 @@ Dự án tái hiện thế giới mở **Grand Theft Auto V (Los Santos)** trên
        - `src/client/UI/LSCustomsUI.luau` (mới): chip **`[E] ĐỘ XE`** nhỏ sát đáy màn hình (không che nhân vật) + bảng độ xe chuẩn GTA V (phím `[1] [2] [3]`, `[ESC]` đóng), hiển thị tên xe / % hư hỏng / cấp Turbo / giá tiền và phản hồi thành công–thất bại.
        - **Kiểm thử tương tác trên browser:** mở **`/lscustoms`** trên server `:8080` (`bridge/lscustoms-demo.html`) để bấm thử đủ 3 dịch vụ, xem đèn ĐỎ→XANH và trừ tiền thật; **17/17** test logic DOM đều PASS.
   - Ảnh nghiệm thu: [`docs/qa/plot_c1_forecourt_topdown.png`](docs/qa/plot_c1_forecourt_topdown.png), [`docs/qa/plot_c1_east_corner.png`](docs/qa/plot_c1_east_corner.png), [`docs/qa/plot_c1_south_facade.png`](docs/qa/plot_c1_south_facade.png), [`docs/qa/plot_c1_bay_lights.png`](docs/qa/plot_c1_bay_lights.png)
-- [ ] **Bước 5: Công trình #2 — Cửa hàng Tiện lợi 24/7 Supermarket (`Plot C3` — full nội thất kệ hàng & kính vỡ từng mảnh)**
+- [x] **Bước 5: Công trình #2 — Cửa hàng Tiện lợi 24/7 Supermarket (`Plot C3` — full nội thất kệ hàng & kính vỡ từng mảnh)** ✅ *(xong — `AGENT_2` `52d0eff`, nghiệm thu ĐẠT: `934` khối, `99,9 %` phá huỷ, `0` khối tràn biên/Z-fighting/lơ lửng; biên bản: [`agents/notes/APPROVED_AGENT_2_SUPERMARKET_247__b37b6115.md`](agents/notes/APPROVED_AGENT_2_SUPERMARKET_247__b37b6115.md))*
+  - `src/shared/World/Modules/Plot_C3_Supermarket247.luau`: mặt tiền 24/7 (mái hiên sọc xanh–trắng–cam phát sáng, bảng hiệu `46 × 4,4` stud, cột pylon), vách kính chia **từng ô rời có máu riêng** (bắn vỡ từng mảnh), cửa đôi `9` stud, bãi đỗ + gờ chặn bánh, cửa cuốn nhận hàng `16 × 12` + dock nâng.
+  - Nội thất full: 3 dãy kệ hàng đầy sản phẩm, quầy thu ngân + máy tính tiền, ATM, tủ lạnh nước ngọt phát sáng, máy Slushie.
+  - **Tối ưu hiệu năng đi kèm (Sync v10):** lớp `src/shared/World/PerfOptimizer.luau` + tách nhịp cập nhật HUD/radar + cache server — xem [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md).
 - [ ] **Bước 6: Công trình #3 — Đồn Cảnh Sát Mission Row LSPD (`Plot C3`)**
 - [ ] **Bước 7: Công trình #4 — Tháp Tài Chính Maze Bank Tower (`Plot D2`)**

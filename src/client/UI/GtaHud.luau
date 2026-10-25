@@ -622,14 +622,48 @@ function GtaHud.mount(localPlayer: Player, hudRemote: RemoteEvent)
 		Color3.fromRGB(86, 186, 86)
 	)
 
-	RunService.RenderStepped:Connect(function(dt)
-		-- Cập nhật đồng hồ giờ game
+	local lastCarName = ""
+	local lastMphText = ""
+
+	-- =====================================================================
+	-- TỐI ƯU HIỆU NĂNG: tách nhịp cập nhật HUD
+	--   • 60 FPS : chỉ radar xoay/dịch + thanh máu/thể lực (phép tính rẻ, mượt)
+	--   •  10 FPS : chữ đồng hồ, sao truy nã, tên xe, số MPH (string.format rất tốn)
+	--   •   3 FPS : getLocationInfo() (dò khu vực/tên đường nặng nhất)
+	-- Trước đây TOÀN BỘ chạy 60 FPS -> ~180 string.format + 240 FindFirstChild mỗi giây.
+	-- =====================================================================
+	local TEXT_INTERVAL = 0.1
+	local LOCATION_INTERVAL = 0.34
+	local textAccum = TEXT_INTERVAL
+	local locationAccum = LOCATION_INTERVAL
+
+	-- Cache nhân vật: tránh gọi FindFirstChild/FindFirstChildOfClass mỗi frame
+	local cachedChar: Model? = nil
+	local cachedHrp: BasePart? = nil
+	local cachedHum: Humanoid? = nil
+
+	local function refreshCharacterCache()
+		local char = localPlayer.Character
+		if char ~= cachedChar then
+			cachedChar = char
+			cachedHrp = if char then char:FindFirstChild("HumanoidRootPart") :: BasePart? else nil
+			cachedHum = if char then char:FindFirstChildOfClass("Humanoid") else nil
+		end
+		if cachedHrp and not cachedHrp.Parent then
+			cachedChar = nil
+			cachedHrp = nil
+			cachedHum = nil
+		end
+	end
+
+	local function updateTextLayer(dt: number, hum: Humanoid, hrp: BasePart)
+		-- Đồng hồ giờ game
 		local ct = Lighting.ClockTime
 		local hh = math.floor(ct)
 		local mm = math.floor((ct - hh) * 60)
 		clockChip.Text = string.format("LOS SANTOS • %02d:%02d", hh, mm)
 
-		-- Cập nhật hiệu ứng chớp Sao Truy Nã + Chớp Xanh-Đỏ trên Radar
+		-- Sao truy nã + chớp Xanh-Đỏ
 		local wanted = math.clamp(tonumber(localPlayer:GetAttribute("WantedLevel")) or 0, 0, 5)
 		starsRow.Visible = wanted > 0
 		if wanted > 0 then
@@ -638,7 +672,6 @@ function GtaHud.mount(localPlayer: Player, hudRemote: RemoteEvent)
 				then Color3.fromRGB(239, 68, 68)
 				else Color3.fromRGB(59, 130, 246)
 			wantedFlash.BackgroundTransparency = 0.84
-
 			for i = 1, 5 do
 				local st = starLabels[i]
 				if i <= wanted then
@@ -655,21 +688,55 @@ function GtaHud.mount(localPlayer: Player, hudRemote: RemoteEvent)
 			wantedFlash.BackgroundTransparency = 1
 		end
 
-		local char = localPlayer.Character
-		local hrp = if char then char:FindFirstChild("HumanoidRootPart") else nil
-		local hum = if char then char:FindFirstChildOfClass("Humanoid") else nil
-		if not hrp or not hrp:IsA("BasePart") or not hum then
+		-- Đồng hồ tốc độ MPH
+		local seatPart = hum.SeatPart
+		local activeCar = if seatPart then seatPart:FindFirstAncestorOfClass("Model") else nil
+		if activeCar and activeCar:GetAttribute("IsGtaVehicle") == true then
+			local mph = tonumber(activeCar:GetAttribute("CurrentMPH")) or 0
+			local cname = tostring(activeCar:GetAttribute("VehicleDisplayName") or activeCar.Name)
+			if cname ~= lastCarName then
+				lastCarName = cname
+				carNameTag.Text = string.upper(cname)
+			end
+			local mphText = string.format("%d MPH", mph)
+			if mphText ~= lastMphText then
+				lastMphText = mphText
+				mphLabel.Text = mphText
+			end
+			speedoCluster.Visible = true
+		else
+			speedoCluster.Visible = false
+			lastMphText = ""
+		end
+	end
+
+	RunService.RenderStepped:Connect(function(dt)
+		textAccum += dt
+		locationAccum += dt
+		local doText = textAccum >= TEXT_INTERVAL
+		local doLocation = locationAccum >= LOCATION_INTERVAL
+		if doText then
+			textAccum = 0
+		end
+		if doLocation then
+			locationAccum = 0
+		end
+
+		refreshCharacterCache()
+		local hrp = cachedHrp
+		local hum = cachedHum
+		if not hrp or not hum then
 			return
 		end
 
-		-- Máu (Health)
+		-- Máu (Health) — mượt mỗi frame
 		local hpRatio = math.clamp(hum.Health / math.max(1, hum.MaxHealth), 0, 1)
 		healthFill.Size = UDim2.fromScale(hpRatio, 1)
 		healthFill.BackgroundColor3 = if hpRatio < 0.3
 			then Color3.fromRGB(220, 56, 56)
 			else Color3.fromRGB(86, 186, 86)
 
-		-- Thể lực chạy nhanh (Stamina)
+		-- Thể lực chạy nhanh (Stamina) — mượt mỗi frame
 		local moving = hum.MoveDirection.Magnitude > 0.05
 		if isSprinting and moving and stamina > 1 then
 			stamina = math.max(0, stamina - 22 * dt)
@@ -680,7 +747,7 @@ function GtaHud.mount(localPlayer: Player, hudRemote: RemoteEvent)
 		end
 		staminaFill.Size = UDim2.fromScale(stamina / 100, 1)
 
-		-- Cuộn & xoay Minimap theo Camera và vị trí người chơi
+		-- Radar xoay/dịch theo Camera — mượt mỗi frame
 		local cam = workspace.CurrentCamera
 		local camLook = if cam then cam.CFrame.LookVector else Vector3.new(0, 0, -1)
 		local camHeadingRad = math.atan2(camLook.X, -camLook.Z)
@@ -690,38 +757,31 @@ function GtaHud.mount(localPlayer: Player, hudRemote: RemoteEvent)
 		mapPivot.Rotation = mapRotDeg
 		mapContent.Position = UDim2.fromOffset(-pos.X * RADAR_SCALE, -pos.Z * RADAR_SCALE)
 
-		-- Xoay mũi tên người chơi tương đối so với góc xoay Camera
 		local charLook = hrp.CFrame.LookVector
 		local charHeadingRad = math.atan2(charLook.X, -charLook.Z)
 		playerBlip.Rotation = math.deg(charHeadingRad - camHeadingRad) + 45
 
-		-- Đưa chữ 'N' (Hướng Bắc = -Z) chạy dọc mép khung chữ nhật Radar
 		local northAngle = -camHeadingRad - math.pi / 2
 		local nx = math.clamp(0.5 + math.cos(northAngle) * 0.46, 0.06, 0.94)
 		local ny = math.clamp(0.5 + math.sin(northAngle) * 0.46, 0.07, 0.93)
 		northBadge.Position = UDim2.new(nx, 0, 0, ny * RADAR_H)
 
-		-- Cập nhật đồng hồ tốc độ MPH khi ngồi trên xe GTA V
-		local seatPart = hum.SeatPart
-		local activeCar = if seatPart then seatPart:FindFirstAncestorOfClass("Model") else nil
-		if activeCar and activeCar:GetAttribute("IsGtaVehicle") == true then
-			local mph = tonumber(activeCar:GetAttribute("CurrentMPH")) or 0
-			local cname = tostring(activeCar:GetAttribute("VehicleDisplayName") or activeCar.Name)
-			carNameTag.Text = string.upper(cname)
-			mphLabel.Text = string.format("%d MPH", mph)
-			speedoCluster.Visible = true
-		else
-			speedoCluster.Visible = false
+		-- Tầng chữ: 10 lần/giây
+		if doText then
+			updateTextLayer(dt, hum, hrp)
 		end
 
-		-- Cập nhật chữ Khu Vực & Tên Đường góc dưới phải
-		local distName, stName = WorldGrid.getLocationInfo(pos)
-		local locKey = distName .. "|" .. stName
-		if locKey ~= lastLocationKey then
-			lastLocationKey = locKey
-			districtLabel.Text = distName
-			streetLabel.Text = stName
+		-- Khu vực & tên đường: 3 lần/giây (nặng nhất)
+		if doLocation then
+			local distName, stName = WorldGrid.getLocationInfo(pos)
+			local locKey = distName .. "|" .. stName
+			if locKey ~= lastLocationKey then
+				lastLocationKey = locKey
+				districtLabel.Text = distName
+				streetLabel.Text = stName
+			end
 		end
+
 	end)
 
 	return screen

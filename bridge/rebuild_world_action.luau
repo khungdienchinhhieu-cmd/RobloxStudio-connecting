@@ -9,10 +9,13 @@ if shared then
 	local ok, err = pcall(function()
 		local CityFoundation = require(freshShared:WaitForChild("World"):WaitForChild("CityFoundation"))
 		local DistrictRegistry = require(freshShared:WaitForChild("World"):WaitForChild("DistrictRegistry"))
+		local PerfOptimizer = require(freshShared:WaitForChild("World"):WaitForChild("PerfOptimizer"))
 		local VehicleBuilder = require(freshShared:WaitForChild("Vehicles"):WaitForChild("VehicleBuilder"))
 		local root = CityFoundation.build(true)
 		DistrictRegistry.buildAll(root)
 		VehicleBuilder.spawnDefaultFleet(root)
+		-- Tối ưu hiệu năng ngay trong Edit Mode để bản lưu xuống Studio cũng nhẹ
+		PerfOptimizer.optimize(root)
 	end)
 
 	freshShared:Destroy()

@@ -158,8 +158,35 @@ function WeaponClient.mount(localPlayer: Player, fireRemote: RemoteEvent)
 		end
 	end)
 
+	-- TỐI ƯU: cache vũ khí đang trang bị (trước đây dò Character mỗi frame)
+	local cachedWeapon: Tool? = nil
+	local weaponDirty = true
+
+	local function refreshWeaponCache()
+		weaponDirty = false
+		local char = localPlayer.Character
+		cachedWeapon = if char then getEquippedGtaWeapon() else nil
+	end
+
+	localPlayer.CharacterAdded:Connect(function(char)
+		weaponDirty = true
+		char.ChildAdded:Connect(function(ch)
+			if ch:IsA("Tool") then
+				weaponDirty = true
+			end
+		end)
+		char.ChildRemoved:Connect(function(ch)
+			if ch:IsA("Tool") then
+				weaponDirty = true
+			end
+		end)
+	end)
+
 	RunService.RenderStepped:Connect(function()
-		local tool = getEquippedGtaWeapon()
+		if weaponDirty or (cachedWeapon ~= nil and cachedWeapon.Parent == nil) then
+			refreshWeaponCache()
+		end
+		local tool = cachedWeapon
 		if tool then
 			local loc = UserInputService:GetMouseLocation()
 			dot.Position = UDim2.fromOffset(loc.X, loc.Y)
