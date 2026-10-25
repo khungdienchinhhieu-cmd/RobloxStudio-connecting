@@ -410,7 +410,7 @@ function GtaHud.mount(localPlayer: Player, hudRemote: RemoteEvent)
 	local testBar = Instance.new("Frame")
 	testBar.Name = "DevHudTestBar"
 	testBar.Position = UDim2.fromOffset(22, 16)
-	testBar.Size = UDim2.fromOffset(RADAR_W, 226)
+	testBar.Size = UDim2.fromOffset(RADAR_W, 261)
 	testBar.BackgroundColor3 = Color3.fromRGB(10, 13, 18)
 	testBar.BackgroundTransparency = 0.12
 	testBar.BorderSizePixel = 0
@@ -474,6 +474,7 @@ function GtaHud.mount(localPlayer: Player, hudRemote: RemoteEvent)
 	closeTag.MouseButton1Click:Connect(toggleTestMenu)
 
 	local testButtonsSpec = {
+		{ label = "▶  Gọi Siêu Xe Trước Mặt", right = "CAR", cmd = "spawn_car", accent = Color3.fromRGB(56, 189, 248) },
 		{ label = "★  Tăng +1 Sao Truy Nã", right = "LSPD", cmd = "add_star", accent = Color3.fromRGB(239, 68, 68) },
 		{ label = "☆  Xoá Toàn Bộ Truy Nã", right = "0 ★", cmd = "clear_stars", accent = Color3.fromRGB(148, 163, 184) },
 		{ label = "$  Nhận +$500 Tiền Mặt", right = "+$500", cmd = "add_cash", accent = Color3.fromRGB(114, 204, 114) },
@@ -581,8 +582,43 @@ function GtaHud.mount(localPlayer: Player, hudRemote: RemoteEvent)
 		end
 	end)
 
+	-- Đồng hồ tốc độ xe hơi góc dưới phải (tự hiện khi lên xe, tự ẩn khi xuống xe)
+	local speedoCluster = Instance.new("Frame")
+	speedoCluster.Name = "VehicleSpeedometer"
+	speedoCluster.AnchorPoint = Vector2.new(1, 1)
+	speedoCluster.Position = UDim2.new(1, -26, 1, -82)
+	speedoCluster.Size = UDim2.fromOffset(190, 44)
+	speedoCluster.BackgroundTransparency = 1
+	speedoCluster.Visible = false
+	speedoCluster.Parent = screen
+
+	local carNameTag = Instance.new("TextLabel")
+	carNameTag.Position = UDim2.fromOffset(0, 0)
+	carNameTag.Size = UDim2.new(1, 0, 0, 15)
+	carNameTag.BackgroundTransparency = 1
+	carNameTag.Font = Enum.Font.GothamBold
+	carNameTag.TextSize = 12
+	carNameTag.TextXAlignment = Enum.TextXAlignment.Right
+	carNameTag.TextColor3 = Color3.fromRGB(56, 189, 248)
+	carNameTag.TextStrokeTransparency = 0.2
+	carNameTag.Text = "BANSHEE GT"
+	carNameTag.Parent = speedoCluster
+
+	local mphLabel = Instance.new("TextLabel")
+	mphLabel.Position = UDim2.fromOffset(0, 15)
+	mphLabel.Size = UDim2.new(1, 0, 0, 28)
+	mphLabel.BackgroundTransparency = 1
+	mphLabel.Font = Enum.Font.GothamBlack
+	mphLabel.TextSize = 26
+	mphLabel.TextXAlignment = Enum.TextXAlignment.Right
+	mphLabel.TextColor3 = Color3.fromRGB(248, 250, 252)
+	mphLabel.TextStrokeColor3 = Color3.fromRGB(8, 10, 14)
+	mphLabel.TextStrokeTransparency = 0.14
+	mphLabel.Text = "0 MPH"
+	mphLabel.Parent = speedoCluster
+
 	showFeed(
-		"Chào mừng đến Los Santos! Giữ [Shift] để chạy nhanh • Nhấn [H] để ẩn/hiện thanh Test HUD.",
+		"Los Santos sẵn sàng! Lên xe quanh quảng trường hoặc cầm Pistol [1] / Rifle [2] bắn thử gạch & xe • [H] Menu Test.",
 		Color3.fromRGB(86, 186, 86)
 	)
 
@@ -664,6 +700,19 @@ function GtaHud.mount(localPlayer: Player, hudRemote: RemoteEvent)
 		local nx = math.clamp(0.5 + math.cos(northAngle) * 0.46, 0.06, 0.94)
 		local ny = math.clamp(0.5 + math.sin(northAngle) * 0.46, 0.07, 0.93)
 		northBadge.Position = UDim2.new(nx, 0, 0, ny * RADAR_H)
+
+		-- Cập nhật đồng hồ tốc độ MPH khi ngồi trên xe GTA V
+		local seatPart = hum.SeatPart
+		local activeCar = if seatPart then seatPart:FindFirstAncestorOfClass("Model") else nil
+		if activeCar and activeCar:GetAttribute("IsGtaVehicle") == true then
+			local mph = tonumber(activeCar:GetAttribute("CurrentMPH")) or 0
+			local cname = tostring(activeCar:GetAttribute("VehicleDisplayName") or activeCar.Name)
+			carNameTag.Text = string.upper(cname)
+			mphLabel.Text = string.format("%d MPH", mph)
+			speedoCluster.Visible = true
+		else
+			speedoCluster.Visible = false
+		end
 
 		-- Cập nhật chữ Khu Vực & Tên Đường góc dưới phải
 		local distName, stName = WorldGrid.getLocationInfo(pos)

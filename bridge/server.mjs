@@ -156,6 +156,9 @@ const HTML = `<!DOCTYPE html>
   }
   .zone-txt { font-size: 15px; font-weight: 800; color: #f0c642; letter-spacing: 0.5px; }
   .street-txt { font-size: 22px; font-weight: 900; color: #f8fafc; }
+  .speedo-box { margin-bottom: 6px; display: none; }
+  .car-tag { font-size: 11.5px; font-weight: 800; color: #38bdf8; letter-spacing: 0.6px; }
+  .mph-txt { font-size: 26px; font-weight: 900; color: #f8fafc; line-height: 1.05; }
 
   .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; }
   .card h2 { font-size: 15px; font-weight: 700; margin-bottom: 5px; }
@@ -187,7 +190,7 @@ const HTML = `<!DOCTYPE html>
 <div class="container">
   <div class="header">
     <div>
-      <h1>🌴 GTA V Roblox (Los Santos) — Nền Thành Phố v2 (Ghép Khối Phá Huỷ) + HUD [H]</h1>
+      <h1>🏎️ GTA V Roblox (Los Santos) — Bước 2: Siêu Xe + Máu Ẩn Từng Part (Đụng / Bắn Tự Vỡ)</h1>
       <p id="repoMeta">Đang tải thông tin đồng bộ...</p>
     </div>
     <div class="badge"><span class="dot"></span><span id="verText">Live Sync v3 Sẵn Sàng</span></div>
@@ -205,6 +208,7 @@ const HTML = `<!DOCTYPE html>
         <button class="hud-menu-close" onclick="toggleDevMenu()">[H] Đóng</button>
       </div>
       <div class="hud-menu-body">
+        <button class="hud-row-btn" style="border-left-color:#38bdf8" onclick="simCmd('car')"><span>▶ &nbsp;Gọi Siêu Xe Trước Mặt</span><span style="color:#38bdf8;font-size:10px">CAR</span></button>
         <button class="hud-row-btn" style="border-left-color:#ef4444" onclick="simCmd('star')"><span>★ &nbsp;Tăng +1 Sao Truy Nã</span><span style="color:#ef4444;font-size:10px">LSPD</span></button>
         <button class="hud-row-btn" style="border-left-color:#94a3b8" onclick="simCmd('clear')"><span>☆ &nbsp;Xoá Toàn Bộ Truy Nã</span><span style="color:#94a3b8;font-size:10px">0 ★</span></button>
         <button class="hud-row-btn" style="border-left-color:#72cc72" onclick="simCmd('cash')"><span>$ &nbsp;Nhận +$500 Tiền Mặt</span><span style="color:#72cc72;font-size:10px">+$500</span></button>
@@ -213,7 +217,7 @@ const HTML = `<!DOCTYPE html>
       </div>
     </div>
 
-    <div class="hud-hint">🖱️ Kéo chuột xoay 3D • ⌨️ WASD + Shift chạy bộ • Phím [H] mở Menu Test</div>
+    <div class="hud-hint">⌨️ WASD đi/lái • [F] Lên/Xuống xe • [Space] Bắn gạch &amp; xe (máu ẩn tự vỡ!) • [H] Menu</div>
 
     <div class="hud-topright">
       <div class="stars-row" id="starsRow"></div>
@@ -236,6 +240,10 @@ const HTML = `<!DOCTYPE html>
     </div>
 
     <div class="hud-bottomright">
+      <div class="speedo-box" id="speedoBox">
+        <div class="car-tag" id="carTag">BANSHEE GT</div>
+        <div class="mph-txt" id="mphTxt">0 MPH</div>
+      </div>
       <div class="zone-txt" id="zoneTxt">LEGION SQUARE</div>
       <div class="street-txt" id="streetTxt">Vespucci Blvd</div>
     </div>
@@ -289,10 +297,85 @@ const PLOTS = [
 ];
 
 const state = {
-  px: 0, pz: 92, heading: 0,
-  camYaw: -0.62, camPitch: 0.46, camDist: 235,
-  cash: 5000, hp: 100, armor: 65, stamina: 100, wanted: 2,
+  px: -12, pz: 118, heading: 0,
+  camYaw: -0.45, camPitch: 0.38, camDist: 145,
+  cash: 5000, hp: 100, armor: 65, stamina: 100, wanted: 0,
+  drivingCar: null, tracerTimer: 0, tracerEnd: null, hitShatter: false,
 };
+const CARS = [
+  { name: "BANSHEE GT",   cx: -24, cz: 139, yaw: -Math.PI/2, spd: 0, col: "#d21e26", hoodHp: 140, maxHoodHp: 140, glassHp: 55 },
+  { name: "GAUNTLET GTX", cx: -99, cz: 78,  yaw: 0,          spd: 0, col: "#1a1c22", hoodHp: 150, maxHoodHp: 150, glassHp: 55 },
+  { name: "BANSHEE GT",   cx: -36, cz: -25, yaw: Math.PI/2,  spd: 0, col: "#1848aa", hoodHp: 140, maxHoodHp: 140, glassHp: 55 },
+  { name: "BANSHEE GT",   cx: 42,  cz: 139, yaw: Math.PI/2,  spd: 0, col: "#ee7c18", hoodHp: 140, maxHoodHp: 140, glassHp: 55 },
+];
+const PROPS = [];
+// Các bồn gạch Sandstone & cọc chắn quảng trường có máu ẩn (hp) — xe đụng hoặc bắn hết máu là tự vỡ tung!
+for (let x = -72; x <= 72; x += 9) {
+  if (Math.abs(x) < 16) continue;
+  PROPS.push({ cx: x, cy: 1.9, cz: 118, sx: 7.8, sy: 1.5, sz: 2.2, col: "#cfc5b2", r:207, g:197, b:178, hp: 120, maxHp: 120 });
+}
+for (let x = -14; x <= 14; x += 5.5) {
+  PROPS.push({ cx: x, cy: 2.1, cz: 120, sx: 1.3, sy: 2.4, sz: 1.3, col: "#262a32", r:38, g:42, b:50, hp: 85, maxHp: 85 });
+}
+const DEBRIS = [];
+function spawnBurst(cx, cy, cz, col, n) {
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2, sp = 14 + Math.random() * 26;
+    DEBRIS.push({
+      cx, cy: cy + 0.5, cz,
+      vx: Math.cos(a)*sp, vy: 14 + Math.random()*18, vz: Math.sin(a)*sp,
+      sx: 1.5, sy: 1.1, sz: 1.5, col, ttl: 2.6,
+    });
+  }
+}
+function damageProp(p, dmg) {
+  if (p.hp <= 0) return false;
+  p.hp = Math.max(0, p.hp - dmg);
+  const k = 1 - 0.35 * (1 - p.hp / p.maxHp);
+  p.col = "rgb(" + Math.round(p.r*k) + "," + Math.round(p.g*k) + "," + Math.round(p.b*k) + ")";
+  if (p.hp <= 0) {
+    spawnBurst(p.cx, p.cy, p.cz, p.col, 5);
+    return true;
+  }
+  return false;
+}
+function fireGun() {
+  const dirX = Math.sin(state.heading), dirZ = -Math.cos(state.heading);
+  let bestT = 85, hitObj = null, hitKind = "";
+  for (const p of PROPS) {
+    if (p.hp <= 0) continue;
+    const dx = p.cx - state.px, dz = p.cz - state.pz;
+    const proj = dx*dirX + dz*dirZ;
+    const perp = Math.abs(dx*dirZ - dz*dirX);
+    if (proj > 1 && proj < bestT && perp < Math.max(p.sx, p.sz)*0.65 + 1.8) {
+      bestT = proj; hitObj = p; hitKind = "prop";
+    }
+  }
+  for (const c of CARS) {
+    if (c === state.drivingCar) continue;
+    const dx = c.cx - state.px, dz = c.cz - state.pz;
+    const proj = dx*dirX + dz*dirZ;
+    const perp = Math.abs(dx*dirZ - dz*dirX);
+    if (proj > 1 && proj < bestT && perp < 5.5) {
+      bestT = proj; hitObj = c; hitKind = "car";
+    }
+  }
+  state.tracerEnd = [state.px + dirX * bestT, state.pz + dirZ * bestT];
+  state.tracerTimer = 0.14;
+  state.hitShatter = false;
+  if (hitKind === "prop") {
+    state.hitShatter = damageProp(hitObj, 42);
+    if (state.hitShatter) showFeed("💥 Khối gạch hết máu ẩn -> <b>TỰ ĐỘNG VỠ VỤN!</b>", "#f87171");
+  } else if (hitKind === "car") {
+    if (hitObj.glassHp > 0) {
+      hitObj.glassHp = Math.max(0, hitObj.glassHp - 35);
+      if (hitObj.glassHp === 0) { spawnBurst(hitObj.cx, 2.8, hitObj.cz, "#7dd3fc", 6); state.hitShatter = true; showFeed("💥 Kính chắn gió xe hết máu ẩn -> <b>VỠ TAN!</b>", "#38bdf8"); }
+    } else if (hitObj.hoodHp > 0) {
+      hitObj.hoodHp = Math.max(0, hitObj.hoodHp - 48);
+      if (hitObj.hoodHp === 0) { spawnBurst(hitObj.cx, 2.6, hitObj.cz, hitObj.col, 4); state.hitShatter = true; showFeed("💥 Nắp Capo hết máu ẩn -> <b>BUNG RỜI LỘ MÁY V8!</b>", "#fb923c"); }
+    }
+  }
+}
 window.toggleDevMenu = function() {
   const tb = document.getElementById("hudTestBar");
   const hint = document.getElementById("hudOpenHint");
@@ -304,6 +387,26 @@ const keys = {};
 window.addEventListener("keydown", e => {
   keys[e.code] = true;
   if (e.code === "KeyH") window.toggleDevMenu();
+  if (e.code === "Space") { e.preventDefault(); fireGun(); }
+  if (e.code === "KeyF") {
+    if (state.drivingCar) {
+      state.px = state.drivingCar.cx + 7; state.pz = state.drivingCar.cz;
+      state.drivingCar.spd = 0; state.drivingCar = null;
+      showFeed("Đã xuống xe. Nhấn <b>[Space]</b> bắn thử gạch &amp; xe!", "#94a3b8");
+    } else {
+      let near = null, bd = 22;
+      for (const c of CARS) {
+        const d = Math.hypot(c.cx - state.px, c.cz - state.pz);
+        if (d < bd) { bd = d; near = c; }
+      }
+      if (near) {
+        state.drivingCar = near;
+        showFeed("Đã lên siêu xe <b>" + near.name + "</b>! Lái WASD đâm thử tường gạch!", "#38bdf8");
+      } else {
+        showFeed("Lại gần xe hơn hoặc bấm <b>[H] -> Gọi Siêu Xe</b>!", "#f59e0b");
+      }
+    }
+  }
 });
 window.addEventListener("keyup", e => { keys[e.code] = false; });
 
@@ -315,7 +418,13 @@ function showFeed(msg, color) {
 function fmtCash(n) { return "$" + n.toLocaleString("en-US"); }
 
 window.simCmd = function(cmd) {
-  if (cmd === "star") {
+  if (cmd === "car") {
+    const nx = state.px + Math.sin(state.heading) * 14;
+    const nz = state.pz - Math.cos(state.heading) * 14;
+    const nc = { name: "BANSHEE GT", cx: nx, cz: nz, yaw: state.heading, spd: 0, col: "#dc2626", hoodHp: 140, maxHoodHp: 140, glassHp: 55 };
+    CARS.push(nc);
+    showFeed("Legendary Motorsport: Đã giao <b>Banshee GT</b> ngay trước mặt! Nhấn <b>[F]</b> lên xe.", "#38bdf8");
+  } else if (cmd === "star") {
     state.wanted = Math.min(5, state.wanted + 1);
     showFeed("<b>LSPD ALERT:</b> Mức truy nã hiện tại là " + state.wanted + " Sao!", "#ef4444");
   } else if (cmd === "clear") {
@@ -442,23 +551,68 @@ SLABS.push(...HILLS);
 
 function tick(now) {
   const dt = 0.016;
-  const sprinting = keys["ShiftLeft"] || keys["ShiftRight"];
-  const spd = (sprinting && state.stamina > 2) ? 62 : 34;
-  let mx = 0, mz = 0;
-  if (keys["KeyW"] || keys["ArrowUp"]) mz -= 1;
-  if (keys["KeyS"] || keys["ArrowDown"]) mz += 1;
-  if (keys["KeyA"] || keys["ArrowLeft"]) mx -= 1;
-  if (keys["KeyD"] || keys["ArrowRight"]) mx += 1;
-  if (mx !== 0 || mz !== 0) {
-    const c = Math.cos(state.camYaw), s = Math.sin(state.camYaw);
-    const wx = mx * c + mz * s, wz = -mx * s + mz * c;
-    const len = Math.hypot(wx, wz);
-    state.px = Math.max(-345, Math.min(345, state.px + (wx/len)*spd*dt));
-    state.pz = Math.max(-245, Math.min(245, state.pz + (wz/len)*spd*dt));
-    state.heading = Math.atan2(wx, -wz);
-    if (sprinting) state.stamina = Math.max(0, state.stamina - 24 * dt);
+  const spBox = document.getElementById("speedoBox");
+  if (state.drivingCar) {
+    const car = state.drivingCar;
+    let thr = 0, str = 0;
+    if (keys["KeyW"] || keys["ArrowUp"]) thr += 1;
+    if (keys["KeyS"] || keys["ArrowDown"]) thr -= 1;
+    if (keys["KeyA"] || keys["ArrowLeft"]) str -= 1;
+    if (keys["KeyD"] || keys["ArrowRight"]) str += 1;
+    if (thr !== 0) car.spd = Math.max(-45, Math.min(115, car.spd + thr * 92 * dt));
+    else car.spd *= 0.96;
+    if (Math.abs(car.spd) > 2) car.yaw += str * (car.spd >= 0 ? 1 : -1) * 2.1 * dt;
+    car.cx = Math.max(-345, Math.min(345, car.cx + Math.sin(car.yaw) * car.spd * dt));
+    car.cz = Math.max(-245, Math.min(245, car.cz - Math.cos(car.yaw) * car.spd * dt));
+    state.px = car.cx; state.pz = car.cz; state.heading = car.yaw;
+
+    // Va chạm xe trừ máu ẩn PartHealth của tường gạch & nắp capo!
+    if (Math.abs(car.spd) > 16) {
+      for (const p of PROPS) {
+        if (p.hp <= 0) continue;
+        if (Math.abs(car.cx - p.cx) < p.sx*0.5 + 4.2 && Math.abs(car.cz - p.cz) < p.sz*0.5 + 4.2) {
+          const dmg = Math.abs(car.spd) * 1.45;
+          const broke = damageProp(p, dmg);
+          if (car.hoodHp > 0) {
+            car.hoodHp = Math.max(0, car.hoodHp - dmg * 0.45);
+            if (car.hoodHp === 0) spawnBurst(car.cx, 2.5, car.cz, car.col, 4);
+          }
+          car.spd *= 0.68;
+          if (broke) showFeed("💥 Xe đụng vỡ tung khối gạch quảng trường!", "#fb923c");
+        }
+      }
+    }
+    spBox.style.display = "block";
+    document.getElementById("carTag").textContent = car.name;
+    document.getElementById("mphTxt").textContent = Math.round(Math.abs(car.spd) * 0.82) + " MPH";
   } else {
-    state.stamina = Math.min(100, state.stamina + 18 * dt);
+    spBox.style.display = "none";
+    const sprinting = keys["ShiftLeft"] || keys["ShiftRight"];
+    const spd = (sprinting && state.stamina > 2) ? 62 : 34;
+    let mx = 0, mz = 0;
+    if (keys["KeyW"] || keys["ArrowUp"]) mz -= 1;
+    if (keys["KeyS"] || keys["ArrowDown"]) mz += 1;
+    if (keys["KeyA"] || keys["ArrowLeft"]) mx -= 1;
+    if (keys["KeyD"] || keys["ArrowRight"]) mx += 1;
+    if (mx !== 0 || mz !== 0) {
+      const c = Math.cos(state.camYaw), s = Math.sin(state.camYaw);
+      const wx = mx * c + mz * s, wz = -mx * s + mz * c;
+      const len = Math.hypot(wx, wz);
+      state.px = Math.max(-345, Math.min(345, state.px + (wx/len)*spd*dt));
+      state.pz = Math.max(-245, Math.min(245, state.pz + (wz/len)*spd*dt));
+      state.heading = Math.atan2(wx, -wz);
+      if (sprinting) state.stamina = Math.max(0, state.stamina - 24 * dt);
+    } else {
+      state.stamina = Math.min(100, state.stamina + 18 * dt);
+    }
+  }
+  if (state.tracerTimer > 0) state.tracerTimer = Math.max(0, state.tracerTimer - dt);
+  for (let i = DEBRIS.length - 1; i >= 0; i--) {
+    const d = DEBRIS[i];
+    d.ttl -= dt; d.vy -= 48 * dt;
+    d.cx += d.vx * dt; d.cy = Math.max(0.6, d.cy + d.vy * dt); d.cz += d.vz * dt;
+    if (d.cy <= 0.65) { d.vy *= -0.35; d.vx *= 0.7; d.vz *= 0.7; }
+    if (d.ttl <= 0) DEBRIS.splice(i, 1);
   }
 
   document.getElementById("hpFill").style.width = state.hp + "%";
@@ -543,14 +697,47 @@ function tick(now) {
   }
 
   for (const s of SLABS.filter(x => !x.tall)) drawTop(s);
-  const tallSorted = SLABS.filter(x => x.tall).sort((a,b) => Math.hypot(b.cx-camX, b.cz-camZ) - Math.hypot(a.cx-camX, a.cz-camZ));
-  for (const s of tallSorted) drawTop(s);
+  const dynBlocks = [
+    ...SLABS.filter(x => x.tall),
+    ...PROPS.filter(p => p.hp > 0).map(p => ({ ...p, tall: true })),
+    ...DEBRIS.map(d => ({ ...d, tall: true })),
+  ];
+  for (const c of CARS) {
+    const sy = Math.sin(c.yaw), cy = Math.cos(c.yaw);
+    dynBlocks.push({ cx: c.cx, cy: 1.5, cz: c.cz, sx: 8.5, sy: 1.8, sz: 8.5, col: c.col, tall: true });
+    if (c.hoodHp > 0) {
+      dynBlocks.push({ cx: c.cx + sy*3.2, cy: 2.3, cz: c.cz - cy*3.2, sx: 5.2, sy: 0.4, sz: 5.2, col: c.col, tall: true });
+    } else {
+      // Lộ khoang máy V8 xám kim loại khi bung nắp capo!
+      dynBlocks.push({ cx: c.cx + sy*3.2, cy: 2.1, cz: c.cz - cy*3.2, sx: 3.4, sy: 0.6, sz: 3.4, col: "#475569", tall: true });
+    }
+    if (c.glassHp > 0) {
+      dynBlocks.push({ cx: c.cx - sy*0.6, cy: 2.8, cz: c.cz + cy*0.6, sx: 5.2, sy: 0.9, sz: 5.2, col: "#334155", tall: true });
+    }
+  }
+  dynBlocks.sort((a,b) => Math.hypot(b.cx-camX, b.cz-camZ) - Math.hypot(a.cx-camX, a.cz-camZ));
+  for (const s of dynBlocks) drawTop(s);
 
-  // Player marker in 3D
-  const pp = proj3(state.px, 2.2, state.pz);
-  if (pp) {
-    wCtx.fillStyle = "#38bdf8"; wCtx.strokeStyle = "#fff"; wCtx.lineWidth = 2;
-    wCtx.beginPath(); wCtx.arc(pp[0], pp[1], Math.max(4, 900/pp[2]), 0, Math.PI*2); wCtx.fill(); wCtx.stroke();
+  // Tia đạn vàng + Hitmarker chữ X khi bắn trúng part có máu ẩn
+  if (state.tracerTimer > 0 && state.tracerEnd) {
+    const p0 = proj3(state.px, 2.6, state.pz);
+    const p1 = proj3(state.tracerEnd[0], 2.2, state.tracerEnd[1]);
+    if (p0 && p1) {
+      wCtx.strokeStyle = "#fde047"; wCtx.lineWidth = 2.5;
+      wCtx.beginPath(); wCtx.moveTo(p0[0], p0[1]); wCtx.lineTo(p1[0], p1[1]); wCtx.stroke();
+      wCtx.fillStyle = state.hitShatter ? "#ef4444" : "#ffffff";
+      wCtx.font = "bold 16px sans-serif";
+      wCtx.fillText("×", p1[0] - 5, p1[1] + 5);
+    }
+  }
+
+  // Player marker in 3D (khi đi bộ)
+  if (!state.drivingCar) {
+    const pp = proj3(state.px, 2.2, state.pz);
+    if (pp) {
+      wCtx.fillStyle = "#38bdf8"; wCtx.strokeStyle = "#fff"; wCtx.lineWidth = 2;
+      wCtx.beginPath(); wCtx.arc(pp[0], pp[1], Math.max(4, 900/pp[2]), 0, Math.PI*2); wCtx.fill(); wCtx.stroke();
+    }
   }
 
   // Render Live Rotating GTA V Rectangular Minimap
@@ -576,6 +763,9 @@ function tick(now) {
   for (const r of EW_ROADS) rCtx.fillRect(-340, r.coord - r.width/2, 680, r.width);
   for (const r of NS_ROADS) rCtx.fillRect(r.coord - r.width/2, -240, r.width, 404);
   rCtx.fillStyle = "#facc15"; rCtx.beginPath(); rCtx.arc(0, 49, 8, 0, Math.PI*2); rCtx.fill();
+  for (const c of CARS) {
+    rCtx.fillStyle = "#38bdf8"; rCtx.fillRect(c.cx - 5, c.cz - 5, 10, 10);
+  }
   rCtx.restore();
 
   if (state.wanted > 0) {

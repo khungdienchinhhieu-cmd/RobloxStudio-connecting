@@ -37,17 +37,13 @@ Dự án tái hiện thế giới mở **Grand Theft Auto V (Los Santos)** trên
 
 ## 📋 Lộ Trình Triển Khai Từng Bước Nhỏ
 
-- [x] **Bước 1 (Đang hoàn thiện v2): GTA V HUD (Phím `[H]` mở Menu Test) + Đại Tu Toàn Bộ Nền Thành Phố Ghép Khối**
-  - **UI (`GtaHud.luau`):** Màn hình mặc định sạch chuẩn GTA V 100%; nhấn phím **`[H]`** để đóng/mở bảng **Los Santos Dev Menu** (thử Sao truy nã, Tiền, Giáp, Máu).
-  - **Nền Thành Phố Siêu Chi Tiết (`CityFoundation.luau` + `VoxelBuilder.luau`):**
-    - Hệ thống đường nhựa có rãnh thoát nước bê tông (`Gutter`), song chắn rác kim loại âm vỉa hè, dốc hạ vỉa hè cho người đi bộ tại 48 góc ngã tư, đinh phản quang phân làn (`Botts' Dots`), mũi tên chỉ hướng & vạch `STOP`.
-    - Đại lộ trung tâm `Olympic Fwy` có **dải phân cách bê tông K-Rail (Jersey Barriers) ghép từ từng khối rời `Destructible = true`**.
-    - Bờ biển **Vespucci Beach** có bờ kè đá xây từng viên gạch so le (`Destructible = true`), 3 cụm cầu thang đá đi bộ xuống bãi cát, đường dạo lát ván gỗ, mỏm đá chắn sóng vươn ra biển và 4 tầng màu nước biển chuyển sắc.
-    - Dãy đồi **Vinewood Hills** tạo hình sườn dốc tự nhiên bằng khối vát đa diện (`WedgePart`), vách đá sa thạch, đường mòn sườn đồi và tường kè đá ghép khối chống sạt lở.
-    - Nền quảng trường **Legion Square** lát gạch đa sắc, bồn cây xây từ từng viên đá rời, cọc tiêu bảo vệ vỉa hè (`Destructible = true`) và 5 ô móng công trình kỹ thuật phẳng phiu có lối xe chạy vào (`Driveway Apron`).
-- [ ] **Bước 2: Hạ tầng Đường phố (Đèn giao thông ngã tư, Đèn đường đôi & Hàng cọ California — ghép đoạn có thể húc đổ)**
-- [ ] **Bước 3: Công trình #1 — Garage Độ Xe Los Santos Customs (`Plot C1` — làm duy nhất 1 công trình cực chỉnh chu, tường gạch/cửa cuốn ghép khối phá huỷ)**
-- [ ] **Bước 4: Hệ thống Xe Hơi GTA V & Cơ chế Va chạm / Phá huỷ Khối Vật Lý (`DestructionEngine`)**
+- [x] **Bước 1: GTA V HUD (Phím `[H]` mở Menu Test) + Đại Tu Toàn Bộ Nền Thành Phố Ghép Khối (`2,803` parts)**
+- [x] **Bước 2 (Hiện tại): Hệ thống Xe Hơi GTA V + Máu Ẩn Cho Từng Part (`PartHealth`) & Tự Vỡ Khi Xe Đụng / Bị Bắn**
+  - **Máu Ẩn Từng Khối (`PartBuilder.luau` + `DestructionManager.luau`):** Mọi viên gạch, đốt dải phân cách K-Rail, cọc tiêu thép, bờ kè đá, tượng đài và **từng bộ phận vỏ xe** (cản trước/sau, nắp capo, kính chắn gió, 2 cửa xe, đèn pha/hậu, cánh gió) đều có máu ẩn `PartHealth`. Khi bị xe tông hoặc súng bắn sẽ sẫm màu/nứt dần và **tự động vỡ tung thành mảnh vật lý văng ra** ngay khi hết máu ẩn (kèm sập dây chuyền các viên gạch phía trên).
+  - **Xe Hơi GTA V Siêu Chi Tiết (`VehicleBuilder.luau` + `VehicleManager.luau`):** Dòng Coupe thể thao `Banshee GT` & Muscle `Gauntlet GTX` có khoang động cơ V8 bên dưới nắp capo, bánh xe quay & đánh lái thật, vật lý leo vỉa hè mượt, đồng hồ `MPH` góc dưới phải khi ngồi lái, và cháy nổ khi hỏng động cơ.
+  - **Súng Kiểm Thử Phá Huỷ (`WeaponManager.luau` + `WeaponClient.luau`):** Trang bị sẵn `Pistol 9mm` & `Carbine Rifle` có tâm ngắm chấm trắng chuẩn GTA V, tia đạn và hiệu ứng bắn vỡ từng viên gạch / kính xe / cánh cửa xe.
+- [ ] **Bước 3: Hạ tầng Đường phố (Đèn giao thông ngã tư, Đèn đường đôi & Hàng cọ California — có máu ẩn, xe tông gãy đổ)**
+- [ ] **Bước 4: Công trình #1 — Garage Độ Xe Los Santos Customs (`Plot C1` — làm duy nhất 1 công trình cực chỉnh chu, tường gạch/cửa cuốn có máu ẩn phá huỷ)**
 - [ ] **Bước 5: Công trình #2 — Cửa hàng Tiện lợi 24/7 Supermarket (`Plot C3` — full nội thất kệ hàng & kính vỡ từng mảnh)**
 - [ ] **Bước 6: Công trình #3 — Đồn Cảnh Sát Mission Row LSPD (`Plot C3`)**
 - [ ] **Bước 7: Công trình #4 — Tháp Tài Chính Maze Bank Tower (`Plot D2`)**

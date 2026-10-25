@@ -79,6 +79,8 @@ local function applyDestructionTags(
 	inst:SetAttribute("Destructible", isDest)
 	if isDest then
 		local hp = integrity or 100
+		inst:SetAttribute("MaxPartHealth", hp)
+		inst:SetAttribute("PartHealth", hp)
 		inst:SetAttribute("MaxIntegrity", hp)
 		inst:SetAttribute("Integrity", hp)
 		inst:SetAttribute("FractureGroup", group or "WorldProp")

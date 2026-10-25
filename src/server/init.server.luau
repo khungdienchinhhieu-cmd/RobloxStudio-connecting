@@ -5,25 +5,40 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local CityFoundation = require(Shared:WaitForChild("World"):WaitForChild("CityFoundation"))
+local VehicleManager = require(script:WaitForChild("VehicleManager"))
+local WeaponManager = require(script:WaitForChild("WeaponManager"))
 
--- Tạo RemoteEvent phục vụ HUD & hệ thống GTA V
+-- Tạo thư mục RemoteEvents phục vụ HUD, Xe & Vũ khí GTA V
 local remotesFolder = ReplicatedStorage:FindFirstChild("GtaRemotes")
 if not remotesFolder then
-	remotesFolder = Instance.new("Folder")
-	remotesFolder.Name = "GtaRemotes"
-	remotesFolder.Parent = ReplicatedStorage
+	local createdFolder = Instance.new("Folder")
+	createdFolder.Name = "GtaRemotes"
+	createdFolder.Parent = ReplicatedStorage
+	remotesFolder = createdFolder
 end
+local activeRemotes = remotesFolder :: Instance
 
-local hudRemote = remotesFolder:FindFirstChild("HudAction") :: RemoteEvent?
+local hudRemote = activeRemotes:FindFirstChild("HudAction") :: RemoteEvent?
 if not hudRemote then
 	local created = Instance.new("RemoteEvent")
 	created.Name = "HudAction"
-	created.Parent = remotesFolder
+	created.Parent = activeRemotes
 	hudRemote = created
 end
+local activeHudRemote = hudRemote :: RemoteEvent
 
--- Dựng Nền Thành Phố Los Santos (Giai đoạn 1) nếu chưa có trong Workspace
+if not activeRemotes:FindFirstChild("WeaponFire") then
+	local wf = Instance.new("RemoteEvent")
+	wf.Name = "WeaponFire"
+	wf.Parent = activeRemotes
+end
+
+-- 1. Dựng Nền Thành Phố ghép khối có máu ẩn (nếu chưa có trong Workspace)
 CityFoundation.build(false)
+
+-- 2. Khởi chạy Đội Xe Hơi GTA V (vật lý lái + đụng xe trừ máu ẩn PartHealth) & Vũ Khí bắn vỡ khối
+VehicleManager.init()
+WeaponManager.init(activeRemotes)
 
 local STARTING_CASH = 5000
 
@@ -47,10 +62,17 @@ for _, p in ipairs(Players:GetPlayers()) do
 end
 Players.PlayerAdded:Connect(setupPlayer)
 
--- Xử lý nút Test nhanh trên thanh HUD (Giai đoạn 1)
-local activeHudRemote = hudRemote :: RemoteEvent
+-- Xử lý lệnh từ Menu Kiểm Thử [H]
 activeHudRemote.OnServerEvent:Connect(function(player, cmd)
-	if cmd == "add_star" then
+	if cmd == "spawn_car" then
+		local car = VehicleManager.spawnForPlayer(player)
+		if car then
+			activeHudRemote:FireClient(player, {
+				message = string.format("Legendary Motorsport: Đã giao siêu xe %s ngay trước mặt bạn!", car.Name),
+				color = Color3.fromRGB(56, 189, 248),
+			})
+		end
+	elseif cmd == "add_star" then
 		local cur = tonumber(player:GetAttribute("WantedLevel")) or 0
 		local nxt = math.min(5, cur + 1)
 		player:SetAttribute("WantedLevel", nxt)
