@@ -263,6 +263,7 @@ local function runQueuedActions(actions)
 end
 
 local function applyBundle(bundle)
+	local tStart = os.clock()
 	local stats = {
 		created = 0,
 		updated = 0,
@@ -283,12 +284,23 @@ local function applyBundle(bundle)
 		return false
 	end
 
+	local tAfterInject = os.clock()
 	local ranActions = runQueuedActions(bundle.actions)
+	local tAfterActions = os.clock()
 
 	state.syncedVersion = tonumber(bundle.version) or state.syncedVersion
 	state.syncedHash = tostring(bundle.hash or "")
 	state.syncedFiles = stats.totalScripts
 	state.lastStatus = string.format("Đã đồng bộ lúc %s", os.date("%H:%M:%S"))
+
+	print(
+		string.format(
+			"[Arena Bridge] ⏱ Nạp script %.2fs · Chạy tác vụ (dựng thành phố) %.2fs · TỔNG %.2fs",
+			tAfterInject - tStart,
+			tAfterActions - tAfterInject,
+			tAfterActions - tStart
+		)
+	)
 
 	print(
 		string.format(
@@ -693,9 +705,11 @@ syncOnceNow = function()
 				state.lastCommitSha = detectedSha
 			end
 			if tostring(bundle.hash or "") ~= state.syncedHash then
+				state.pollInterval = 8
 				applyBundle(bundle)
 			else
 				state.lastStatus = "Trực tuyến (Đã đồng bộ mới nhất)"
+				state.pollInterval = 30
 			end
 		else
 			state.lastStatus = "Lỗi đọc dữ liệu JSON"
@@ -725,7 +739,7 @@ startPolling = function()
 	task.spawn(function()
 		while state.running and state.connected and state.pollGen == myGen do
 			syncOnceNow()
-			task.wait(8)
+			task.wait(state.pollInterval or 8)
 		end
 	end)
 end

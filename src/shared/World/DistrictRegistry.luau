@@ -147,4 +147,45 @@ function DistrictRegistry.buildAll(losSantosRoot: Instance): BuildSummary
 	return summary
 end
 
+--[[
+	Dựng lại ĐÚNG MỘT module (dùng cho đồng bộ tăng dần: chỉ module nào đổi mã mới dựng lại).
+	Trả về (thành công, lỗi).
+]]
+function DistrictRegistry.buildOne(losSantosRoot: Instance, moduleName: string): (boolean, string?)
+	local container = losSantosRoot:FindFirstChild("DistrictModules")
+	if not container then
+		return false, "chưa có DistrictModules"
+	end
+	local modulesFolder = script.Parent:FindFirstChild("Modules")
+	local mod = modulesFolder and modulesFolder:FindFirstChild(moduleName)
+	if not mod or not mod:IsA("ModuleScript") then
+		return false, "không thấy ModuleScript " .. moduleName
+	end
+
+	local okReq, spec = pcall(require, mod)
+	if not okReq or type(spec) ~= "table" or type((spec :: any).build) ~= "function" then
+		return false, "module không hợp lệ: " .. tostring(spec)
+	end
+	local s = spec :: WorldModuleSpec
+	if s.Enabled == false then
+		return false, "module đang tắt"
+	end
+
+	-- Xoá bản dựng cũ của riêng module này (tên = Id, có fallback theo tên file)
+	local old = container:FindFirstChild(s.Id) or container:FindFirstChild(moduleName)
+	if old then
+		old:Destroy()
+	end
+
+	clearPlotPlaceholders(losSantosRoot, s.PlotId)
+
+	local okBuild, err = pcall(function()
+		s.build(container)
+	end)
+	if not okBuild then
+		return false, tostring(err)
+	end
+	return true, nil
+end
+
 return DistrictRegistry

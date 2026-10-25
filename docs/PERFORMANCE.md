@@ -96,6 +96,44 @@ Tác dụng với map này: chỉ ~1.800 part quanh người chơi được nạ
 
 ---
 
+## 5.1. TỐC ĐỘ ĐỒNG BỘ LÊN STUDIO (Sync v18) — 30 giây → ~2 giây
+
+Trước đây **mỗi lần publish** (dù chỉ sửa 1 dòng UI) tác vụ dựng thành phố đều
+**xoá sạch rồi dựng lại toàn bộ ~14.000 part** → Studio đơ 20–40 giây mỗi lần.
+
+`bridge/rebuild_world_action.luau` giờ chạy **ĐỒNG BỘ TĂNG DẦN**:
+
+| Tình huống | Việc phải làm | Thời gian |
+| :--- | :--- | :--- |
+| Không đổi gì (hoặc chỉ sửa UI / NPC / vũ khí) | **BỎ QUA** — chỉ băm mã nguồn rồi thoát | **~0,1 s** |
+| Đổi 1 module công trình (vd. Maze Bank) | Chỉ dựng lại **đúng module đó** (`DistrictRegistry.buildOne`) + tối ưu riêng phần vừa dựng | ~2–4 s |
+| Đổi `CityFoundation` / `WorldGrid` / `PartBuilder` | Dựng lại nền + toàn bộ công trình (như cũ) | ~20–30 s |
+| Đổi `VehicleBuilder` | Chỉ dựng lại dàn xe | ~0,5 s |
+| Mất 1 công trình trong Studio (ai đó xoá tay) | Tự phát hiện và dựng lại đúng công trình đó | ~2–4 s |
+
+**Nguyên lý:** băm **toàn bộ byte** mã nguồn của từng file trong `ReplicatedStorage.Shared`
+(hàm băm `h = (h*31 + byte) % 2 147 483 647`), lưu vào `StringValue` tên `SyncHashes`
+trong `workspace.LosSantos`, rồi lần sync sau so sánh.
+
+> ⚠️ Bản đầu tiên lấy mẫu **mỗi 3 byte** cho nhanh — đã phát hiện lỗi: đổi 1 ký tự trong
+> file ngắn vẫn ra **cùng mã băm** nên thành phố không cập nhật. Hiện băm **tất cả byte**
+> (500 KB chỉ tốn ~0,05 giây, rẻ hơn 30 giây dựng lại rất nhiều).
+
+**Van an toàn:** nếu dựng tăng dần lỗi ở bất kỳ module nào, tác vụ **tự động lùi về dựng lại
+toàn bộ** để không bao giờ bị thiếu công trình.
+
+**Ép dựng lại toàn bộ** (chạy trong Command Bar):
+```lua
+local sv = workspace.LosSantos:FindFirstChild("SyncHashes")
+if sv then sv:Destroy() end
+```
+
+**Plugin cũng được tối ưu:**
+1. In **thời gian từng công đoạn** (`Nạp script X s · Chạy tác vụ Y s · TỔNG Z s`) để biết chậm ở đâu.
+2. **Poll thích ứng**: có thay đổi → 8 giây/lần; đã đồng bộ mới nhất → giãn ra **30 giây/lần**
+   (trước đây tải lại gói 800 KB mỗi 8 giây kể cả khi không có gì mới).
+3. Script **không đổi thì không ghi lại `Source`** (đã có từ trước) — không biên dịch lại 745 KB Lua.
+
 ## 6. Các bước tối ưu tiếp theo (chưa làm, xếp theo mức lợi)
 
 1. **Gom cụm tĩnh thành `MeshPart`/Union theo cụm 4×4 stud** cho phần *không phá huỷ*
