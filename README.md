@@ -1,69 +1,64 @@
-# RobloxStudio-connecting
+# 🌴 Dự Án GTA V Roblox — Los Santos Modular
 
-Dự án **Roblox Luau** được cấu hình sẵn với **Rojo v7.7.1**, hỗ trợ đồng bộ code trực tiếp giữa GitHub / trình soạn thảo code (VS Code, Cursor...) và **Roblox Studio**.
-
----
-
-## Cấu trúc thư mục
-
-| Thư mục / File trên Git | Ánh xạ trong Roblox Studio (`DataModel`) | Mô tả |
-| :--- | :--- | :--- |
-| `src/server/` | `ServerScriptService.Server` | Code chạy phía **Server** (`.server.luau`, ModuleScript...) |
-| `src/client/` | `StarterPlayer.StarterPlayerScripts.Client` | Code chạy phía **Client** (`.client.luau`, UI controller...) |
-| `src/shared/` | `ReplicatedStorage.Shared` | Module dùng chung cho cả Server và Client (`.luau`) |
-| `default.project.json` | Cấu hình cây `DataModel` | File cấu hình chính của Rojo |
-| `rokit.toml` | Quản lý phiên bản công cụ | Tự động cài đúng phiên bản `rojo`, `stylua`, `selene` |
-
-### Quy ước đặt tên file trong Rojo (v7.7+)
-- `*.server.luau` → Tạo thành **`Script`** (chạy trên Server)
-- `*.client.luau` → Tạo thành **`LocalScript`** (chạy trên Client)
-- `*.luau` → Tạo thành **`ModuleScript`**
-- `init.server.luau` / `init.client.luau` / `init.luau` → Biến chính thư mục chứa nó thành `Script` / `LocalScript` / `ModuleScript`.
+Dự án tái hiện thế giới mở phong cách **Grand Theft Auto V (Los Santos)** trên Roblox Studio theo phương pháp **chia nhỏ từng phân khu độc lập (Modular Architecture)**, kiểm thử trực quan trên **Trình duyệt (Browser Simulator)** trước khi ghép nối trực tiếp vào **Roblox Studio** qua **GitHub Live Bridge (CDN)**.
 
 ---
 
-## Hướng dẫn kết nối vào Roblox Studio trên máy của bạn
+## 🧭 Quy Trình Làm Việc Chuẩn (Áp dụng cho mọi Giai đoạn)
 
-### Bước 1: Clone repo về máy tính
-```bash
-git clone https://github.com/khungdienchinhhieu-cmd/RobloxStudio-connecting.git
-cd RobloxStudio-connecting
-```
-
-### Bước 2: Cài đặt Rojo (chọn 1 trong 2 cách)
-
-#### Cách A — Dùng Extension trên VS Code / Cursor (Nhanh nhất)
-1. Mở thư mục `RobloxStudio-connecting` bằng **VS Code** hoặc **Cursor**.
-2. Cài extension chính thức **Rojo - Roblox Studio Sync** (`evaera.vscode-rojo`).
-3. Nhấn tổ hợp `Ctrl + Shift + P` (hoặc `Cmd + Shift + P` trên macOS) → chọn **`Rojo: Open Menu`**.
-4. Nhấn nút **Install Roblox Studio Plugin** (nếu máy bạn chưa cài plugin Rojo cho Studio), sau đó nhấn **Start (`default.project.json`)**.
-
-#### Cách B — Dùng dòng lệnh với Rokit CLI
-1. Cài đặt [Rokit](https://github.com/rojo-rbx/rokit) rồi chạy lệnh sau trong thư mục dự án:
-   ```bash
-   rokit install
-   ```
-2. Cài plugin Rojo vào Roblox Studio (chỉ cần chạy 1 lần đầu):
-   ```bash
-   rojo plugin install
-   ```
-3. Khởi chạy server đồng bộ trực tiếp:
-   ```bash
-   rojo serve
-   ```
-   *(Hoặc nếu muốn xuất ra file `.rbxlx` để mở thẳng bằng Roblox Studio)*:
-   ```bash
-   rojo build -o "RobloxStudio-connecting.rbxlx"
-   ```
-
-### Bước 3: Kết nối trong Roblox Studio
-1. Mở **Roblox Studio** (tạo một *Baseplate* mới hoặc mở place của bạn).
-2. Vào tab **Plugins** → nhấn biểu tượng **Rojo** → bấm **Connect** (mặc định `localhost:34872`).
-3. Nhấn **Play (F5)** và kiểm tra cửa sổ **Output** — nếu thấy 2 dòng thông báo từ `Server` và `Client` là bạn đã kết nối thành công!
+1. **Thiết kế Module độc lập:** Mỗi hạng mục (UI, Nền đường, từng Khu phố, Xe cộ, Cửa hàng, LSPD...) nằm trong một `ModuleScript` riêng biệt trong `src/`, bám sát hệ trục tọa độ chuẩn `WorldGrid.luau`.
+2. **Kiểm thử trên Browser của Agent trước:** Chạy bộ mô phỏng 3D + UI từ chính mã Luau để xuất ảnh chụp thực tế, kiểm tra bố cục, màu sắc, tỷ lệ, độ tương phản và sửa cho thật chuẩn đẹp.
+3. **Đồng bộ sang Roblox Studio:** Sau khi đạt chuẩn thẩm mỹ trên Browser, đóng gói vào `studio-sync.json` và đẩy qua CDN để cập nhật tức thì vào `Workspace.LosSantos`.
 
 ---
 
-## Kết hợp với Roblox Studio MCP (Tuỳ chọn)
-Nếu bạn muốn AI Client trên máy cá nhân (Cursor, Claude Code, VS Code...) vừa sửa file trong repo Rojo này vừa điều khiển Playtest / kiểm tra Instance trực tiếp trong Studio:
-1. Mở Roblox Studio → **Assistant** → **`…`** → **Manage MCP Servers**.
-2. Bật **Enable Studio as MCP server** và bật công cụ bạn đang dùng trong mục **Quick connect**.
+## 🗺️ Quy Hoạch Bản Đồ Tổng Thể (`WorldGrid.luau` — `720 × 720 studs`)
+
+| Mã Ô Đất | Tên Khu Vực (Cảm hứng GTA V) | Tọa độ X (`studs`) | Tọa độ Z (`studs`) | Trạng thái |
+| :--- | :--- | :---: | :---: | :---: |
+| **North Ridge** | **Vinewood Hills** (Đồi xanh phân tầng phía Bắc) | `[-360, +360]` | `[-360, -240]` | ✅ Đã tạo nền đồi (GĐ 1) |
+| **Plot D1** | **Rockford Hills** (Khu Biệt Thự & Luxury Boutique) | `[-308, -128]` | `[-208, -54]` | ⏳ Ô đất sạch chờ GĐ 3 |
+| **Plot D2** | **Pillbox Hill** (Tháp Tài Chính Maze Bank Downtown) | `[-92, +92]` | `[-208, -54]` | ⏳ Ô đất sạch chờ GĐ 3 |
+| **Plot D3** | **Downtown Vinewood** (Đại lộ Điện Ảnh & Studio) | `[+128, +308]` | `[-208, -54]` | ⏳ Ô đất sạch chờ GĐ 3 |
+| **Plot C1** | **Del Perro** (Los Santos Customs & Cửa Hàng Ven Biển) | `[-308, -128]` | `[-18, +132]` | ⏳ Ô đất sạch chờ GĐ 3-4 |
+| **Plot C2** | **Legion Square** (Quảng Trường Trung Tâm, Hồ Nước & Điểm Spawn) | `[-92, +92]` | `[-18, +132]` | ✅ Đã hoàn thiện (GĐ 1) |
+| **Plot C3** | **Mission Row** (Sở Cảnh Sát LSPD & Khu Thương Mại) | `[+128, +308]` | `[-18, +132]` | ⏳ Ô đất sạch chờ GĐ 3-5 |
+| **South Coast** | **Vespucci Beach & Pacific Ocean** (Phố đi bộ, Cát vàng & Biển) | `[-360, +360]` | `[+164, +360]` | ✅ Đã tạo bờ biển (GĐ 1) |
+
+### Hệ thống 7 Đại lộ Đối xứng (Khít `0.000 stud`)
+- **Trục Đông – Tây (`X = -340 .. +340`):**
+  - `Vinewood Blvd` (`Z = -224`, rộng `32 studs`, 2 làn)
+  - `Olympic Fwy` (`Z = -36`, rộng `36 studs`, đại lộ trung tâm 4 làn vạch đôi vàng)
+  - `Vespucci Blvd` (`Z = +148`, rộng `32 studs`, đại lộ ven biển 2 làn)
+- **Trục Bắc – Nam (`Z = -240 .. +164`, đối xứng qua `X = 0`):**
+  - `Del Perro Fwy` (`X = -324`, rộng `32 studs`, 2 làn)
+  - `San Andreas Ave` (`X = -110`, rộng `36 studs`, 4 làn)
+  - `Alta St` (`X = +110`, rộng `36 studs`, 4 làn)
+  - `Elgin Ave` (`X = +324`, rộng `32 studs`, 2 làn)
+
+---
+
+## 📋 Lộ Trình Từng Giai Đoạn Nhỏ (Checklist Tiến Độ)
+
+- [x] **Giai đoạn 1 (Hiện tại): Giao diện GTA V (UI) & Nền Thành Phố Los Santos**
+  - **GTA V HUD (`src/client/UI/GtaHud.luau`):**
+    - Bản đồ nhỏ hình chữ nhật góc dưới trái (**Live Rectangular Minimap**) cuộn & xoay theo vị trí thực tế, hiển thị đường phố, bờ biển, hướng Bắc (`N`) và chớp Xanh-Đỏ khi bị truy nã.
+    - Bộ 3 thanh chỉ số sát đáy Minimap chuẩn GTA V: **Máu (Xanh lá 50%)** • **Giáp (Xanh dương 25%)** • **Thể lực / Kỹ năng (Vàng 25%)**.
+    - Góc trên phải: **5 Sao Truy Nã (`★`)** chớp sáng + **Tiền Mặt (`$`)** kèm hiệu ứng cộng/trừ tiền + Giờ trong game.
+    - Góc dưới phải: Chữ nghệ thuật báo **Tên Đường & Khu Phố** tự động hiện khi di chuyển sang đường mới.
+    - Hộp thông báo đen mờ phía trên Minimap + Phím **`[H]`** bật/tắt nhanh thanh Test thử Sao truy nã, Tiền, Giáp, Máu.
+  - **Nền Thành Phố (`src/shared/World/CityFoundation.luau`):**
+    - Mạng lưới đại lộ nhựa Asphalt đen mịn, vạch đôi vàng California, vạch phân làn trắng đứt nét, vạch dừng ngã tư & vạch qua đường.
+    - Vỉa hè bê tông giật cấp có bó vỉa xám/đỏ, cống thoát nước mưa, nắp hố ga kim loại và các **ô nền dự án (`Plot Pads`)** đánh dấu sẵn cho các giai đoạn sau.
+    - Bờ biển cát thoải **Vespucci Beach** nối ra mặt nước biển Thái Bình Dương xanh ngọc (phía Nam) và dải đồi **Vinewood Hills** phân tầng (phía Bắc).
+- [ ] **Giai đoạn 2: Quảng trường Legion Square, Hàng cọ California & Đèn đường đôi Los Santos**
+- [ ] **Giai đoạn 3: Hệ thống Siêu xe GTA V (Vật lý lái mượt, Đồng hồ tốc độ, Đài Radio) & Garage LS Customs**
+- [ ] **Giai đoạn 4: Cụm Cao ốc Downtown (Tháp Maze Bank & Căn hộ Eclipse Towers có thang máy)**
+- [ ] **Giai đoạn 5: Chuỗi Cửa hàng Tương tác (Siêu thị 24/7, Burger Shot, Cây ATM Maze Bank)**
+- [ ] **Giai đoạn 6: Khu vui chơi Cầu cảng Del Perro Pier & Vòng quay Mặt Trời phát sáng**
+- [ ] **Giai đoạn 7: Cư dân NPC, Xe cộ lưu thông & Hệ thống Cảnh sát LSPD theo Sao Truy Nã (1★–5★)**
+
+---
+
+## 🔗 Lệnh Kết Nối Trực Tiếp Vào Roblox Studio (Command Bar)
+Mở **View → Command Bar** trong Roblox Studio và dán dòng lệnh hiển thị trên bảng **Live Preview** (hoặc trong tin nhắn mới nhất của Agent) để đồng bộ tự động qua GitHub CDN.
