@@ -117,7 +117,7 @@
     {
       "taskId": "AGENT_4_MAZE_BANK_TOWER",
       "order": 50,
-      "status": "ready_for_parallel_agent",
+      "status": "completed",
       "title": "Tháp Tài Chính Maze Bank Plaza & Tower",
       "district": "PILLBOX HILL",
       "plotId": "Plot_D2",
@@ -129,7 +129,17 @@
         "groundY": 1.15
       },
       "modulePath": "src/shared/World/Modules/Plot_D2_MazeBankTower.luau",
-      "spec": "Khối đế Plaza bậc thang + đài phun nước tiền sảnh + thân tháp biểu tượng vát góc thu dần lên đỉnh có bãi đáp trực thăng tròn 'MAZE BANK' đỏ trắng trên nóc; sảnh tầng trệt thông tầng cao 18 studs có quầy lễ tân đá cẩm thạch, cổng an ninh, thang máy & các ô kính mặt dựng tầng thấp có máu ẩn integrity bắn vỡ được."
+      "spec": "Khối đế Plaza bậc thang + đài phun nước tiền sảnh + thân tháp biểu tượng vát góc thu dần lên đỉnh có bãi đáp trực thăng tròn 'MAZE BANK' đỏ trắng trên nóc; sảnh tầng trệt thông tầng cao 18 studs có quầy lễ tân đá cẩm thạch, cổng an ninh, thang máy & các ô kính mặt dựng tầng thấp có máu ẩn integrity bắn vỡ được.",
+      "agentBranch": "arena/bc783dbc-robloxstudio-connecting",
+      "submittedCommit": "2fc5ca1",
+      "approvedBy": "arena/b37b6115-robloxstudio-connecting",
+      "score": 9.2,
+      "scoreAsSubmitted": 8.2,
+      "partCount": 2312,
+      "destructibleRatio": 0.9818,
+      "reviewReport": "agents/reviews/AGENT_4_MAZE_BANK_TOWER/MASTER_QA__b37b6115.md",
+      "masterPatches": 4,
+      "notes": "Duyệt 9.2/10 (bài nộp 8.2). Lỗi chặn: cửa kính CanCollide=true -> sảnh niêm phong; đã vá. Kèm vá mái đen 2 cánh, sàn plaza caro, z-fight bậc thang."
     },
     {
       "taskId": "AGENT_5_ROCKFORD_LUXURY_AUTOS",
