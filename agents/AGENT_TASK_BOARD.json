@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "project": "GTA V Roblox — Los Santos Modular City",
+  "repository": "khungdienchinhhieu-cmd/RobloxStudio-connecting",
+  "baseGroundY": 1.15,
+  "asphaltRoadY": 0.5,
+  "r15ScaleRules": {
+    "avatarStandingHeightStuds": 5.45,
+    "minWalkDoorHeightStuds": 8.0,
+    "minCeilingHeightStuds": 14.0,
+    "minVehicleGarageBayWidthStuds": 15.0,
+    "minVehicleGarageBayHeightStuds": 11.0
+  },
+  "zeroConflictContract": {
+    "dropInDirectory": "src/shared/World/Modules",
+    "autoLoader": "src/shared/World/DistrictRegistry.luau",
+    "forbiddenSharedEdits": [
+      "src/shared/WorldGrid.luau",
+      "src/shared/World/PartBuilder.luau",
+      "src/shared/World/CityFoundation.luau",
+      "src/shared/World/DistrictRegistry.luau",
+      "src/shared/Vehicles/VehicleBuilder.luau",
+      "src/server/DestructionManager.luau",
+      "src/server/VehicleManager.luau",
+      "src/server/WeaponManager.luau",
+      "src/server/init.server.luau",
+      "src/client/init.client.luau",
+      "src/client/UI/GtaHud.luau",
+      "src/client/UI/VehiclePromptUI.luau"
+    ],
+    "doNotCommitSyncBundleInFeaturePRs": true
+  },
+  "tasks": [
+    {
+      "taskId": "PLOT_C2_LEGION_SQUARE",
+      "status": "completed",
+      "district": "LEGION SQUARE",
+      "buildableBounds": { "minX": -83, "maxX": 83, "minZ": -9, "maxZ": 123, "groundY": 1.15 },
+      "modulePath": "src/shared/World/CityFoundation.luau"
+    },
+    {
+      "taskId": "AGENT_1_LS_CUSTOMS",
+      "status": "ready_for_parallel_agent",
+      "district": "DEL PERRO",
+      "plotId": "Plot_C1",
+      "buildableBounds": { "minX": -299, "maxX": -137, "minZ": -9, "maxZ": 123, "groundY": 1.15 },
+      "modulePath": "src/shared/World/Modules/Plot_C1_LSCustoms.luau"
+    },
+    {
+      "taskId": "AGENT_2_SUPERMARKET_247",
+      "status": "ready_for_parallel_agent",
+      "district": "MISSION ROW (WEST)",
+      "plotId": "Plot_C3_West",
+      "buildableBounds": { "minX": 137, "maxX": 212, "minZ": 20, "maxZ": 123, "groundY": 1.15 },
+      "modulePath": "src/shared/World/Modules/Plot_C3_Supermarket247.luau"
+    },
+    {
+      "taskId": "AGENT_3_MISSION_ROW_LSPD",
+      "status": "ready_for_parallel_agent",
+      "district": "MISSION ROW (EAST)",
+      "plotId": "Plot_C3_East",
+      "buildableBounds": { "minX": 222, "maxX": 299, "minZ": -9, "maxZ": 123, "groundY": 1.15 },
+      "modulePath": "src/shared/World/Modules/Plot_C3_MissionRowLSPD.luau"
+    },
+    {
+      "taskId": "AGENT_4_MAZE_BANK_TOWER",
+      "status": "ready_for_parallel_agent",
+      "district": "PILLBOX HILL",
+      "plotId": "Plot_D2",
+      "buildableBounds": { "minX": -83, "maxX": 83, "minZ": -199, "maxZ": -63, "groundY": 1.15 },
+      "modulePath": "src/shared/World/Modules/Plot_D2_MazeBankTower.luau"
+    },
+    {
+      "taskId": "AGENT_5_ROCKFORD_LUXURY_AUTOS",
+      "status": "ready_for_parallel_agent",
+      "district": "ROCKFORD HILLS",
+      "plotId": "Plot_D1",
+      "buildableBounds": { "minX": -299, "maxX": -137, "minZ": -199, "maxZ": -63, "groundY": 1.15 },
+      "modulePath": "src/shared/World/Modules/Plot_D1_RockfordShowroom.luau"
+    },
+    {
+      "taskId": "AGENT_6_VINEWOOD_THEATER",
+      "status": "ready_for_parallel_agent",
+      "district": "DOWNTOWN VINEWOOD",
+      "plotId": "Plot_D3",
+      "buildableBounds": { "minX": 137, "maxX": 299, "minZ": -199, "maxZ": -63, "groundY": 1.15 },
+      "modulePath": "src/shared/World/Modules/Plot_D3_VinewoodCinema.luau"
+    },
+    {
+      "taskId": "AGENT_7_STREET_INFRASTRUCTURE",
+      "status": "ready_for_parallel_agent",
+      "district": "CITYWIDE SIDEWALKS",
+      "plotId": "StreetProps",
+      "modulePath": "src/shared/World/Modules/Infra_StreetLightsAndPalms.luau"
+    }
+  ]
+}

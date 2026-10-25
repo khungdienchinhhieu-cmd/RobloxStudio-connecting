@@ -160,7 +160,7 @@ local function wireDoorAndSeat(car: Model, chassis: BasePart, tag: "Left" | "Rig
 			VehicleManager.animateDoor(car, tag, 64, 0.28, Enum.EasingStyle.Quart)
 
 			-- Đưa nhân vật đứng ngay sát bậc cửa đang mở, quay mặt vào khoang lái
-			local standPos = (chassis.CFrame * CFrame.new(sideSign * 4.55, 0.65, 0.25)).Position
+			local standPos = (chassis.CFrame * CFrame.new(sideSign * 5.05, 0.55, 0.25)).Position
 			local seatWorld = seatObj.Position
 			hrp.CFrame = CFrame.lookAt(standPos, Vector3.new(seatWorld.X, standPos.Y, seatWorld.Z))
 
@@ -184,6 +184,13 @@ local function wireDoorAndSeat(car: Model, chassis: BasePart, tag: "Left" | "Rig
 			end)
 		end)
 	end
+
+	-- Hạ nhẹ tư thế ngồi SeatWeld xuống đệm ghế đua âm sàn (-0.34 stud) để tóc cao R15 tuyệt đối không lòi qua mui xe!
+	seatObj.ChildAdded:Connect(function(ch)
+		if ch.Name == "SeatWeld" and ch:IsA("Weld") then
+			ch.C0 = CFrame.new(0, -0.34, 0.10) * ch.C0
+		end
+	end)
 
 	-- 2) Theo dõi khi ngồi trực tiếp (chạm ghế) HOẶC khi nhảy ra khỏi xe (Space) -> Tự động mở & đóng cửa!
 	seatObj:GetPropertyChangedSignal("Occupant"):Connect(function()
@@ -224,7 +231,7 @@ local function wireDoorAndSeat(car: Model, chassis: BasePart, tag: "Left" | "Rig
 				if prevHrp and prevHrp:IsA("BasePart") then
 					task.defer(function()
 						if prevHrp.Parent and chassis.Parent then
-							local exitCF = chassis.CFrame * CFrame.new(sideSign * 5.25, 0.75, 0.30)
+							local exitCF = chassis.CFrame * CFrame.new(sideSign * 5.75, 0.65, 0.30)
 							prevHrp.CFrame = CFrame.lookAt(
 								exitCF.Position,
 								exitCF.Position + chassis.CFrame.LookVector

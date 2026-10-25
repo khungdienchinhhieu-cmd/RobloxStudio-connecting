@@ -31,14 +31,16 @@ end
 
 local GITHUB_OWNER = "khungdienchinhhieu-cmd"
 local GITHUB_REPO = "RobloxStudio-connecting"
-local GITHUB_BRANCH = "arena/b37b6115-robloxstudio-connecting"
+local activeBranch = "arena/b37b6115-robloxstudio-connecting"
 
-local ATOM_FEED_URL = string.format(
-	"https://github.com/%s/%s/commits/%s.atom",
-	GITHUB_OWNER,
-	GITHUB_REPO,
-	GITHUB_BRANCH
-)
+local function getAtomFeedUrl()
+	return string.format(
+		"https://github.com/%s/%s/commits/%s.atom",
+		GITHUB_OWNER,
+		GITHUB_REPO,
+		activeBranch
+	)
+end
 
 local function buildRawUrl(refOrSha, filePath)
 	return string.format(
@@ -433,16 +435,59 @@ local function createBridgeUi(container, isFloating)
 	statusLabel.Text = "Đang kết nối CDN..."
 	statusLabel.Parent = root
 
-	local repoLabel = Instance.new("TextLabel")
-	repoLabel.BackgroundTransparency = 1
-	repoLabel.Position = UDim2.fromOffset(0, 58)
-	repoLabel.Size = UDim2.new(1, 0, 0, 18)
-	repoLabel.Font = Enum.Font.Code
-	repoLabel.TextSize = 10
-	repoLabel.TextXAlignment = Enum.TextXAlignment.Left
-	repoLabel.TextColor3 = Color3.fromRGB(148, 163, 184)
-	repoLabel.Text = "CDN Trực Tiếp • Không giới hạn 403"
-	repoLabel.Parent = root
+	local branchBox = Instance.new("TextBox")
+	branchBox.Position = UDim2.fromOffset(0, 56)
+	branchBox.Size = UDim2.new(0.76, 0, 0, 22)
+	branchBox.BackgroundColor3 = Color3.fromRGB(15, 18, 25)
+	branchBox.TextColor3 = Color3.fromRGB(125, 211, 252)
+	branchBox.PlaceholderText = "Nhập nhánh GitHub (vd: main hoặc arena/...)"
+	branchBox.Font = Enum.Font.Code
+	branchBox.TextSize = 10
+	branchBox.ClearTextOnFocus = false
+	branchBox.TextXAlignment = Enum.TextXAlignment.Left
+	branchBox.Text = activeBranch
+	branchBox.Parent = root
+	local bCorner = Instance.new("UICorner")
+	bCorner.CornerRadius = UDim.new(0, 5)
+	branchBox.ClipsDescendants = true
+	bCorner.Parent = branchBox
+	local bPad = Instance.new("UIPadding")
+	bPad.PaddingLeft = UDim.new(0, 6)
+	bPad.Parent = branchBox
+
+	local mainSwitchBtn = Instance.new("TextButton")
+	mainSwitchBtn.Position = UDim2.new(0.78, 0, 0, 56)
+	mainSwitchBtn.Size = UDim2.new(0.22, 0, 0, 22)
+	mainSwitchBtn.BackgroundColor3 = Color3.fromRGB(30, 58, 95)
+	mainSwitchBtn.TextColor3 = Color3.fromRGB(224, 242, 254)
+	mainSwitchBtn.Font = Enum.Font.GothamBold
+	mainSwitchBtn.TextSize = 10
+	mainSwitchBtn.Text = "⇄ main"
+	mainSwitchBtn.Parent = root
+	local msCorner = Instance.new("UICorner")
+	msCorner.CornerRadius = UDim.new(0, 5)
+	msCorner.Parent = mainSwitchBtn
+
+	local function applyBranchInput(newBranch)
+		local trimmed = string.gsub(newBranch or "", "^%s*(.-)%s*$", "%1")
+		if trimmed ~= "" and trimmed ~= activeBranch then
+			activeBranch = trimmed
+			branchBox.Text = activeBranch
+			state.lastCommitSha = ""
+			state.syncedHash = ""
+			state.lastStatus = "Đã chuyển sang nhánh: " .. activeBranch
+			updateUi()
+			task.spawn(syncOnceNow)
+		end
+	end
+
+	branchBox.FocusLost:Connect(function()
+		applyBranchInput(branchBox.Text)
+	end)
+	mainSwitchBtn.MouseButton1Click:Connect(function()
+		local target = if activeBranch == "main" then "arena/b37b6115-robloxstudio-connecting" else "main"
+		applyBranchInput(target)
+	end)
 
 	local syncNowBtn = Instance.new("TextButton")
 	syncNowBtn.Position = UDim2.fromOffset(0, 82)
@@ -522,7 +567,7 @@ local function createBridgeUi(container, isFloating)
 		spCorner.Parent = savePluginBtn
 
 		savePluginBtn.MouseButton1Click:Connect(function()
-			local ref = if state.lastCommitSha ~= "" then state.lastCommitSha else GITHUB_BRANCH
+			local ref = if state.lastCommitSha ~= "" then state.lastCommitSha else activeBranch
 			local rawPluginUrl = buildRawUrl(ref, "plugin/StudioLiveBridge.server.luau")
 			local okP, body = pcall(function()
 				return HttpService:GetAsync(rawPluginUrl, true)
@@ -608,7 +653,7 @@ syncOnceNow = function()
 
 	local okAtom, atomResp = pcall(function()
 		return HttpService:RequestAsync({
-			Url = ATOM_FEED_URL .. "?_t=" .. tostring(os.time()),
+			Url = getAtomFeedUrl() .. "?_t=" .. tostring(os.time()),
 			Method = "GET",
 			Headers = {
 				["Cache-Control"] = "no-cache",
@@ -616,7 +661,7 @@ syncOnceNow = function()
 		})
 	end)
 
-	local targetRef = GITHUB_BRANCH
+	local targetRef = activeBranch
 	local detectedSha = ""
 
 	if okAtom and atomResp and atomResp.StatusCode == 200 and type(atomResp.Body) == "string" then

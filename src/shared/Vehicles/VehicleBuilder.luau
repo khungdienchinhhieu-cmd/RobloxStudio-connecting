@@ -1,15 +1,13 @@
 --!strict
 --[[
-	VehicleBuilder.luau (v2 — Taller Profile + Full Cockpit Interior + Hinged Doors)
-	Hệ thống lắp ráp Xe Hơi GTA V (Los Santos) theo cấu trúc Module Ghép Khối:
-	- Dáng xe cao thoáng chuẩn tỉ lệ nhân vật Roblox (trần xe cao ~5.65 studs so với mặt đường, ngồi rộng rãi không đụng đầu).
-	- Khoang nội thất siêu chi tiết (28+ chi tiết): Vô lăng thể thao 3 chấu + lẫy chuyển số + trục lái, chân ga/phanh,
-	  bảng đồng hồ tốc độ/tua máy phát sáng, màn hình giải trí trung tâm GPS, 4 cửa gió điều hoà, hộc đồ phụ,
-	  bệ tì tay trung tâm + cần số bọc da núm đỏ + phanh tay + khay ly, ghế đua 2 tông màu có gối tựa đầu thanh kim loại,
-	  gương chiếu hậu trong xe + tấm che nắng + đèn trần ca-bin tự sáng khi mở cửa!
-	- 2 Cánh cửa Trái/Phải gắn khớp bản lề thực (`Weld` tại mép trước cửa) kèm Táp-pi cửa trong, loa cửa, tay nắm,
-	  gương chiếu hậu & kính cửa sổ để diễn hoạt mở cửa 64° mượt mà khi bấm [F] lên/xuống xe!
-	- MỌI bộ phận vỏ ngoài & kính xe đều gắn MÁU ẨN (`PartHealth`) — xe đụng hoặc bị súng bắn cạn máu sẽ tự vỡ / bung rời!
+	VehicleBuilder.luau (v3 — R15 Zero-Head-Clip Ergonomic Cabin + Custom [F] Prompt + Hinged Doors)
+	Hệ thống lắp ráp Xe Hơi GTA V (Los Santos) chuẩn tỉ lệ nhân vật R15 có phụ kiện tóc cao:
+	- Ghế đua Bucket đặt âm sâu vào sàn ca-bin (`seatTop = +0.10`) kết hợp trần xe cao thoáng (`RoofPanel Y = +4.46`),
+	  tạo khoảng trống trên đỉnh tóc nhân vật R15 hơn +0.70 stud — TUYỆT ĐỐI KHÔNG BAO GIỜ LÒI ĐẦU / TÓC QUA MUI XE!
+	- Vô lăng 3 chấu đặt đúng tầm tay nhân vật R15 đang ngồi (`Y = 2.08, Z = -1.04`).
+	- `ProximityPrompt.Style = Enum.ProximityPromptStyle.Custom` tắt hoàn toàn bảng nút F khổng lồ mặc định của Roblox,
+	  nhường chỗ cho nút `[F]` mini chuẩn GTA V (`VehiclePromptUI.luau`) tự ẩn 100% ngay khi đã ngồi vào xe!
+	- MỌI bộ phận vỏ ngoài & kính xe đều gắn MÁU ẨN (`PartHealth`) — xe đụng hoặc súng bắn hết máu tự vỡ / bung rời!
 ]]
 
 export type VehicleTrim = {
@@ -147,12 +145,12 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 	car:SetAttribute("CurrentMPH", 0)
 	car.Parent = parent
 
-	-- 1. KHUNG SƯỜN GẦM LÕI CAO THOÁNG (Chassis Y = +2.22 trên mặt đường; tổng chiều cao tới mui xe ~5.68 studs)
+	-- 1. KHUNG SƯỜN GẦM LÕI WIDEBODY (Chassis Y = +2.36 trên mặt đường; tổng chiều cao tới mui ~6.94 studs)
 	local chassis = Instance.new("Part")
 	chassis.Name = "Chassis"
-	chassis.Size = Vector3.new(6.5, 1.05, 14.8)
-	chassis.CFrame = spawnCF * CFrame.new(0, 2.22, 0)
-	chassis.Color = Color3.fromRGB(26, 28, 34)
+	chassis.Size = Vector3.new(7.1, 0.85, 16.0)
+	chassis.CFrame = spawnCF * CFrame.new(0, 2.36, 0)
+	chassis.Color = Color3.fromRGB(24, 26, 32)
 	chassis.Material = Enum.Material.Metal
 	chassis.TopSurface = Enum.SurfaceType.Smooth
 	chassis.BottomSurface = Enum.SurfaceType.Smooth
@@ -164,29 +162,29 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 	car.PrimaryPart = chassis
 
 	-- ========================================================================
-	-- 2. NỘI THẤT KHOANG LÁI SIÊU CHI TIẾT (28+ BỘ PHẬN COCKPIT GTA V)
+	-- 2. KHOANG NỘI THẤT COCKPIT ÂM SÀN (GHẾ ĐUA ÂM THẤP ĐỂ ĐẦU/TÓC R15 KHÔNG BAO GIỜ CHẠM MUI!)
 	-- ========================================================================
 	local interiorFolder = Instance.new("Folder")
 	interiorFolder.Name = "InteriorDetails"
 	interiorFolder.Parent = car
 
-	-- Thảm sàn nỉ tối màu + 2 Thảm lót chân viền thể thao + Vách sau ca-bin
+	-- Thảm sàn đặt âm sát đáy gầm (`Y = -0.22`) + 2 Thảm lót chân thể thao + Vách sau ca-bin cao
 	makeCarPart({
 		name = "CabinCarpetFloor",
 		parent = interiorFolder,
 		chassis = chassis,
-		localCF = CFrame.new(0, 0.34, 0.15),
-		size = Vector3.new(5.95, 0.34, 6.55),
-		color = Color3.fromRGB(28, 31, 38),
+		localCF = CFrame.new(0, -0.22, 0.25),
+		size = Vector3.new(6.45, 0.20, 7.15),
+		color = Color3.fromRGB(26, 29, 36),
 		material = Enum.Material.Fabric,
 	})
-	for _, sx in ipairs({ -1.52, 1.52 }) do
+	for _, sx in ipairs({ -1.68, 1.68 }) do
 		makeCarPart({
 			name = "SportFloorMat",
 			parent = interiorFolder,
 			chassis = chassis,
-			localCF = CFrame.new(sx, 0.53, -1.05),
-			size = Vector3.new(2.05, 0.05, 2.15),
+			localCF = CFrame.new(sx, -0.09, -0.95),
+			size = Vector3.new(2.15, 0.05, 2.35),
 			color = Color3.fromRGB(18, 20, 25),
 			material = Enum.Material.Fabric,
 		})
@@ -194,8 +192,8 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 			name = "FloorMatAccentStrip",
 			parent = interiorFolder,
 			chassis = chassis,
-			localCF = CFrame.new(sx, 0.56, -2.02),
-			size = Vector3.new(1.85, 0.04, 0.14),
+			localCF = CFrame.new(sx, -0.05, -2.02),
+			size = Vector3.new(1.95, 0.04, 0.14),
 			color = trim.interiorAccent,
 		})
 	end
@@ -203,27 +201,27 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 		name = "RearCabinBulkhead",
 		parent = interiorFolder,
 		chassis = chassis,
-		localCF = CFrame.new(0, 1.52, 3.18),
-		size = Vector3.new(5.85, 2.15, 0.36),
-		color = Color3.fromRGB(25, 28, 34),
+		localCF = CFrame.new(0, 1.82, 3.65),
+		size = Vector3.new(6.35, 2.85, 0.38),
+		color = Color3.fromRGB(24, 27, 34),
 		material = Enum.Material.Fabric,
 	})
 
-	-- Yên ngựa trung tâm (Center Console) + Tì tay bọc da + Cần số thể thao + Phanh tay + Khay để cốc
+	-- Yên ngựa trung tâm + Tì tay bọc da + Cần số thể thao + Phanh tay + Khay cốc đôi
 	makeCarPart({
 		name = "CenterTransmissionTunnel",
 		parent = interiorFolder,
 		chassis = chassis,
-		localCF = CFrame.new(0, 0.84, -0.35),
-		size = Vector3.new(0.96, 0.72, 4.85),
+		localCF = CFrame.new(0, 0.48, -0.25),
+		size = Vector3.new(1.04, 1.08, 5.35),
 		color = Color3.fromRGB(30, 33, 40),
 	})
 	makeCarPart({
 		name = "CenterLeatherArmrest",
 		parent = interiorFolder,
 		chassis = chassis,
-		localCF = CFrame.new(0, 1.28, 0.88),
-		size = Vector3.new(1.04, 0.28, 1.95),
+		localCF = CFrame.new(0, 1.12, 1.05),
+		size = Vector3.new(1.12, 0.30, 2.15),
 		color = Color3.fromRGB(38, 42, 50),
 		material = Enum.Material.Fabric,
 	})
@@ -231,8 +229,8 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 		name = "ShifterGateBase",
 		parent = interiorFolder,
 		chassis = chassis,
-		localCF = CFrame.new(0, 1.23, -1.08),
-		size = Vector3.new(0.62, 0.08, 0.72),
+		localCF = CFrame.new(0, 1.06, -1.02),
+		size = Vector3.new(0.66, 0.08, 0.76),
 		color = Color3.fromRGB(172, 178, 188),
 		material = Enum.Material.Metal,
 	})
@@ -240,8 +238,8 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 		name = "GearShiftStick",
 		parent = interiorFolder,
 		chassis = chassis,
-		localCF = CFrame.new(0, 1.52, -1.06) * CFrame.Angles(math.rad(-12), 0, 0),
-		size = Vector3.new(0.11, 0.56, 0.11),
+		localCF = CFrame.new(0, 1.38, -1.00) * CFrame.Angles(math.rad(-12), 0, 0),
+		size = Vector3.new(0.11, 0.62, 0.11),
 		color = Color3.fromRGB(198, 204, 214),
 		material = Enum.Material.Metal,
 	})
@@ -249,60 +247,60 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 		name = "SportShiftKnob",
 		parent = interiorFolder,
 		chassis = chassis,
-		localCF = CFrame.new(0, 1.82, -1.00),
-		size = Vector3.new(0.24, 0.24, 0.24),
+		localCF = CFrame.new(0, 1.72, -0.94),
+		size = Vector3.new(0.26, 0.26, 0.26),
 		color = trim.interiorAccent,
 	})
 	makeCarPart({
 		name = "HandbrakeLever",
 		parent = interiorFolder,
 		chassis = chassis,
-		localCF = CFrame.new(-0.28, 1.36, -0.32) * CFrame.Angles(math.rad(24), 0, 0),
-		size = Vector3.new(0.10, 0.12, 0.72),
+		localCF = CFrame.new(-0.30, 1.20, -0.22) * CFrame.Angles(math.rad(24), 0, 0),
+		size = Vector3.new(0.10, 0.12, 0.78),
 		color = Color3.fromRGB(20, 22, 26),
 	})
-	for _, cz in ipairs({ -0.22, -0.58 }) do
+	for _, cz in ipairs({ -0.15, -0.54 }) do
 		makeCarPart({
 			name = "CupholderRing",
 			parent = interiorFolder,
 			chassis = chassis,
-			localCF = CFrame.new(0.22, 1.22, cz),
-			size = Vector3.new(0.28, 0.06, 0.28),
+			localCF = CFrame.new(0.24, 1.05, cz),
+			size = Vector3.new(0.30, 0.06, 0.30),
 			color = Color3.fromRGB(14, 16, 20),
 		})
 	end
 
-	-- Bảng Táp-lô điêu khắc đa tầng + Mái vòm đồng hồ + Màn hình GPS 8-inch + 4 Cửa gió điều hoà + Hộc đồ phụ
+	-- Bảng Táp-lô cao đúng tầm tay R15 + Mái vòm đồng hồ + Màn hình GPS 8-inch + 4 Cửa gió điều hoà + Hộc đồ phụ
 	makeCarPart({
 		name = "DashboardMain",
 		parent = interiorFolder,
 		chassis = chassis,
-		localCF = CFrame.new(0, 1.38, -2.42),
-		size = Vector3.new(5.85, 1.16, 1.28),
+		localCF = CFrame.new(0, 1.48, -2.55),
+		size = Vector3.new(6.35, 1.46, 1.38),
 		color = Color3.fromRGB(22, 25, 32),
 	})
 	makeCarPart({
 		name = "DashboardAccentTrim",
 		parent = interiorFolder,
 		chassis = chassis,
-		localCF = CFrame.new(0, 1.48, -1.77),
-		size = Vector3.new(5.72, 0.08, 0.06),
+		localCF = CFrame.new(0, 1.78, -1.85),
+		size = Vector3.new(6.22, 0.09, 0.06),
 		color = trim.interiorAccent,
 	})
 	makeCarPart({
 		name = "GaugeBinnacleHood",
 		parent = interiorFolder,
 		chassis = chassis,
-		localCF = CFrame.new(-1.52, 2.02, -2.25),
-		size = Vector3.new(1.78, 0.22, 0.92),
+		localCF = CFrame.new(-1.68, 2.38, -2.35),
+		size = Vector3.new(1.88, 0.24, 0.96),
 		color = Color3.fromRGB(18, 20, 26),
 	})
 	makeCarPart({
 		name = "TachometerDialGlow",
 		parent = interiorFolder,
 		chassis = chassis,
-		localCF = CFrame.new(-1.90, 1.78, -1.78),
-		size = Vector3.new(0.62, 0.42, 0.06),
+		localCF = CFrame.new(-2.08, 2.12, -1.85),
+		size = Vector3.new(0.66, 0.46, 0.06),
 		color = Color3.fromRGB(56, 189, 248),
 		material = Enum.Material.Neon,
 	})
@@ -310,8 +308,8 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 		name = "SpeedometerDialGlow",
 		parent = interiorFolder,
 		chassis = chassis,
-		localCF = CFrame.new(-1.14, 1.78, -1.78),
-		size = Vector3.new(0.62, 0.42, 0.06),
+		localCF = CFrame.new(-1.28, 2.12, -1.85),
+		size = Vector3.new(0.66, 0.46, 0.06),
 		color = Color3.fromRGB(248, 250, 252),
 		material = Enum.Material.Neon,
 	})
@@ -319,26 +317,26 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 		name = "InfotainmentBezel",
 		parent = interiorFolder,
 		chassis = chassis,
-		localCF = CFrame.new(0.15, 1.76, -1.76) * CFrame.Angles(math.rad(-8), math.rad(6), 0),
-		size = Vector3.new(1.32, 0.74, 0.10),
+		localCF = CFrame.new(0.18, 2.08, -1.83) * CFrame.Angles(math.rad(-8), math.rad(6), 0),
+		size = Vector3.new(1.42, 0.78, 0.10),
 		color = Color3.fromRGB(14, 16, 22),
 	})
 	makeCarPart({
 		name = "InfotainmentGpsScreen",
 		parent = interiorFolder,
 		chassis = chassis,
-		localCF = CFrame.new(0.15, 1.76, -1.70) * CFrame.Angles(math.rad(-8), math.rad(6), 0),
-		size = Vector3.new(1.16, 0.58, 0.04),
+		localCF = CFrame.new(0.18, 2.08, -1.77) * CFrame.Angles(math.rad(-8), math.rad(6), 0),
+		size = Vector3.new(1.24, 0.62, 0.04),
 		color = Color3.fromRGB(34, 148, 198),
 		material = Enum.Material.Neon,
 	})
-	for _, vx in ipairs({ -2.52, -0.52, 0.98, 2.46 }) do
+	for _, vx in ipairs({ -2.76, -0.58, 1.08, 2.72 }) do
 		makeCarPart({
 			name = "DashACVent",
 			parent = interiorFolder,
 			chassis = chassis,
-			localCF = CFrame.new(vx, 1.62, -1.77),
-			size = Vector3.new(0.46, 0.22, 0.08),
+			localCF = CFrame.new(vx, 1.94, -1.85),
+			size = Vector3.new(0.48, 0.24, 0.08),
 			color = Color3.fromRGB(48, 54, 64),
 			material = Enum.Material.Metal,
 		})
@@ -347,28 +345,28 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 		name = "PassengerGlovebox",
 		parent = interiorFolder,
 		chassis = chassis,
-		localCF = CFrame.new(1.68, 1.08, -1.78),
-		size = Vector3.new(1.85, 0.56, 0.06),
+		localCF = CFrame.new(1.82, 1.28, -1.85),
+		size = Vector3.new(1.98, 0.64, 0.06),
 		color = Color3.fromRGB(28, 32, 40),
 	})
 	makeCarPart({
 		name = "GloveboxChromeLatch",
 		parent = interiorFolder,
 		chassis = chassis,
-		localCF = CFrame.new(1.68, 1.24, -1.74),
-		size = Vector3.new(0.34, 0.08, 0.05),
+		localCF = CFrame.new(1.82, 1.46, -1.81),
+		size = Vector3.new(0.36, 0.08, 0.05),
 		color = Color3.fromRGB(196, 202, 212),
 		material = Enum.Material.Metal,
 	})
 
-	-- Vô lăng thể thao 3 chấu đáy phẳng + Trục lái + Lẫy chuyển số +/- + Chân ga & Chân phanh
-	local steerCenter = CFrame.new(-1.52, 1.68, -1.32) * CFrame.Angles(math.rad(-20), 0, 0)
+	-- Vô lăng 3 chấu đặt ở độ cao Y = 2.08 (khớp chuẩn tầm hai bàn tay nhân vật R15 khi ngồi!)
+	local steerCenter = CFrame.new(-1.68, 2.08, -1.16) * CFrame.Angles(math.rad(-18), 0, 0)
 	makeCarPart({
 		name = "SteeringColumn",
 		parent = interiorFolder,
 		chassis = chassis,
-		localCF = CFrame.new(-1.52, 1.60, -1.62) * CFrame.Angles(math.rad(-20), 0, 0),
-		size = Vector3.new(0.32, 0.32, 0.68),
+		localCF = CFrame.new(-1.68, 1.98, -1.56) * CFrame.Angles(math.rad(-18), 0, 0),
+		size = Vector3.new(0.34, 0.34, 0.78),
 		color = Color3.fromRGB(26, 29, 36),
 	})
 	makeCarPart({
@@ -376,32 +374,31 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 		parent = interiorFolder,
 		chassis = chassis,
 		localCF = steerCenter,
-		size = Vector3.new(0.42, 0.42, 0.16),
+		size = Vector3.new(0.44, 0.44, 0.16),
 		color = Color3.fromRGB(32, 36, 44),
 	})
-	-- Vành vô lăng ghép 4 cạnh + vạch đỏ 12 giờ + 3 nan chấu kim loại + 2 lẫy chuyển số
 	makeCarPart({
 		name = "SteeringRimTop",
 		parent = interiorFolder,
 		chassis = chassis,
-		localCF = steerCenter * CFrame.new(0, 0.52, 0),
-		size = Vector3.new(0.96, 0.14, 0.14),
+		localCF = steerCenter * CFrame.new(0, 0.56, 0),
+		size = Vector3.new(1.04, 0.14, 0.14),
 		color = Color3.fromRGB(18, 20, 24),
 	})
 	makeCarPart({
 		name = "SteeringTopMarker",
 		parent = interiorFolder,
 		chassis = chassis,
-		localCF = steerCenter * CFrame.new(0, 0.52, 0),
-		size = Vector3.new(0.14, 0.16, 0.16),
+		localCF = steerCenter * CFrame.new(0, 0.56, 0),
+		size = Vector3.new(0.15, 0.16, 0.16),
 		color = trim.interiorAccent,
 	})
 	makeCarPart({
 		name = "SteeringRimBottomFlat",
 		parent = interiorFolder,
 		chassis = chassis,
-		localCF = steerCenter * CFrame.new(0, -0.48, 0),
-		size = Vector3.new(0.92, 0.14, 0.14),
+		localCF = steerCenter * CFrame.new(0, -0.52, 0),
+		size = Vector3.new(0.98, 0.14, 0.14),
 		color = Color3.fromRGB(18, 20, 24),
 	})
 	for _, sgn in ipairs({ -1, 1 }) do
@@ -409,16 +406,16 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 			name = "SteeringRimSide",
 			parent = interiorFolder,
 			chassis = chassis,
-			localCF = steerCenter * CFrame.new(sgn * 0.48, 0.02, 0),
-			size = Vector3.new(0.14, 0.98, 0.14),
+			localCF = steerCenter * CFrame.new(sgn * 0.52, 0.02, 0),
+			size = Vector3.new(0.14, 1.04, 0.14),
 			color = Color3.fromRGB(18, 20, 24),
 		})
 		makeCarPart({
 			name = "SteeringSpokeSide",
 			parent = interiorFolder,
 			chassis = chassis,
-			localCF = steerCenter * CFrame.new(sgn * 0.26, -0.04, 0),
-			size = Vector3.new(0.42, 0.11, 0.10),
+			localCF = steerCenter * CFrame.new(sgn * 0.28, -0.04, 0),
+			size = Vector3.new(0.46, 0.12, 0.10),
 			color = Color3.fromRGB(182, 190, 200),
 			material = Enum.Material.Metal,
 		})
@@ -426,8 +423,8 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 			name = "PaddleShifter",
 			parent = interiorFolder,
 			chassis = chassis,
-			localCF = steerCenter * CFrame.new(sgn * 0.34, 0.14, -0.10),
-			size = Vector3.new(0.14, 0.34, 0.05),
+			localCF = steerCenter * CFrame.new(sgn * 0.36, 0.15, -0.10),
+			size = Vector3.new(0.14, 0.36, 0.05),
 			color = trim.interiorAccent,
 			material = Enum.Material.Metal,
 		})
@@ -436,19 +433,19 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 		name = "SteeringSpokeBottom",
 		parent = interiorFolder,
 		chassis = chassis,
-		localCF = steerCenter * CFrame.new(0, -0.26, 0),
-		size = Vector3.new(0.13, 0.42, 0.10),
+		localCF = steerCenter * CFrame.new(0, -0.28, 0),
+		size = Vector3.new(0.14, 0.46, 0.10),
 		color = Color3.fromRGB(182, 190, 200),
 		material = Enum.Material.Metal,
 	})
 
-	-- Chân ga & chân phanh hợp kim dưới gầm ghế lái
+	-- Chân ga & chân phanh hợp kim dưới khoang để chân âm sàn
 	makeCarPart({
 		name = "BrakePedal",
 		parent = interiorFolder,
 		chassis = chassis,
-		localCF = CFrame.new(-1.68, 0.78, -2.02) * CFrame.Angles(math.rad(32), 0, 0),
-		size = Vector3.new(0.32, 0.22, 0.06),
+		localCF = CFrame.new(-1.86, 0.28, -2.02) * CFrame.Angles(math.rad(32), 0, 0),
+		size = Vector3.new(0.34, 0.24, 0.06),
 		color = Color3.fromRGB(190, 196, 206),
 		material = Enum.Material.Metal,
 	})
@@ -456,17 +453,17 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 		name = "AcceleratorPedal",
 		parent = interiorFolder,
 		chassis = chassis,
-		localCF = CFrame.new(-1.24, 0.76, -2.06) * CFrame.Angles(math.rad(36), 0, 0),
-		size = Vector3.new(0.18, 0.42, 0.06),
+		localCF = CFrame.new(-1.40, 0.26, -2.06) * CFrame.Angles(math.rad(36), 0, 0),
+		size = Vector3.new(0.20, 0.46, 0.06),
 		color = Color3.fromRGB(190, 196, 206),
 		material = Enum.Material.Metal,
 	})
 
-	-- Ghế lái chính thức (VehicleSeat) + Ghế phụ (Seat) + Đệm ôm hông 2 tông màu + Tựa đầu thanh crôm
+	-- GHẾ ĐUA BUCKET ÂM SÂU (`Y = -0.02`, mặt ghế `+0.10` -> nhân vật R15 + búi tóc cao vẫn thấp hơn trần hơn 0.70 stud!)
 	local driverSeat = Instance.new("VehicleSeat")
 	driverSeat.Name = "DriverSeat"
-	driverSeat.Size = Vector3.new(2.05, 0.48, 2.05)
-	driverSeat.CFrame = chassis.CFrame * CFrame.new(-1.52, 0.72, 0.22)
+	driverSeat.Size = Vector3.new(2.15, 0.24, 2.15)
+	driverSeat.CFrame = chassis.CFrame * CFrame.new(-1.68, -0.02, 0.48)
 	driverSeat.Color = Color3.fromRGB(26, 29, 36)
 	driverSeat.Material = Enum.Material.Fabric
 	driverSeat.MaxSpeed = trim.maxSpeed
@@ -482,8 +479,8 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 
 	local passSeat = Instance.new("Seat")
 	passSeat.Name = "PassengerSeat"
-	passSeat.Size = Vector3.new(2.05, 0.48, 2.05)
-	passSeat.CFrame = chassis.CFrame * CFrame.new(1.52, 0.72, 0.22)
+	passSeat.Size = Vector3.new(2.15, 0.24, 2.15)
+	passSeat.CFrame = chassis.CFrame * CFrame.new(1.68, -0.02, 0.48)
 	passSeat.Color = Color3.fromRGB(26, 29, 36)
 	passSeat.Material = Enum.Material.Fabric
 	passSeat.TopSurface = Enum.SurfaceType.Smooth
@@ -493,14 +490,14 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 	passSeat.Parent = car
 	weldTo(chassis, passSeat)
 
-	for _, sx in ipairs({ -1.52, 1.52 }) do
-		local backTilt = CFrame.new(sx, 1.68, 1.18) * CFrame.Angles(math.rad(-11), 0, 0)
+	for _, sx in ipairs({ -1.68, 1.68 }) do
+		local backTilt = CFrame.new(sx, 1.56, 1.56) * CFrame.Angles(math.rad(-12), 0, 0)
 		makeCarPart({
 			name = "SportSeatBack",
 			parent = interiorFolder,
 			chassis = chassis,
 			localCF = backTilt,
-			size = Vector3.new(1.88, 1.88, 0.38),
+			size = Vector3.new(2.02, 2.38, 0.40),
 			color = Color3.fromRGB(30, 34, 42),
 			material = Enum.Material.Fabric,
 		})
@@ -508,29 +505,29 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 			name = "SeatCenterInsert",
 			parent = interiorFolder,
 			chassis = chassis,
-			localCF = backTilt * CFrame.new(0, 0.04, -0.17),
-			size = Vector3.new(0.88, 1.48, 0.08),
+			localCF = backTilt * CFrame.new(0, 0.06, -0.18),
+			size = Vector3.new(0.96, 1.88, 0.08),
 			color = trim.interiorAccent,
 			material = Enum.Material.Fabric,
 		})
-		for _, bs in ipairs({ -0.82, 0.82 }) do
+		for _, bs in ipairs({ -0.88, 0.88 }) do
 			makeCarPart({
 				name = "SeatSideBolster",
 				parent = interiorFolder,
 				chassis = chassis,
-				localCF = backTilt * CFrame.new(bs, -0.06, -0.16),
-				size = Vector3.new(0.32, 1.62, 0.28),
+				localCF = backTilt * CFrame.new(bs, -0.08, -0.18),
+				size = Vector3.new(0.34, 2.05, 0.30),
 				color = Color3.fromRGB(22, 25, 32),
 				material = Enum.Material.Fabric,
 			})
 		end
-		for _, rx in ipairs({ -0.28, 0.28 }) do
+		for _, rx in ipairs({ -0.30, 0.30 }) do
 			makeCarPart({
 				name = "HeadrestChromeRod",
 				parent = interiorFolder,
 				chassis = chassis,
-				localCF = backTilt * CFrame.new(rx, 1.04, 0),
-				size = Vector3.new(0.08, 0.34, 0.08),
+				localCF = backTilt * CFrame.new(rx, 1.32, 0),
+				size = Vector3.new(0.08, 0.38, 0.08),
 				color = Color3.fromRGB(196, 202, 212),
 				material = Enum.Material.Metal,
 			})
@@ -539,19 +536,19 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 			name = "SeatHeadrest",
 			parent = interiorFolder,
 			chassis = chassis,
-			localCF = backTilt * CFrame.new(0, 1.32, -0.04),
-			size = Vector3.new(1.06, 0.56, 0.34),
+			localCF = backTilt * CFrame.new(0, 1.64, -0.04),
+			size = Vector3.new(1.14, 0.64, 0.36),
 			color = Color3.fromRGB(26, 29, 36),
 			material = Enum.Material.Fabric,
 		})
 	end
 
-	-- Gương chiếu hậu trong xe + 2 Tấm che nắng + Đèn trần ca-bin tự sáng khi mở cửa
+	-- Gương chiếu hậu trong xe + 2 Tấm che nắng + Đèn trần ca-bin cao sát trần `Y = 4.30`
 	makeCarPart({
 		name = "RearviewMirrorStem",
 		parent = interiorFolder,
 		chassis = chassis,
-		localCF = CFrame.new(0, 3.16, -1.22),
+		localCF = CFrame.new(0, 4.22, -1.12),
 		size = Vector3.new(0.10, 0.28, 0.10),
 		color = Color3.fromRGB(24, 26, 32),
 	})
@@ -559,18 +556,18 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 		name = "InteriorRearviewMirror",
 		parent = interiorFolder,
 		chassis = chassis,
-		localCF = CFrame.new(0, 2.98, -1.26),
-		size = Vector3.new(1.05, 0.26, 0.10),
+		localCF = CFrame.new(0, 4.02, -1.16),
+		size = Vector3.new(1.14, 0.28, 0.10),
 		color = Color3.fromRGB(28, 32, 38),
 		reflectance = 0.35,
 	})
-	for _, vx in ipairs({ -1.52, 1.52 }) do
+	for _, vx in ipairs({ -1.68, 1.68 }) do
 		makeCarPart({
 			name = "SunVisor",
 			parent = interiorFolder,
 			chassis = chassis,
-			localCF = CFrame.new(vx, 3.22, -1.05),
-			size = Vector3.new(1.48, 0.06, 0.46),
+			localCF = CFrame.new(vx, 4.28, -0.96),
+			size = Vector3.new(1.58, 0.06, 0.48),
 			color = Color3.fromRGB(28, 31, 38),
 		})
 	end
@@ -578,8 +575,8 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 		name = "CabinDomeLight",
 		parent = interiorFolder,
 		chassis = chassis,
-		localCF = CFrame.new(0, 3.26, 0.32),
-		size = Vector3.new(0.56, 0.08, 0.38),
+		localCF = CFrame.new(0, 4.32, 0.45),
+		size = Vector3.new(0.62, 0.08, 0.42),
 		color = Color3.fromRGB(255, 236, 185),
 		material = Enum.Material.SmoothPlastic,
 	})
@@ -587,7 +584,7 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 	domePointLight.Name = "CabinPointLight"
 	domePointLight.Color = Color3.fromRGB(255, 234, 186)
 	domePointLight.Brightness = 0
-	domePointLight.Range = 9
+	domePointLight.Range = 10
 	domePointLight.Parent = domeLamp
 
 	-- ========================================================================
@@ -597,8 +594,8 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 		name = "V8_EngineBlock",
 		parent = car,
 		chassis = chassis,
-		localCF = CFrame.new(0, 0.62, -5.05),
-		size = Vector3.new(2.55, 0.98, 2.85),
+		localCF = CFrame.new(0, 0.78, -5.45),
+		size = Vector3.new(2.75, 1.12, 3.05),
 		color = Color3.fromRGB(58, 62, 70),
 		material = Enum.Material.Metal,
 	})
@@ -606,18 +603,18 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 		name = "V8_TwinIntake",
 		parent = car,
 		chassis = chassis,
-		localCF = CFrame.new(0, 1.18, -5.05),
-		size = Vector3.new(1.78, 0.26, 2.25),
+		localCF = CFrame.new(0, 1.42, -5.45),
+		size = Vector3.new(1.92, 0.28, 2.45),
 		color = Color3.fromRGB(148, 156, 168),
 		material = Enum.Material.Metal,
 	})
-	for _, sx in ipairs({ -1.18, 1.18 }) do
+	for _, sx in ipairs({ -1.28, 1.28 }) do
 		makeCarPart({
 			name = "ChromeHeaderPipe",
 			parent = car,
 			chassis = chassis,
-			localCF = CFrame.new(sx, 0.78, -5.05),
-			size = Vector3.new(0.42, 0.30, 2.35),
+			localCF = CFrame.new(sx, 0.96, -5.45),
+			size = Vector3.new(0.46, 0.32, 2.55),
 			color = Color3.fromRGB(196, 202, 210),
 			material = Enum.Material.Metal,
 			reflectance = 0.25,
@@ -625,7 +622,7 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 	end
 
 	-- ========================================================================
-	-- 4. VỎ NGOÀI CAO THOÁNG + BẢN LỀ CỬA MỞ XOAY 64° + MÁU ẨN (PartHealth)
+	-- 4. VỎ NGOÀI WIDEBODY CAO THOÁNG (`RoofPanel Y = +4.46`) + MÁU ẨN (PartHealth)
 	-- ========================================================================
 	local bodyPartsFolder = Instance.new("Folder")
 	bodyPartsFolder.Name = "DestructibleBodywork"
@@ -636,8 +633,8 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 		name = "FrontBumper",
 		parent = bodyPartsFolder,
 		chassis = chassis,
-		localCF = CFrame.new(0, 0.42, -7.85),
-		size = Vector3.new(7.45, 1.36, 1.08),
+		localCF = CFrame.new(0, 0.56, -8.45),
+		size = Vector3.new(8.10, 1.56, 1.15),
 		color = trim.bodyColor,
 		hp = 125,
 		zone = "Front",
@@ -646,8 +643,8 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 		name = "FrontCarbonSplitter",
 		parent = bodyPartsFolder,
 		chassis = chassis,
-		localCF = CFrame.new(0, -0.22, -8.08),
-		size = Vector3.new(7.55, 0.22, 1.28),
+		localCF = CFrame.new(0, -0.22, -8.68),
+		size = Vector3.new(8.22, 0.24, 1.35),
 		color = Color3.fromRGB(22, 24, 28),
 		hp = 85,
 		zone = "Front",
@@ -656,8 +653,8 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 		name = "FrontRadiatorGrille",
 		parent = bodyPartsFolder,
 		chassis = chassis,
-		localCF = CFrame.new(0, 0.44, -8.36),
-		size = Vector3.new(4.38, 0.84, 0.14),
+		localCF = CFrame.new(0, 0.58, -8.98),
+		size = Vector3.new(4.78, 0.96, 0.16),
 		color = Color3.fromRGB(18, 20, 24),
 		material = Enum.Material.DiamondPlate,
 		hp = 90,
@@ -669,8 +666,8 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 			name = tag .. "Headlight",
 			parent = bodyPartsFolder,
 			chassis = chassis,
-			localCF = CFrame.new(side * 2.78, 0.88, -8.30),
-			size = Vector3.new(1.48, 0.46, 0.28),
+			localCF = CFrame.new(side * 3.05, 1.08, -8.92),
+			size = Vector3.new(1.58, 0.52, 0.30),
 			color = Color3.fromRGB(238, 248, 255),
 			material = Enum.Material.Neon,
 			hp = 45,
@@ -678,14 +675,14 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 		})
 	end
 
-	-- Nắp Capo cao thoáng dốc nhẹ về phía mũi xe (140 HP)
+	-- Nắp Capo cơ bắp dốc nhẹ về phía mũi xe (140 HP)
 	local hoodTilt = CFrame.Angles(math.rad(-4.2), 0, 0)
 	makeCarPart({
 		name = "HoodPanel",
 		parent = bodyPartsFolder,
 		chassis = chassis,
-		localCF = CFrame.new(0, 1.56, -5.22) * hoodTilt,
-		size = Vector3.new(5.18, 0.26, 4.68),
+		localCF = CFrame.new(0, 1.88, -5.85) * hoodTilt,
+		size = Vector3.new(5.65, 0.28, 4.95),
 		color = trim.bodyColor,
 		hp = 140,
 		zone = "Front",
@@ -694,8 +691,8 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 		name = "HoodRacingStripe",
 		parent = bodyPartsFolder,
 		chassis = chassis,
-		localCF = CFrame.new(0, 1.71, -5.22) * hoodTilt,
-		size = Vector3.new(1.36, 0.05, 4.60),
+		localCF = CFrame.new(0, 2.04, -5.85) * hoodTilt,
+		size = Vector3.new(1.48, 0.05, 4.88),
 		color = trim.stripeColor,
 		hp = 95,
 		zone = "Front",
@@ -705,8 +702,8 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 			name = "SuperchargerScoop",
 			parent = bodyPartsFolder,
 			chassis = chassis,
-			localCF = CFrame.new(0, 1.88, -4.95) * hoodTilt,
-			size = Vector3.new(1.58, 0.36, 2.20),
+			localCF = CFrame.new(0, 2.22, -5.55) * hoodTilt,
+			size = Vector3.new(1.72, 0.38, 2.35),
 			color = Color3.fromRGB(24, 26, 32),
 			material = Enum.Material.Metal,
 			hp = 110,
@@ -714,15 +711,23 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 		})
 	end
 
-	-- Vè chắn bùn hốc bánh trước & sau 2 bên + Bệ bước SideSkirt
+	-- Vè chắn bùn hốc bánh trước & sau 2 bên + Vách đen lòng dè (che kín khoang máy nhìn ngang) + SideSkirt
 	for _, side in ipairs({ -1, 1 }) do
 		local tag = if side < 0 then "Left" else "Right"
+		makeCarPart({
+			name = tag .. "WheelWellSplashGuard",
+			parent = car,
+			chassis = chassis,
+			localCF = CFrame.new(side * 2.55, 0.95, -5.58),
+			size = Vector3.new(0.18, 1.55, 4.45),
+			color = Color3.fromRGB(18, 20, 24),
+		})
 		makeCarPart({
 			name = tag .. "FrontFender",
 			parent = bodyPartsFolder,
 			chassis = chassis,
-			localCF = CFrame.new(side * 3.18, 1.38, -5.18),
-			size = Vector3.new(1.18, 0.72, 4.65),
+			localCF = CFrame.new(side * 3.46, 1.54, -5.78),
+			size = Vector3.new(1.26, 0.98, 4.98),
 			color = trim.bodyColor,
 			hp = 135,
 			zone = tag,
@@ -731,8 +736,8 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 			name = tag .. "FrontFenderNose",
 			parent = bodyPartsFolder,
 			chassis = chassis,
-			localCF = CFrame.new(side * 3.18, 0.66, -7.02),
-			size = Vector3.new(1.18, 0.96, 1.05),
+			localCF = CFrame.new(side * 3.46, 0.82, -7.68),
+			size = Vector3.new(1.26, 1.12, 1.15),
 			color = trim.bodyColor,
 			hp = 110,
 			zone = tag,
@@ -741,8 +746,8 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 			name = tag .. "RearQuarterPanel",
 			parent = bodyPartsFolder,
 			chassis = chassis,
-			localCF = CFrame.new(side * 3.22, 1.48, 5.12),
-			size = Vector3.new(1.24, 0.84, 4.85),
+			localCF = CFrame.new(side * 3.50, 1.76, 5.58),
+			size = Vector3.new(1.32, 0.96, 5.15),
 			color = trim.bodyColor,
 			hp = 145,
 			zone = tag,
@@ -751,8 +756,8 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 			name = tag .. "RearQuarterTail",
 			parent = bodyPartsFolder,
 			chassis = chassis,
-			localCF = CFrame.new(side * 3.22, 0.72, 7.04),
-			size = Vector3.new(1.24, 1.04, 1.08),
+			localCF = CFrame.new(side * 3.50, 0.88, 7.62),
+			size = Vector3.new(1.32, 1.18, 1.15),
 			color = trim.bodyColor,
 			hp = 115,
 			zone = tag,
@@ -761,8 +766,8 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 			name = tag .. "SideSkirt",
 			parent = bodyPartsFolder,
 			chassis = chassis,
-			localCF = CFrame.new(side * 3.54, 0.02, -0.05),
-			size = Vector3.new(0.46, 0.36, 5.48),
+			localCF = CFrame.new(side * 3.84, -0.02, -0.10),
+			size = Vector3.new(0.48, 0.38, 6.25),
 			color = Color3.fromRGB(24, 26, 32),
 			hp = 95,
 			zone = tag,
@@ -770,13 +775,12 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 	end
 
 	-- ========================================================================
-	-- 2 CỤM CỬA BẢN LỀ XOAY MỞ THỰC TẾ (LeftDoor / RightDoor + Táp-pi trong + Loa + Tay nắm + Kính + Gương)
+	-- 2 CỤM CỬA BẢN LỀ XOAY MỞ THỰC TẾ + CUSTOM [F] PROMPT NHỎ GỌN KHÔNG CHẮN MÀN HÌNH!
 	-- ========================================================================
 	for _, side in ipairs({ -1, 1 }) do
 		local tag = if side < 0 then "Left" else "Right"
-		local hingeLocalPos = Vector3.new(side * 3.44, 0.98, -2.72)
+		local hingeLocalPos = Vector3.new(side * 3.74, 1.14, -3.22)
 
-		-- Trục bản lề vô hình gắn vào Chassis qua khớp Weld (Tween C0 để xoay mở 64° ra ngoài!)
 		local doorHinge = Instance.new("Part")
 		doorHinge.Name = tag .. "DoorHinge"
 		doorHinge.Size = Vector3.new(0.25, 0.25, 0.25)
@@ -800,50 +804,50 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 		doorHinge:SetAttribute("ClosedZ", hingeLocalPos.Z)
 		doorHinge:SetAttribute("SideSign", side)
 
-		-- Thân cánh cửa kim loại chính (hàn vào doorHinge -> xoay cùng bản lề; có máu ẩn 140 HP!)
 		local doorPanel = makeCarPart({
 			name = tag .. "Door",
 			parent = bodyPartsFolder,
 			chassis = chassis,
 			weldTarget = doorHinge,
-			localCF = CFrame.new(side * 3.44, 0.98, -0.02),
-			size = Vector3.new(0.58, 1.58, 5.42),
+			localCF = CFrame.new(side * 3.74, 1.14, -0.10),
+			size = Vector3.new(0.60, 1.92, 6.22),
 			color = trim.bodyColor,
 			hp = 140,
 			zone = tag,
 		})
 
-		-- Tay nắm cửa mạ Crôm bên ngoài + Khung Prompt [F] Mở cửa lên xe chuẩn GTA V
 		local handle = makeCarPart({
 			name = tag .. "OuterDoorHandle",
 			parent = bodyPartsFolder,
 			chassis = chassis,
 			weldTarget = doorPanel,
-			localCF = CFrame.new(side * 3.76, 1.34, 1.62),
-			size = Vector3.new(0.14, 0.14, 0.68),
+			localCF = CFrame.new(side * 4.08, 1.62, 1.85),
+			size = Vector3.new(0.14, 0.15, 0.72),
 			color = Color3.fromRGB(214, 220, 228),
 			material = Enum.Material.Metal,
 			reflectance = 0.25,
 		})
 
+		-- QUAN TRỌNG: Style = Custom để tắt hoàn toàn bảng nút F khổng lồ mặc định của Roblox!
 		local prompt = Instance.new("ProximityPrompt")
 		prompt.Name = "EnterDoorPrompt"
-		prompt.ActionText = if side < 0 then "Mở Cửa Lái Xe" else "Mở Cửa Ghế Phụ"
+		prompt.Style = Enum.ProximityPromptStyle.Custom
+		prompt.Exclusivity = Enum.ProximityPromptExclusivity.OnePerButton
+		prompt.ActionText = if side < 0 then "Vào ghế lái" else "Vào ghế phụ"
 		prompt.ObjectText = trim.modelName
 		prompt.KeyboardKeyCode = Enum.KeyCode.F
 		prompt.HoldDuration = 0
-		prompt.MaxActivationDistance = 11
+		prompt.MaxActivationDistance = 9.5
 		prompt.RequiresLineOfSight = false
 		prompt.Parent = handle
 
-		-- Táp-pi da bên trong cánh cửa + Tay vịn kéo cửa + Màng loa tròn (lộ rõ mồn một khi cửa mở!)
 		makeCarPart({
 			name = tag .. "DoorInnerTrimCard",
 			parent = bodyPartsFolder,
 			chassis = chassis,
 			weldTarget = doorPanel,
-			localCF = CFrame.new(side * 3.12, 0.96, -0.02),
-			size = Vector3.new(0.10, 1.38, 5.05),
+			localCF = CFrame.new(side * 3.40, 1.12, -0.10),
+			size = Vector3.new(0.10, 1.72, 5.75),
 			color = Color3.fromRGB(28, 31, 38),
 			material = Enum.Material.Fabric,
 		})
@@ -852,8 +856,8 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 			parent = bodyPartsFolder,
 			chassis = chassis,
 			weldTarget = doorPanel,
-			localCF = CFrame.new(side * 2.98, 1.04, 0.25),
-			size = Vector3.new(0.22, 0.16, 1.95),
+			localCF = CFrame.new(side * 3.24, 1.24, 0.25),
+			size = Vector3.new(0.24, 0.18, 2.15),
 			color = trim.interiorAccent,
 		})
 		local speaker = makeCarPart({
@@ -861,8 +865,8 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 			parent = bodyPartsFolder,
 			chassis = chassis,
 			weldTarget = doorPanel,
-			localCF = CFrame.new(side * 3.05, 0.66, -1.55),
-			size = Vector3.new(0.08, 0.66, 0.66),
+			localCF = CFrame.new(side * 3.33, 0.72, -1.85),
+			size = Vector3.new(0.08, 0.74, 0.74),
 			color = Color3.fromRGB(46, 52, 62),
 			material = Enum.Material.DiamondPlate,
 		})
@@ -870,43 +874,58 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 			speaker.Shape = Enum.PartType.Cylinder
 		end
 
-		-- Gương chiếu hậu & Kính cửa sổ bên (hàn vào doorPanel để đi theo cánh cửa khi mở ra!)
 		makeCarPart({
 			name = tag .. "SideMirror",
 			parent = bodyPartsFolder,
 			chassis = chassis,
 			weldTarget = doorPanel,
-			localCF = CFrame.new(side * 3.98, 1.88, -2.08),
-			size = Vector3.new(0.60, 0.34, 0.44),
+			localCF = CFrame.new(side * 4.30, 2.24, -2.42),
+			size = Vector3.new(0.64, 0.36, 0.46),
 			color = trim.bodyColor,
 			hp = 38,
 			zone = tag,
+		})
+		-- Kính cửa sổ bên hình thang chuẩn Coupe (WedgePart tam giác trước ôm sát cột A + Kính chữ nhật chính dưới mui!)
+		local winTilt = CFrame.Angles(0, 0, side * math.rad(9))
+		makeCarPart({
+			name = tag .. "SideWindowFront",
+			parent = bodyPartsFolder,
+			chassis = chassis,
+			weldTarget = doorPanel,
+			localCF = CFrame.new(side * 3.42, 3.22, -2.10) * winTilt,
+			size = Vector3.new(0.12, 2.26, 2.26),
+			color = Color3.fromRGB(32, 44, 58),
+			material = Enum.Material.Glass,
+			transparency = 0.56,
+			isWedge = true,
+			hp = 40,
+			zone = "Glass",
 		})
 		makeCarPart({
 			name = tag .. "SideWindow",
 			parent = bodyPartsFolder,
 			chassis = chassis,
 			weldTarget = doorPanel,
-			localCF = CFrame.new(side * 3.14, 2.48, 0.18) * CFrame.Angles(0, 0, side * math.rad(12)),
-			size = Vector3.new(0.12, 1.54, 4.45),
+			localCF = CFrame.new(side * 3.42, 3.22, 0.86) * winTilt,
+			size = Vector3.new(0.12, 2.26, 3.66),
 			color = Color3.fromRGB(32, 44, 58),
 			material = Enum.Material.Glass,
-			transparency = 0.54,
+			transparency = 0.56,
 			hp = 45,
 			zone = "Glass",
 		})
 	end
 
-	-- Kính chắn gió trước cao thoáng + Cột chữ A 2 bên + Mui xe cao (Y = 3.36) + Kính Fastback sau
+	-- Kính chắn gió trước cao rộng (`Y = 2.02 -> 4.46`) + Cột chữ A ôm chuẩn 38.2° + Mui xe cao `Y = 4.46`!
 	makeCarPart({
 		name = "FrontWindshield",
 		parent = bodyPartsFolder,
 		chassis = chassis,
-		localCF = CFrame.new(0, 2.52, -2.28),
-		size = Vector3.new(5.68, 1.68, 2.55),
+		localCF = CFrame.new(0, 3.24, -2.52),
+		size = Vector3.new(6.18, 2.44, 3.10),
 		color = Color3.fromRGB(34, 48, 66),
 		material = Enum.Material.Glass,
-		transparency = 0.52,
+		transparency = 0.54,
 		isWedge = true,
 		hp = 55,
 		zone = "Glass",
@@ -917,8 +936,8 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 			name = tag .. "APillar",
 			parent = bodyPartsFolder,
 			chassis = chassis,
-			localCF = CFrame.new(side * 2.80, 2.52, -2.28) * CFrame.Angles(math.rad(-33.4), 0, 0),
-			size = Vector3.new(0.22, 0.22, 3.04),
+			localCF = CFrame.new(side * 3.06, 3.24, -2.52) * CFrame.Angles(math.rad(-38.2), 0, 0),
+			size = Vector3.new(0.24, 0.24, 3.94),
 			color = Color3.fromRGB(24, 27, 34),
 			hp = 160,
 			zone = "Top",
@@ -929,8 +948,8 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 		name = "RoofPanel",
 		parent = bodyPartsFolder,
 		chassis = chassis,
-		localCF = CFrame.new(0, 3.36, 0.58),
-		size = Vector3.new(5.62, 0.24, 3.45),
+		localCF = CFrame.new(0, 4.46, 0.72),
+		size = Vector3.new(6.12, 0.24, 3.95),
 		color = trim.bodyColor,
 		hp = 210,
 		zone = "Top",
@@ -939,8 +958,8 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 		name = "RoofStripe",
 		parent = bodyPartsFolder,
 		chassis = chassis,
-		localCF = CFrame.new(0, 3.50, 0.58),
-		size = Vector3.new(1.36, 0.05, 3.38),
+		localCF = CFrame.new(0, 4.60, 0.72),
+		size = Vector3.new(1.48, 0.05, 3.88),
 		color = trim.stripeColor,
 		hp = 120,
 		zone = "Top",
@@ -949,23 +968,23 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 		name = "RearFastbackWindow",
 		parent = bodyPartsFolder,
 		chassis = chassis,
-		localCF = CFrame.new(0, 2.54, 3.58) * CFrame.Angles(0, math.rad(180), 0),
-		size = Vector3.new(5.52, 1.58, 2.65),
+		localCF = CFrame.new(0, 3.26, 4.22) * CFrame.Angles(0, math.rad(180), 0),
+		size = Vector3.new(5.98, 2.36, 3.05),
 		color = Color3.fromRGB(28, 38, 52),
 		material = Enum.Material.Glass,
-		transparency = 0.50,
+		transparency = 0.52,
 		isWedge = true,
 		hp = 50,
 		zone = "Glass",
 	})
 
-	-- Cốp sau + Cánh gió thể thao GT cao ráo + Cản sau + Đèn hậu LED + Ống xả đôi + Biển số San Andreas
+	-- Cốp sau + Cánh gió thể thao GT + Cản sau + Đèn hậu LED + Ống xả đôi + Biển số San Andreas
 	makeCarPart({
 		name = "TrunkDeck",
 		parent = bodyPartsFolder,
 		chassis = chassis,
-		localCF = CFrame.new(0, 1.66, 6.08),
-		size = Vector3.new(5.16, 0.38, 2.98),
+		localCF = CFrame.new(0, 1.98, 6.72),
+		size = Vector3.new(5.62, 0.40, 3.05),
 		color = trim.bodyColor,
 		hp = 130,
 		zone = "Rear",
@@ -975,19 +994,19 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 			name = "RearSpoilerWing",
 			parent = bodyPartsFolder,
 			chassis = chassis,
-			localCF = CFrame.new(0, 2.52, 7.32),
-			size = Vector3.new(6.92, 0.18, 1.08),
+			localCF = CFrame.new(0, 2.94, 7.92),
+			size = Vector3.new(7.45, 0.20, 1.12),
 			color = Color3.fromRGB(22, 24, 30),
 			hp = 75,
 			zone = "Rear",
 		})
-		for _, sx in ipairs({ -2.14, 2.14 }) do
+		for _, sx in ipairs({ -2.32, 2.32 }) do
 			makeCarPart({
 				name = "SpoilerPylon",
 				parent = bodyPartsFolder,
 				chassis = chassis,
-				localCF = CFrame.new(sx, 2.14, 7.22),
-				size = Vector3.new(0.24, 0.72, 0.76),
+				localCF = CFrame.new(sx, 2.52, 7.82),
+				size = Vector3.new(0.26, 0.78, 0.78),
 				color = Color3.fromRGB(22, 24, 30),
 				hp = 70,
 				zone = "Rear",
@@ -999,8 +1018,8 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 		name = "RearBumper",
 		parent = bodyPartsFolder,
 		chassis = chassis,
-		localCF = CFrame.new(0, 0.56, 7.88),
-		size = Vector3.new(7.48, 1.44, 1.08),
+		localCF = CFrame.new(0, 0.72, 8.48),
+		size = Vector3.new(8.12, 1.62, 1.15),
 		color = trim.bodyColor,
 		hp = 125,
 		zone = "Rear",
@@ -1009,8 +1028,8 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 		name = "RearDiffuser",
 		parent = bodyPartsFolder,
 		chassis = chassis,
-		localCF = CFrame.new(0, -0.14, 8.04),
-		size = Vector3.new(6.65, 0.36, 0.92),
+		localCF = CFrame.new(0, -0.14, 8.64),
+		size = Vector3.new(7.15, 0.38, 0.96),
 		color = Color3.fromRGB(20, 22, 26),
 		hp = 90,
 		zone = "Rear",
@@ -1021,8 +1040,8 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 			name = tag .. "Taillight",
 			parent = bodyPartsFolder,
 			chassis = chassis,
-			localCF = CFrame.new(side * 2.58, 1.12, 8.38),
-			size = Vector3.new(1.78, 0.42, 0.22),
+			localCF = CFrame.new(side * 2.82, 1.34, 9.00),
+			size = Vector3.new(1.92, 0.46, 0.24),
 			color = Color3.fromRGB(225, 28, 38),
 			material = Enum.Material.Neon,
 			hp = 45,
@@ -1032,8 +1051,8 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 			name = tag .. "ExhaustTip",
 			parent = bodyPartsFolder,
 			chassis = chassis,
-			localCF = CFrame.new(side * 1.88, -0.12, 8.50),
-			size = Vector3.new(0.56, 0.44, 0.56),
+			localCF = CFrame.new(side * 2.02, -0.12, 9.12),
+			size = Vector3.new(0.60, 0.46, 0.60),
 			color = Color3.fromRGB(198, 204, 212),
 			material = Enum.Material.Metal,
 			reflectance = 0.3,
@@ -1046,8 +1065,8 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 		name = "LicensePlate",
 		parent = bodyPartsFolder,
 		chassis = chassis,
-		localCF = CFrame.new(0, 0.68, 8.44),
-		size = Vector3.new(1.88, 0.64, 0.08),
+		localCF = CFrame.new(0, 0.84, 9.06),
+		size = Vector3.new(1.95, 0.66, 0.08),
 		color = Color3.fromRGB(242, 245, 250),
 		hp = 60,
 		zone = "Rear",
@@ -1076,25 +1095,25 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 	plateNum.Parent = plateGui
 
 	-- ========================================================================
-	-- 5. BỐN CỤM BÁNH XE LỚN HƠN (3.06 STUDS) + CẦU LĂN VẬT LÝ LEO VỈA HÈ MƯỢT
+	-- 5. BỐN CỤM BÁNH XE CƠ BẮP (3.36 STUDS) + CẦU LĂN VẬT LÝ LEO VỈA HÈ MƯỢT
 	-- ========================================================================
 	local wheelsFolder = Instance.new("Folder")
 	wheelsFolder.Name = "Wheels"
 	wheelsFolder.Parent = car
 
 	local wheelSpecs = {
-		{ name = "FL", x = -3.22, z = -5.12 },
-		{ name = "FR", x = 3.22, z = -5.12 },
-		{ name = "RL", x = -3.22, z = 5.12 },
-		{ name = "RR", x = 3.22, z = 5.12 },
+		{ name = "FL", x = -3.52, z = -5.58 },
+		{ name = "FR", x = 3.52, z = -5.58 },
+		{ name = "RL", x = -3.52, z = 5.58 },
+		{ name = "RR", x = 3.52, z = 5.58 },
 	}
 	for _, ws in ipairs(wheelSpecs) do
 		local sideSign = if ws.x < 0 then -1 else 1
 		local ball = Instance.new("Part")
 		ball.Name = "WheelCollider_" .. ws.name
 		ball.Shape = Enum.PartType.Ball
-		ball.Size = Vector3.new(3.48, 3.48, 3.48)
-		ball.CFrame = chassis.CFrame * CFrame.new(ws.x * 0.86, -0.48, ws.z)
+		ball.Size = Vector3.new(3.68, 3.68, 3.68)
+		ball.CFrame = chassis.CFrame * CFrame.new(ws.x * 0.86, -0.52, ws.z)
 		ball.Transparency = 1
 		ball.CanCollide = true
 		ball.CanQuery = false
@@ -1108,7 +1127,7 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 		local tire = Instance.new("Part")
 		tire.Name = "Tire_" .. ws.name
 		tire.Shape = Enum.PartType.Cylinder
-		tire.Size = Vector3.new(1.16, 3.06, 3.06)
+		tire.Size = Vector3.new(1.24, 3.36, 3.36)
 		tire.CFrame = chassis.CFrame * CFrame.new(ws.x, -0.68, ws.z)
 		tire.Color = Color3.fromRGB(22, 24, 28)
 		tire.Material = Enum.Material.Rubber
@@ -1121,7 +1140,7 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 		local rim = Instance.new("Part")
 		rim.Name = "Rim_" .. ws.name
 		rim.Shape = Enum.PartType.Cylinder
-		rim.Size = Vector3.new(1.12, 2.04, 2.04)
+		rim.Size = Vector3.new(1.20, 2.24, 2.24)
 		rim.CFrame = chassis.CFrame * CFrame.new(ws.x + sideSign * 0.04, -0.68, ws.z)
 		rim.Color = trim.rimColor
 		rim.Material = Enum.Material.Metal
@@ -1135,9 +1154,9 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 		for _, spokeAng in ipairs({ 0, 45, 90, 135 }) do
 			local spoke = Instance.new("Part")
 			spoke.Name = "Spoke_" .. ws.name
-			spoke.Size = Vector3.new(0.08, 1.86, 0.19)
+			spoke.Size = Vector3.new(0.08, 2.04, 0.20)
 			spoke.CFrame = chassis.CFrame
-				* CFrame.new(ws.x + sideSign * 0.61, -0.68, ws.z)
+				* CFrame.new(ws.x + sideSign * 0.65, -0.68, ws.z)
 				* CFrame.Angles(math.rad(spokeAng), 0, 0)
 			spoke.Color = Color3.fromRGB(36, 40, 48)
 			spoke.Material = Enum.Material.Metal
@@ -1150,8 +1169,8 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 
 		local caliper = Instance.new("Part")
 		caliper.Name = "BrakeCaliper_" .. ws.name
-		caliper.Size = Vector3.new(0.22, 0.68, 0.42)
-		caliper.CFrame = chassis.CFrame * CFrame.new(ws.x + sideSign * 0.28, -0.50, ws.z - 0.52)
+		caliper.Size = Vector3.new(0.24, 0.74, 0.44)
+		caliper.CFrame = chassis.CFrame * CFrame.new(ws.x + sideSign * 0.30, -0.48, ws.z - 0.56)
 		caliper.Color = Color3.fromRGB(220, 36, 36)
 		caliper.Material = Enum.Material.Metal
 		caliper.CanCollide = false
@@ -1184,7 +1203,6 @@ function VehicleBuilder.spawn(parent: Instance, spawnCF: CFrame, trim: VehicleTr
 	return car
 end
 
--- Đội xe GTA V đậu sẵn quanh Quảng trường Legion Square & Đại lộ trung tâm
 function VehicleBuilder.spawnDefaultFleet(losSantosRoot: Instance): Folder
 	local existing = losSantosRoot:FindFirstChild("Phase2_Vehicles")
 	if existing then

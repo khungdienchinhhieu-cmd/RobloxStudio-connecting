@@ -5,6 +5,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local CityFoundation = require(Shared:WaitForChild("World"):WaitForChild("CityFoundation"))
+local DistrictRegistry = require(Shared:WaitForChild("World"):WaitForChild("DistrictRegistry"))
 local VehicleManager = require(script:WaitForChild("VehicleManager"))
 local WeaponManager = require(script:WaitForChild("WeaponManager"))
 
@@ -33,8 +34,9 @@ if not activeRemotes:FindFirstChild("WeaponFire") then
 	wf.Parent = activeRemotes
 end
 
--- 1. Dựng Nền Thành Phố ghép khối có máu ẩn (nếu chưa có trong Workspace)
-CityFoundation.build(false)
+-- 1. Dựng Nền Thành Phố ghép khối có máu ẩn + Tự động nạp mọi Công Trình Đa-Agent trong World/Modules
+local losSantosRoot = CityFoundation.build(false)
+DistrictRegistry.buildAll(losSantosRoot)
 
 -- 2. Khởi chạy Đội Xe Hơi GTA V (vật lý lái + đụng xe trừ máu ẩn PartHealth) & Vũ Khí bắn vỡ khối
 VehicleManager.init()

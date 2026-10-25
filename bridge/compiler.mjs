@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
+import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -11,7 +12,19 @@ export const SYNC_BUNDLE_FILE = path.join(REPO_ROOT, "studio-sync.json");
 
 export const GITHUB_OWNER = "khungdienchinhhieu-cmd";
 export const GITHUB_REPO = "RobloxStudio-connecting";
-export const GITHUB_BRANCH = "arena/b37b6115-robloxstudio-connecting";
+
+export function getCurrentGitBranch() {
+	try {
+		return execFileSync("git", ["rev-parse", "--abbrev-ref", "HEAD"], {
+			cwd: REPO_ROOT,
+			encoding: "utf8",
+		}).trim();
+	} catch {
+		return "main";
+	}
+}
+
+export const GITHUB_BRANCH = getCurrentGitBranch();
 
 const KNOWN_CONTAINER_CLASSES = {
 	StarterPlayerScripts: "StarterPlayerScripts",
