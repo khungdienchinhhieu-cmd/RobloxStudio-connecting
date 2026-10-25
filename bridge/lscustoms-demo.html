@@ -177,19 +177,25 @@ function poly(pts, fill, stroke) {
   if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1; ctx.stroke(); }
 }
 function box3(x, y, z, sx, sy, sz, top, side) {
-  // hộp 3D đơn giản: mặt trên + 2 mặt bên
-  const a = project(x - sx / 2, y + sy, z - sz / 2);
-  const b = project(x + sx / 2, y + sy, z - sz / 2);
-  const c = project(x + sx / 2, y + sy, z + sz / 2);
-  const d = project(x - sx / 2, y + sy, z + sz / 2);
-  poly([d, c, b, a], top);
-  const bb = project(x + sx / 2, y, z - sz / 2);
-  const cc = project(x + sx / 2, y, z + sz / 2);
-  poly([c, cc, bb, b], side);
-  const aa = project(x - sx / 2, y, z - sz / 2);
-  poly([d, c, cc, bb, b, a], side);
-  const dd = project(x - sx / 2, y, z + sz / 2);
-  poly([d, dd, cc, c], side);
+  const hx = sx / 2, hz = sz / 2, y1 = y + sy;
+  // 4 góc mặt trên
+  const tA = project(x - hx, y1, z - hz), tB = project(x + hx, y1, z - hz);
+  const tC = project(x + hx, y1, z + hz), tD = project(x - hx, y1, z + hz);
+  // 4 góc mặt đáy
+  const bA = project(x - hx, y, z - hz), bB = project(x + hx, y, z - hz);
+  const bC = project(x + hx, y, z + hz), bD = project(x - hx, y, z + hz);
+  const dark = shade(rgbToHex(side), 0.78);
+  poly([tD, tC, bC, bD], side);   // mặt trước (+Z, hướng về camera)
+  poly([tC, tB, bB, bC], dark);   // mặt hông phải (+X)
+  poly([tA, tD, bD, bA], dark);   // mặt hông trái (−X)
+  poly([tD, tC, tB, tA], top);    // mặt trên
+}
+
+function rgbToHex(c) {
+  if (typeof c === "string" && c[0] === "#") return c;
+  const m = String(c).match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+  if (!m) return "#ffffff";
+  return "#" + [1, 2, 3].map((i) => Number(m[i]).toString(16).padStart(2, "0")).join("");
 }
 
 function drawCar(cx, cz, color, scale = 1) {
