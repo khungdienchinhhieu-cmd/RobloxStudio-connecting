@@ -31,9 +31,9 @@ Dự án tái hiện thế giới mở **Grand Theft Auto V (Los Santos)** trên
 | **Plot D1** | **Rockford Hills** (Ô móng kỹ thuật sạch chờ công trình) | `[-308, -128]` | `[-208, -54]` | ⏳ Chờ dựng từng công trình |
 | **Plot D2** | **Pillbox Hill** (Ô móng kỹ thuật sạch chờ Tháp Maze Bank) | `[-92, +92]` | `[-208, -54]` | ⏳ Chờ dựng từng công trình |
 | **Plot D3** | **Downtown Vinewood** (Ô móng kỹ thuật sạch chờ công trình) | `[+128, +308]` | `[-208, -54]` | ⏳ Chờ dựng từng công trình |
-| **Plot C1** | **Del Perro** (Ô móng kỹ thuật sạch chờ LS Customs) | `[-308, -128]` | `[-18, +132]` | ⏳ Chờ dựng từng công trình |
+| **Plot C1** | **Del Perro — Los Santos Customs** (`3,462` parts, `98.1%` máu ẩn `PartHealth`, 2 khoang cầu nâng + gác lửng) | `[-308, -128]` | `[-18, +132]` | ✅ Đã nghiệm thu & lên Studio (`Sync v8`) |
 | **Plot C2** | **Legion Square** (Nền quảng trường bậc cấp, hồ nước & tường gạch ghép khối) | `[-92, +92]` | `[-18, +132]` | ✅ Hoàn thành ở Nền v2 |
-| **Plot C3** | **Mission Row** (Ô móng kỹ thuật sạch chờ Đồn LSPD) | `[+128, +308]` | `[-18, +132]` | ⏳ Chờ dựng từng công trình |
+| **Plot C3** | **Mission Row** (Nửa Tây: Siêu thị 24/7 đang xây • Nửa Đông: chờ Đồn LSPD) | `[+128, +308]` | `[-18, +132]` | 🟡 Agent #2 đang dựng 24/7 |
 | **South Coast** | **Vespucci Beach** (Kè đá ghép khối, cầu thang xuống biển, sàn gỗ, kè chắn sóng) | `[-360, +360]` | `[+164, +360]` | ✅ Hoàn thành ở Nền v2 |
 
 ---

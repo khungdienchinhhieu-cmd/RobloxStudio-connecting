@@ -47,7 +47,7 @@
     {
       "taskId": "AGENT_1_LS_CUSTOMS",
       "order": 20,
-      "status": "ready_for_parallel_agent",
+      "status": "completed",
       "title": "Garage Độ Xe Los Santos Customs",
       "district": "DEL PERRO",
       "plotId": "Plot_C1",
