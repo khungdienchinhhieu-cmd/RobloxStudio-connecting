@@ -388,12 +388,5 @@
       "children": {}
     }
   },
-  "actions": [
-    {
-      "id": "act-1792931035634",
-      "description": "Sync v13: tích hợp đồn cảnh sát Mission Row LSPD (4639 part, 99.6% phá huỷ được) + vá khe góc Nam, sàn sân trước, mái, vòng đáp trực thăng",
-      "code": "print('[Sync v13] LSPD Mission Row đã tích hợp — 4639 part, 4620 khối phá huỷ được')",
-      "createdAt": "2026-10-25T12:23:55.634Z"
-    }
-  ]
+  "actions": []
 }
