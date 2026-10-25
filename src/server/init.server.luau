@@ -9,6 +9,7 @@ local DistrictRegistry = require(Shared:WaitForChild("World"):WaitForChild("Dist
 local PerfOptimizer = require(Shared:WaitForChild("World"):WaitForChild("PerfOptimizer"))
 local VehicleManager = require(script:WaitForChild("VehicleManager"))
 local WeaponManager = require(script:WaitForChild("WeaponManager"))
+local NPCManager = require(script:WaitForChild("NPCManager"))
 local LSCustomsService = require(script:WaitForChild("LSCustomsService"))
 
 -- Tạo thư mục RemoteEvents phục vụ HUD, Xe & Vũ khí GTA V
@@ -47,6 +48,7 @@ PerfOptimizer.optimize(losSantosRoot)
 -- 2. Khởi chạy Đội Xe Hơi GTA V (vật lý lái + đụng xe trừ máu ẩn PartHealth) & Vũ Khí bắn vỡ khối
 VehicleManager.init()
 WeaponManager.init(activeRemotes)
+NPCManager.init(activeHudRemote)
 
 -- 3. Kích hoạt dịch vụ ĐỘ XE THẬT của Los Santos Customs (Plot_C1): 2 khoang + sửa/sơn/turbo
 LSCustomsService.init(activeRemotes, activeHudRemote, losSantosRoot)

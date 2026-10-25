@@ -308,6 +308,8 @@
   "use strict";
 
   /* ============ DỮ LIỆU 8 Ô (khớp WeaponManager.luau) ============ */
+  const SLOT_COUNT = 9; // 8 khẩu + RPG
+
   const WEAPONS = [
     { slot:1, name:"Unarmed",          display:"TAY KHÔNG",      category:"KHÔNG VŨ KHÍ",       icon:"fist",    accent:"#94a3b8", melee:true,  magSize:0 },
     { slot:2, name:"Baseball Bat",     display:"GẬY BÓNG CHÀY",  category:"CẬN CHIẾN",          icon:"bat",     accent:"#f59e0b", melee:true,  magSize:0 },
@@ -317,6 +319,7 @@
     { slot:6, name:"Carbine Rifle",    display:"CARBINE RIFLE",  category:"SÚNG TRƯỜNG",        icon:"rifle",   accent:"#4ade80", magSize:30, mag:30, reserve:240 },
     { slot:7, name:"Assault Shotgun",  display:"ASSAULT SHOTGUN",category:"SÚNG SHOTGUN",       icon:"shotgun", accent:"#fb923c", magSize:8,  mag:8,  reserve:64 },
     { slot:8, name:"Sniper Rifle",     display:"SNIPER RIFLE",   category:"SÚNG BẮN TỈA",       icon:"sniper",  accent:"#c084fc", magSize:5,  mag:5,  reserve:30 },
+    { slot:9, name:"RPG",              display:"RPG-7",          category:"VŨ KHÍ HẠNG NẶNG",   icon:"rpg",     accent:"#ef4444", magSize:1,  mag:1,  reserve:6 },
   ];
 
   const ICONS = {
@@ -328,6 +331,7 @@
     rifle:'<path d="M2 9.2h14.6l.8-1.8h4.6v2.8l-2.4 1v1.3h-1.6v2.6h-2.4v2.9h-2.4v-2.9H8.8L6.4 12.7H2V9.2z"/>',
     shotgun:'<path d="M2 9.4h15.4l1-1.9h3.6v2.9l-2.2 1v1.4h-1.6v2.5h-2.5v2.8h-2.4v-2.8H8.6L6.2 12.9H2V9.4z"/>',
     sniper:'<path d="M2 11.2h17.6l.9-1.4h1.5v2.9h-1.5l-.9 1.4H8.6L6.4 12.1H2v-.9z"/><path d="M8 5.6h7.4v2.6H8z"/><path d="M9.4 7.6h1.4v2.6H9.4z"/>',
+    rpg:'<path d="M2 12.6 12 7.4l1.4 2.6L4.2 15z"/><path d="M12.6 8.8h6.2v2.4h-6.2z"/><path d="M19.6 7.6l2.4 2.4-2.4 2.4z"/><path d="M7.6 13.6l1.8 3.4H7.2l-1.6-3z"/><path d="M6.2 6.2h2.4v3.2H6.2z"/>',
   };
 
   const state = {
@@ -341,13 +345,14 @@
 
   const DEAD_ZONE = 54;
 
-  /* Góc chuột -> ô 1..8. Ô 1 ở TRÊN CÙNG, đi theo chiều kim đồng hồ. */
+  /* Góc chuột -> ô 1..9. Ô 1 ở TRÊN CÙNG, đi theo chiều kim đồng hồ. */
   function angleToSlot(dx, dy) {
     const dist = Math.hypot(dx, dy);
     if (dist < DEAD_ZONE) return 0;                    // 0 = vùng chết, giữ nguyên ô
     const deg = (Math.atan2(dy, dx) * 180) / Math.PI;  // -180..180, 0 = sang phải
-    const normalized = (((deg + 90 + 22.5) % 360) + 360) % 360;
-    return (Math.floor(normalized / 45) % 8) + 1;
+    const step = 360 / SLOT_COUNT;                     // 9 ô = 40°
+    const normalized = (((deg + 90 + step / 2) % 360) + 360) % 360;
+    return (Math.floor(normalized / step) % SLOT_COUNT) + 1;
   }
 
   function weaponBySlot(slot) { return WEAPONS.find(w => w.slot === slot); }
@@ -513,7 +518,7 @@
       const slot = Number(node.dataset.slot);
       const w = weaponBySlot(slot);
       if (!w) return;
-      node.style.setProperty("--a", ((slot - 1) * 45) + "deg");
+      node.style.setProperty("--a", ((slot - 1) * (360 / SLOT_COUNT)) + "deg");
       node.style.setProperty("--sa", w.accent);
       const ic = node.querySelector(".ic");
       if (ic) ic.innerHTML = '<svg viewBox="0 0 24 24">' + (ICONS[w.icon] || "") + '</svg>';

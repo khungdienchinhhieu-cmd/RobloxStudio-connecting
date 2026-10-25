@@ -13,8 +13,15 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
+local Debris = game:GetService("Debris")
 
 local DestructionManager = require(script.Parent:WaitForChild("DestructionManager"))
+-- NPCManager là tuỳ chọn: nếu chưa có thì bỏ qua phần phản ứng NPC
+local NPCManager: any = nil
+local npcModule = script.Parent:FindFirstChild("NPCManager")
+if npcModule and npcModule:IsA("ModuleScript") then
+	NPCManager = require(npcModule)
+end
 
 local WeaponManager = {}
 
@@ -28,6 +35,7 @@ local WEAPON_ORDER: { string } = {
 	"Carbine Rifle", -- 6  ↙
 	"Assault Shotgun", -- 7  ←
 	"Sniper Rifle", -- 8  ↖
+	"RPG", -- 9  ↖↖ (ô thứ 9, vòng tự giãn góc)
 }
 
 type Spec = {
@@ -47,6 +55,10 @@ type Spec = {
 	reserve: number,
 	reloadTime: number,
 	accent: { number },
+	explosive: boolean?,
+	blastRadius: number?,
+	blastDamage: number?,
+	projectileSpeed: number?,
 }
 
 local SPECS: { [string]: Spec } = {
@@ -194,6 +206,28 @@ local SPECS: { [string]: Spec } = {
 		reloadTime = 2.6,
 		accent = { 192, 132, 252 },
 	},
+	RPG = {
+		display = "RPG-7",
+		icon = "rpg",
+		slot = 9,
+		category = "VŨ KHÍ HẠNG NẶNG",
+		damage = 320,
+		cooldown = 1.75,
+		range = 520,
+		impulse = 120,
+		auto = false,
+		melee = false,
+		pellets = 1,
+		spread = 0,
+		mag = 1,
+		reserve = 6,
+		reloadTime = 3.4,
+		accent = { 239, 68, 68 },
+		explosive = true,
+		blastRadius = 22,
+		blastDamage = 260,
+		projectileSpeed = 145,
+	},
 }
 
 -- Kiểu dáng 3D từng khẩu (handle + các mảnh hàn vào)
@@ -252,6 +286,19 @@ local GUN_MODELS: { [string]: any } = {
 			{ name = "ScopeLens", size = Vector3.new(0.22, 0.22, 0.06), off = Vector3.new(0, 0.80, -1.10), color = Color3.fromRGB(120, 200, 230) },
 			{ name = "Stock", size = Vector3.new(0.24, 0.34, 1.05), off = Vector3.new(0, 0.44, 0.92), color = Color3.fromRGB(28, 32, 30) },
 			{ name = "Bipod", size = Vector3.new(0.10, 0.44, 0.10), off = Vector3.new(0, 0.10, -1.30), color = Color3.fromRGB(24, 26, 24) },
+		},
+	},
+	["RPG"] = {
+		handle = { size = Vector3.new(0.34, 0.78, 0.34), color = Color3.fromRGB(58, 50, 40) },
+		parts = {
+			{ name = "Tube", size = Vector3.new(0.44, 0.44, 4.20), off = Vector3.new(0, 0.55, -1.30), color = Color3.fromRGB(74, 78, 58) },
+			{ name = "TubeFront", size = Vector3.new(0.56, 0.56, 0.60), off = Vector3.new(0, 0.55, -3.42), color = Color3.fromRGB(58, 62, 46) },
+			{ name = "Warhead", size = Vector3.new(0.52, 0.52, 1.15), off = Vector3.new(0, 0.55, -4.16), color = Color3.fromRGB(148, 52, 42) },
+			{ name = "WarheadTip", size = Vector3.new(0.30, 0.30, 0.52), off = Vector3.new(0, 0.55, -4.90), color = Color3.fromRGB(120, 40, 34) },
+			{ name = "Grip", size = Vector3.new(0.24, 0.62, 0.28), off = Vector3.new(0, 0.10, 0.05), color = Color3.fromRGB(30, 30, 32) },
+			{ name = "ForeGrip", size = Vector3.new(0.22, 0.52, 0.26), off = Vector3.new(0, 0.16, -1.35), color = Color3.fromRGB(30, 30, 32) },
+			{ name = "Sight", size = Vector3.new(0.16, 0.42, 0.20), off = Vector3.new(0.34, 0.92, -0.62), color = Color3.fromRGB(40, 42, 34) },
+			{ name = "HeatShield", size = Vector3.new(0.60, 0.60, 0.20), off = Vector3.new(0, 0.55, -2.10), color = Color3.fromRGB(44, 46, 36) },
 		},
 	},
 	["Baseball Bat"] = {
@@ -527,6 +574,196 @@ function WeaponManager.init(remotesFolder: Instance)
 	--=================================================================
 	-- BẮN / CHÉM
 	--=================================================================
+	-- ==========================================================================
+	-- RPG: phóng rocket + nổ sát thương diện rộng
+	-- ==========================================================================
+	local function explodeAt(center: Vector3, spec: any, player: Player)
+		local radius: number = spec.blastRadius or 22
+		local dmg: number = spec.blastDamage or 260
+
+		-- 1. Phá huỷ kết cấu trong bán kính
+		local broken = 0
+		local okDmg, res = pcall(function()
+			return DestructionManager.damageRadius(center, radius, dmg, spec.impulse or 120, player.Character)
+		end)
+		if okDmg and type(res) == "number" then
+			broken = res
+		end
+
+		-- 2. Sát thương nhân vật (người chơi + NPC)
+		local params = OverlapParams.new()
+		params.FilterType = Enum.RaycastFilterType.Exclude
+		params.FilterDescendantsInstances = { player.Character }
+		local parts = Workspace:GetPartBoundsInRadius(center, radius, params)
+		local hitModels: { [Model]: boolean } = {}
+		local victimCount = 0
+		for _, part in ipairs(parts) do
+			local model = part:FindFirstAncestorOfClass("Model")
+			if model and not hitModels[model] then
+				hitModels[model] = true
+				local hum = model:FindFirstChildOfClass("Humanoid")
+				if hum and hum.Health > 0 then
+					local d = (part.Position - center).Magnitude
+					if d <= radius then
+						local falloff = 1 - (d / radius) * 0.6
+						hum:TakeDamage(dmg * 0.35 * falloff)
+						victimCount += 1
+					end
+				end
+			end
+		end
+
+		-- 3. Hiệu ứng nổ: cầu lửa + vòng xung kích + mảnh văng
+		local debris = Workspace:FindFirstChild("LosSantos_Debris")
+		local host = debris or Workspace
+		local boom = Instance.new("Part")
+		boom.Name = "RPG_Fireball"
+		boom.Shape = Enum.PartType.Ball
+		boom.Size = Vector3.new(radius * 0.9, radius * 0.9, radius * 0.9)
+		boom.Color = Color3.fromRGB(255, 176, 72)
+		boom.Material = Enum.Material.Neon
+		boom.CanCollide = false
+		boom.CanTouch = false
+		boom.CanQuery = false
+		boom.Transparency = 0.15
+		boom.CFrame = CFrame.new(center)
+		boom.Parent = host
+
+		local ring = Instance.new("Part")
+		ring.Name = "RPG_Shockwave"
+		ring.Shape = Enum.PartType.Cylinder
+		ring.Size = Vector3.new(1.2, 6, 6)
+		ring.Color = Color3.fromRGB(255, 236, 190)
+		ring.Material = Enum.Material.Neon
+		ring.CanCollide = false
+		ring.CanTouch = false
+		ring.CanQuery = false
+		ring.Transparency = 0.35
+		ring.CFrame = CFrame.new(center + Vector3.new(0, 1.0, 0)) * CFrame.Angles(0, 0, math.rad(90))
+		ring.Parent = host
+
+		-- giãn nở rồi tan
+		task.spawn(function()
+			local steps = 18
+			for i = 1, steps do
+				local a = i / steps
+				if boom.Parent then
+					boom.Size = Vector3.new(radius * (0.9 + a * 0.5), radius * (0.9 + a * 0.5), radius * (0.9 + a * 0.5))
+					boom.Transparency = 0.15 + a * 0.8
+				end
+				if ring.Parent then
+					ring.Size = Vector3.new(1.2, 6 + a * radius * 2.4, 6 + a * radius * 2.4)
+					ring.Transparency = 0.35 + a * 0.6
+				end
+				task.wait(0.028)
+			end
+			if boom.Parent then
+				boom:Destroy()
+			end
+			if ring.Parent then
+				ring:Destroy()
+			end
+		end)
+
+		-- mảnh văng
+		for i = 1, 10 do
+			local chunk = Instance.new("Part")
+			chunk.Name = "RPG_Shard"
+			chunk.Size = Vector3.new(math.random(4, 10) / 10, math.random(4, 10) / 10, math.random(4, 10) / 10)
+			chunk.Color = Color3.fromRGB(52, 50, 46)
+			chunk.Material = Enum.Material.Metal
+			chunk.CanCollide = false
+			chunk.CanTouch = false
+			chunk.CanQuery = false
+			chunk.CFrame = CFrame.new(center + Vector3.new(0, 1, 0))
+			chunk.Parent = host
+			local dir = Vector3.new(math.random() - 0.5, math.random() * 0.9 + 0.2, math.random() - 0.5).Unit
+			chunk.AssemblyLinearVelocity = dir * math.random(40, 90)
+			Debris:AddItem(chunk, 1.6)
+		end
+
+		-- 4. NPC hoảng loạn dây chuyền
+		if NPCManager and type(NPCManager.notifyExplosion) == "function" then
+			pcall(function()
+				NPCManager.notifyExplosion(center, radius, player)
+			end)
+		end
+
+		print(string.format("[RPG] 💥 Nổ tại (%.0f, %.0f, %.0f) — phá %d khối, %d nạn nhân", center.X, center.Y, center.Z, broken, victimCount))
+	end
+
+	local function launchRocket(player: Player, origin: Vector3, dirVec: Vector3, spec: any, tool: Tool)
+		local debris = Workspace:FindFirstChild("LosSantos_Debris")
+		local host = debris or Workspace
+
+		local rocket = Instance.new("Part")
+		rocket.Name = "RPG_Rocket"
+		rocket.Size = Vector3.new(0.42, 0.42, 1.75)
+		rocket.Color = Color3.fromRGB(112, 116, 96)
+		rocket.Material = Enum.Material.Metal
+		rocket.CanCollide = false
+		rocket.CanTouch = false
+		rocket.CanQuery = false
+		rocket.CFrame = CFrame.lookAt(origin, origin + dirVec)
+		rocket.Parent = host
+
+		local flame = Instance.new("Part")
+		flame.Name = "RPG_Trail"
+		flame.Shape = Enum.PartType.Ball
+		flame.Size = Vector3.new(1.15, 1.15, 1.15)
+		flame.Color = Color3.fromRGB(255, 196, 96)
+		flame.Material = Enum.Material.Neon
+		flame.CanCollide = false
+		flame.CanTouch = false
+		flame.CanQuery = false
+		flame.Transparency = 0.25
+		flame.CFrame = rocket.CFrame * CFrame.new(0, 0, 1.0)
+		flame.Parent = host
+
+		local speed: number = spec.projectileSpeed or 145
+		local params = RaycastParams.new()
+		params.FilterType = Enum.RaycastFilterType.Exclude
+		params.FilterDescendantsInstances = { rocket, flame, player.Character, host }
+
+		-- tiếng "phóng" trước khi bay
+		activeFireRemote:FireClient(player, "hit", false)
+
+		task.spawn(function()
+			local pos = origin
+			local maxTime = 6.0
+			local t = 0
+			while t < maxTime do
+				local dt = 1 / 60
+				t += dt
+				if not rocket.Parent then
+					break
+				end
+				local step = dirVec * speed * dt
+				local hit = Workspace:Raycast(pos, step, params)
+				if hit then
+					local center = hit.Position
+					if hit.Instance and hit.Instance:IsA("BasePart") then
+						center = hit.Position + hit.Normal * 0.35
+					end
+					rocket:Destroy()
+					flame:Destroy()
+					explodeAt(center, spec, player)
+					return
+				end
+				pos += step
+				rocket.CFrame = CFrame.lookAt(pos, pos + dirVec)
+				flame.CFrame = rocket.CFrame * CFrame.new(0, 0, 1.0)
+				task.wait(dt)
+			end
+			if rocket.Parent then
+				rocket:Destroy()
+			end
+			if flame.Parent then
+				flame:Destroy()
+			end
+		end)
+	end
+
 	activeFireRemote.OnServerEvent:Connect(function(player, originPos, aimPos)
 		if typeof(originPos) ~= "Vector3" or typeof(aimPos) ~= "Vector3" then
 			return
@@ -572,6 +809,18 @@ function WeaponManager.init(remotesFolder: Instance)
 
 		st.lastShotAt = now
 
+		-- ── VŨ KHÍ NỔ (RPG): phóng rocket, không raycast tức thời ──────────
+		if spec.explosive then
+			local hrpNow = char:FindFirstChild("HumanoidRootPart")
+			local muzzle = if hrpNow then hrpNow.Position + dirVec.Unit * 2.6 + Vector3.new(0, 0.2, 0) else originPos
+			if ammo then
+				ammo.mag = math.max(0, ammo.mag - 1)
+				pushAmmo(player, tool.Name, ammo.mag <= 0)
+			end
+			launchRocket(player, muzzle, dirVec.Unit, spec, tool)
+			return
+		end
+
 		local params = RaycastParams.new()
 		params.FilterType = Enum.RaycastFilterType.Exclude
 		local deb = Workspace:FindFirstChild("LosSantos_Debris")
@@ -600,6 +849,13 @@ function WeaponManager.init(remotesFolder: Instance)
 
 				if hitHum and hitModel ~= char then
 					hitHum:TakeDamage(spec.damage * 0.7)
+					-- NPC phản ứng: bắn trả / bỏ chạy / quay video gọi cảnh sát / đánh tay
+					if NPCManager and hitModel:GetAttribute("IsGTA_NPC") == true then
+						local kind = if spec.melee then "MELEE" else "BULLET"
+						pcall(function()
+							NPCManager.notifyAttacked(hitModel, player, kind)
+						end)
+					end
 					hitSomething = true
 				else
 					local shattered = DestructionManager.damagePart(

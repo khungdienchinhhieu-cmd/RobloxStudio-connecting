@@ -75,12 +75,23 @@
 | Thông số | Giá trị |
 | :--- | :--- |
 | Phím mở | Giữ `TAB`, thả để trang bị · `ESC` huỷ |
-| Số ô | 8 ô, ô 1 ở **trên cùng**, thuận chiều kim đồng hồ (45°/ô) |
+| Số ô | **9 ô**, ô 1 ở **trên cùng**, thuận chiều kim đồng hồ (**40°/ô** = `2π/9`) |
 | Bán kính vòng | 196px, ô 108×108, bo góc 18px |
 | Vùng chết tâm | < 54px → giữ nguyên ô đang chọn |
 | Ô đang chọn | Viền accent 3px + phóng 1.09× + nền pha accent 22% |
 | Tâm | Danh mục (10px) · Tên súng (17px) · Đạn (20px, accent) · Gợi ý (9px) |
-| Đổi nhanh | Phím `1..8` khi vòng đóng |
+| Đổi nhanh | Phím `1..9` khi vòng đóng (ô 9 = RPG-7) |
+
+### 5.1 BỐN chỗ BẮT BUỘC sửa khi thêm vũ khí mới
+
+`SLOT_COUNT` và `SLOT_GAP` **đã được tách thành hằng số** — nhưng vẫn còn 3 nơi phải cập nhật cùng lúc, thiếu 1 chỗ là vòng vẽ sai:
+
+1. `SLOT_COUNT` (dòng ~35) — tổng số ô.
+2. `DEFAULT` (dòng ~40) — danh sách dự phòng khi server chưa gửi `WeaponSync`.
+3. `keySlots` trong `UserInputService.InputBegan` — bảng phím `1..9` -> ô.
+4. `buildIcon()` — thêm nhánh `elseif kind == "<icon>"` vẽ icon bằng `Frame`, nếu không ô sẽ trống trơn.
+
+Bản demo browser `bridge/hud-demo.html` phải sửa **y hệt**: `SLOT_COUNT`, `angleToSlot()` (chia `360 / SLOT_COUNT`), `WEAPONS[]` và `ICONS{}`.
 
 ## 6. Quy tắc hiệu năng UI
 

@@ -32,7 +32,8 @@ local C = {
 	danger = Color3.fromRGB(239, 68, 68),
 }
 
-local SLOT_GAP = math.pi / 4 -- 8 ô = 45°
+local SLOT_COUNT = 9 -- 9 ô (8 khẩu + RPG)
+local SLOT_GAP = (math.pi * 2) / SLOT_COUNT -- tự giãn: 9 ô = 40°
 local RING_RADIUS = 196
 local SLOT_SIZE = 108
 
@@ -45,6 +46,7 @@ local FALLBACK_WEAPONS = {
 	{ name = "Carbine Rifle", display = "CARBINE RIFLE", icon = "rifle", slot = 6, category = "SÚNG TRƯỜNG", magSize = 30, accent = { 74, 222, 128 } },
 	{ name = "Assault Shotgun", display = "ASSAULT SHOTGUN", icon = "shotgun", slot = 7, category = "SÚNG SHOTGUN", magSize = 8, accent = { 251, 146, 60 } },
 	{ name = "Sniper Rifle", display = "SNIPER RIFLE", icon = "sniper", slot = 8, category = "SÚNG BẮN TỈA", magSize = 5, accent = { 192, 132, 252 } },
+	{ name = "RPG", display = "RPG-7", icon = "rpg", slot = 9, category = "VŨ KHÍ HẠNG NẶNG", magSize = 1, accent = { 239, 68, 68 } },
 }
 
 local function accentOf(list: { number }?): Color3
@@ -135,6 +137,15 @@ local function buildIcon(kind: string, parent: Instance, scale: number?): Frame
 		newRect(box, 8, 4, 32, 18, 0, Color3.fromRGB(148, 163, 184))
 		newRect(box, 14, 8, 10, 34, 0, Color3.fromRGB(160, 168, 180))
 		newRect(box, 4, 12, 20, 44, 12, body)
+	elseif kind == "rpg" then
+		-- ống phóng dày + đầu đạn hình nón đỏ
+		newRect(box, 46, 15, 40, 30, 0, body)
+		newRect(box, 12, 19, 62, 30, 0, Color3.fromRGB(74, 78, 58))
+		newRect(box, 13, 13, 74, 30, 0, Color3.fromRGB(148, 52, 42))
+		newRect(box, 7, 7, 82, 30, 0, Color3.fromRGB(120, 40, 34))
+		newRect(box, 9, 15, 16, 42, -8, Color3.fromRGB(30, 30, 32))
+		newRect(box, 8, 11, 34, 45, 0, Color3.fromRGB(30, 30, 32))
+		newRect(box, 6, 9, 30, 18, 0, Color3.fromRGB(40, 42, 34))
 	end
 
 	return box
@@ -398,7 +409,7 @@ function GtaWeaponWheel.mount(localPlayer: Player, syncRemote: RemoteEvent, relo
 	local slots: { SlotView } = {}
 	local slotButtons: { TextButton } = {}
 
-	for i = 1, 8 do
+	for i = 1, SLOT_COUNT do
 		local angle = -math.pi / 2 + (i - 1) * SLOT_GAP
 		local sx = math.cos(angle) * RING_RADIUS
 		local sy = math.sin(angle) * RING_RADIUS
@@ -759,6 +770,7 @@ function GtaWeaponWheel.mount(localPlayer: Player, syncRemote: RemoteEvent, relo
 			[Enum.KeyCode.Six] = 6,
 			[Enum.KeyCode.Seven] = 7,
 			[Enum.KeyCode.Eight] = 8,
+			[Enum.KeyCode.Nine] = 9,
 		}
 		local slot = keySlots[input.KeyCode]
 		if slot then
