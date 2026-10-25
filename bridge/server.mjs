@@ -87,17 +87,36 @@ const HTML = `<!DOCTYPE html>
   #worldCanvas { width: 100%; height: 100%; display: block; cursor: grab; }
   #worldCanvas:active { cursor: grabbing; }
 
-  /* GTA V HUD Overlay */
-  .hud-testbar {
+  /* GTA V [H] Interaction Menu Overlay */
+  .hud-h-hint {
     position: absolute; top: 14px; left: 18px;
-    display: flex; gap: 6px; padding: 5px 8px;
-    background: rgba(14, 18, 26, 0.84); border: 1px solid rgba(255,255,255,0.14);
-    border-radius: 8px; backdrop-filter: blur(4px); z-index: 10;
+    background: rgba(10, 12, 16, 0.62); border: 1px solid rgba(255,255,255,0.14);
+    color: #d7e0ec; border-radius: 4px; padding: 5px 11px;
+    font-size: 11.5px; font-weight: 700; cursor: pointer; z-index: 10;
   }
-  .hud-btn {
-    border: none; border-radius: 6px; padding: 5px 10px;
-    font-size: 11.5px; font-weight: 700; color: #fff; cursor: pointer;
+  .hud-menu {
+    position: absolute; top: 14px; left: 18px; width: 258px;
+    background: rgba(10, 13, 18, 0.92); border: 2px solid #000;
+    display: none; flex-direction: column; z-index: 12;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.65);
   }
+  .hud-menu-head {
+    background: #184a94; padding: 7px 11px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .hud-menu-head b { font-size: 14px; letter-spacing: 0.4px; display: block; }
+  .hud-menu-head span { font-size: 10px; color: #bfdbfe; font-weight: 700; }
+  .hud-menu-close {
+    background: rgba(12, 24, 48, 0.78); color: #e2e8f0; border: none;
+    border-radius: 4px; padding: 4px 8px; font-size: 10px; font-weight: 700; cursor: pointer;
+  }
+  .hud-menu-body { padding: 6px; display: flex; flex-direction: column; gap: 4px; }
+  .hud-row-btn {
+    background: #161b24; color: #f1f5f9; border: none; border-left: 3px solid #fff;
+    padding: 7px 10px; font-size: 12px; font-weight: 700; cursor: pointer;
+    display: flex; justify-content: space-between; align-items: center; text-align: left;
+  }
+  .hud-row-btn:hover { background: #232c3d; }
   .hud-hint {
     position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
     background: rgba(10,12,16,0.72); border: 1px solid rgba(255,255,255,0.12);
@@ -168,7 +187,7 @@ const HTML = `<!DOCTYPE html>
 <div class="container">
   <div class="header">
     <div>
-      <h1>🌴 GTA V Roblox (Los Santos) — Giai đoạn 1: UI + Nền Thành Phố</h1>
+      <h1>🌴 GTA V Roblox (Los Santos) — Nền Thành Phố v2 (Ghép Khối Phá Huỷ) + HUD [H]</h1>
       <p id="repoMeta">Đang tải thông tin đồng bộ...</p>
     </div>
     <div class="badge"><span class="dot"></span><span id="verText">Live Sync v3 Sẵn Sàng</span></div>
@@ -178,15 +197,23 @@ const HTML = `<!DOCTYPE html>
   <div class="sim-wrap" id="simWrap">
     <canvas id="worldCanvas"></canvas>
 
-    <div class="hud-testbar" id="hudTestBar">
-      <button class="hud-btn" style="background:#b9303a" onclick="simCmd('star')">+1★ Truy Nã</button>
-      <button class="hud-btn" style="background:#343c4c" onclick="simCmd('clear')">Xoá ★</button>
-      <button class="hud-btn" style="background:#248448" onclick="simCmd('cash')">+$500</button>
-      <button class="hud-btn" style="background:#2563eb" onclick="simCmd('armor')">+Giáp</button>
-      <button class="hud-btn" style="background:#4b5563" onclick="simCmd('hp')">Test Máu</button>
+    <button class="hud-h-hint" id="hudOpenHint" onclick="toggleDevMenu()">[H] Mở Menu Test</button>
+
+    <div class="hud-menu" id="hudTestBar">
+      <div class="hud-menu-head">
+        <div><b>LOS SANTOS</b><span>MENU KIỂM THỬ HỆ THỐNG</span></div>
+        <button class="hud-menu-close" onclick="toggleDevMenu()">[H] Đóng</button>
+      </div>
+      <div class="hud-menu-body">
+        <button class="hud-row-btn" style="border-left-color:#ef4444" onclick="simCmd('star')"><span>★ &nbsp;Tăng +1 Sao Truy Nã</span><span style="color:#ef4444;font-size:10px">LSPD</span></button>
+        <button class="hud-row-btn" style="border-left-color:#94a3b8" onclick="simCmd('clear')"><span>☆ &nbsp;Xoá Toàn Bộ Truy Nã</span><span style="color:#94a3b8;font-size:10px">0 ★</span></button>
+        <button class="hud-row-btn" style="border-left-color:#72cc72" onclick="simCmd('cash')"><span>$ &nbsp;Nhận +$500 Tiền Mặt</span><span style="color:#72cc72;font-size:10px">+$500</span></button>
+        <button class="hud-row-btn" style="border-left-color:#3b9be8" onclick="simCmd('armor')"><span>◆ &nbsp;Nạp / Đổi Áo Giáp</span><span style="color:#3b9be8;font-size:10px">ARMOR</span></button>
+        <button class="hud-row-btn" style="border-left-color:#f59e0b" onclick="simCmd('hp')"><span>✚ &nbsp;Thử Sát Thương / Hồi Máu</span><span style="color:#f59e0b;font-size:10px">HP</span></button>
+      </div>
     </div>
 
-    <div class="hud-hint">🖱️ Kéo chuột để xoay Camera 3D • ⌨️ WASD + Shift để đi dạo thử Radar & Tên Đường</div>
+    <div class="hud-hint">🖱️ Kéo chuột xoay 3D • ⌨️ WASD + Shift chạy bộ • Phím [H] mở Menu Test</div>
 
     <div class="hud-topright">
       <div class="stars-row" id="starsRow"></div>
@@ -266,13 +293,17 @@ const state = {
   camYaw: -0.62, camPitch: 0.46, camDist: 235,
   cash: 5000, hp: 100, armor: 65, stamina: 100, wanted: 2,
 };
+window.toggleDevMenu = function() {
+  const tb = document.getElementById("hudTestBar");
+  const hint = document.getElementById("hudOpenHint");
+  const opening = tb.style.display !== "flex";
+  tb.style.display = opening ? "flex" : "none";
+  hint.style.display = opening ? "none" : "block";
+};
 const keys = {};
 window.addEventListener("keydown", e => {
   keys[e.code] = true;
-  if (e.code === "KeyH") {
-    const tb = document.getElementById("hudTestBar");
-    tb.style.display = tb.style.display === "none" ? "flex" : "none";
-  }
+  if (e.code === "KeyH") window.toggleDevMenu();
 });
 window.addEventListener("keyup", e => { keys[e.code] = false; });
 
@@ -374,19 +405,30 @@ for (const r of NS_ROADS) {
     SLABS.push({ cx:r.coord, cy:0.54, cz:z, sx:1.3, sy:0.05, sz:14, col:"#eebc2e" });
   }
 }
+for (const [a, b] of [[-296,-138],[-82,82],[138,296]]) {
+  for (let x = a + 7; x <= b - 7; x += 14) {
+    SLABS.push({ cx:x, cy:1.3, cz:-36, sx:13.2, sy:1.8, sz:1.8, col:"#a8acb2", tall:true });
+  }
+}
+for (const jx of [-150, 150]) {
+  for (let s = 1; s <= 8; s++) {
+    SLABS.push({ cx:jx, cy:0.5, cz:232 + s*7.2, sx:8.5 - s*0.4, sy:1.8, sz:6.5, col:"#606268", tall:true });
+  }
+}
 for (const p of PLOTS) {
-  SLABS.push({ cx:p.cx, cy:0.6, cz:p.cz, sx:p.sx, sy:1.15, sz:p.sz, col:"#b2b6bc" });
+  SLABS.push({ cx:p.cx, cy:0.6, cz:p.cz, sx:p.sx, sy:1.15, sz:p.sz, col:"#b6b9be" });
   if (p.plaza) {
-    SLABS.push({ cx:p.cx, cy:1.2, cz:p.cz, sx:p.sx-18, sy:0.15, sz:p.sz-18, col:"#4e8648" });
-    SLABS.push({ cx:p.cx, cy:1.25, cz:p.cz, sx:28, sy:0.15, sz:p.sz-18, col:"#cec8bc" });
-    SLABS.push({ cx:p.cx, cy:1.25, cz:p.cz, sx:p.sx-18, sy:0.15, sz:24, col:"#cec8bc" });
-    SLABS.push({ cx:p.cx, cy:1.28, cz:p.cz, sx:96, sy:0.15, sz:86, col:"#cec8bc" });
-    SLABS.push({ cx:p.cx, cy:1.7, cz:p.cz-8, sx:44, sy:0.8, sz:32, col:"#40444c" });
-    SLABS.push({ cx:p.cx, cy:2.15, cz:p.cz-8, sx:39, sy:0.15, sz:27, col:"#2a9ebc" });
-    SLABS.push({ cx:p.cx, cy:7.5, cz:p.cz-8, sx:3.6, sy:9.5, sz:3.6, col:"#ce3030", tall:true });
-    SLABS.push({ cx:p.cx, cy:13.2, cz:p.cz-8, sx:3.0, sy:3.0, sz:3.0, col:"#f5c838", tall:true });
+    SLABS.push({ cx:p.cx, cy:1.2, cz:p.cz, sx:p.sx-18, sy:0.15, sz:p.sz-18, col:"#488444" });
+    SLABS.push({ cx:p.cx, cy:1.25, cz:p.cz, sx:30, sy:0.15, sz:p.sz-18, col:"#d4ccbe" });
+    SLABS.push({ cx:p.cx, cy:1.25, cz:p.cz, sx:p.sx-18, sy:0.15, sz:26, col:"#d4ccbe" });
+    SLABS.push({ cx:p.cx, cy:1.9, cz:p.cz-4, sx:88, sy:1.2, sz:74, col:"#c2b9aa", tall:true });
+    SLABS.push({ cx:p.cx, cy:2.8, cz:p.cz-6, sx:44, sy:1.1, sz:32, col:"#363a42", tall:true });
+    SLABS.push({ cx:p.cx, cy:3.1, cz:p.cz-6, sx:39, sy:0.2, sz:27, col:"#26a4c4", tall:true });
+    SLABS.push({ cx:p.cx, cy:8.5, cz:p.cz-6, sx:3.4, sy:10.5, sz:3.2, col:"#d22c2c", tall:true });
+    SLABS.push({ cx:p.cx, cy:15.2, cz:p.cz-6, sx:2.8, sy:2.8, sz:2.8, col:"#f0be2c", tall:true });
   } else {
-    SLABS.push({ cx:p.cx, cy:1.2, cz:p.cz, sx:p.sx-18, sy:0.15, sz:p.sz-18, col:"#8e949e" });
+    SLABS.push({ cx:p.cx, cy:1.2, cz:p.cz, sx:p.sx-18, sy:0.15, sz:p.sz-18, col:"#8a909a" });
+    SLABS.push({ cx:p.cx, cy:1.8, cz:p.cz-(p.cz<0?1:-1)*(p.sz/2-10), sx:p.sx-18, sy:1.1, sz:1.5, col:"#a4a8ae", tall:true });
   }
 }
 const HILLS = [

@@ -390,39 +390,128 @@ function GtaHud.mount(localPlayer: Player, hudRemote: RemoteEvent)
 	streetLabel.Parent = locationCluster
 
 	-- ========================================================================
-	-- 5. THANH TEST NHANH GIAO DIỆN GTA V (GÓC TRÊN TRÁI — BẬT/TẮT PHÍM [H])
+	-- 5. BẢNG MENU TEST PHONG CÁCH GTA V INTERACTION MENU (MẶC ĐỊNH ẨN — BẤM [H] ĐỂ MỞ)
 	-- ========================================================================
+	local openHintBtn = Instance.new("TextButton")
+	openHintBtn.Name = "OpenTestHint"
+	openHintBtn.Position = UDim2.fromOffset(22, 16)
+	openHintBtn.Size = UDim2.fromOffset(112, 24)
+	openHintBtn.BackgroundColor3 = Color3.fromRGB(10, 12, 16)
+	openHintBtn.BackgroundTransparency = 0.42
+	openHintBtn.Font = Enum.Font.GothamBold
+	openHintBtn.TextSize = 11
+	openHintBtn.TextColor3 = Color3.fromRGB(215, 224, 236)
+	openHintBtn.Text = "[H] Mở Menu Test"
+	openHintBtn.Parent = screen
+	local ohCorner = Instance.new("UICorner")
+	ohCorner.CornerRadius = UDim.new(0, 4)
+	ohCorner.Parent = openHintBtn
+
 	local testBar = Instance.new("Frame")
 	testBar.Name = "DevHudTestBar"
 	testBar.Position = UDim2.fromOffset(22, 16)
-	testBar.Size = UDim2.fromOffset(428, 34)
-	testBar.BackgroundColor3 = Color3.fromRGB(14, 18, 26)
-	testBar.BackgroundTransparency = 0.18
+	testBar.Size = UDim2.fromOffset(RADAR_W, 226)
+	testBar.BackgroundColor3 = Color3.fromRGB(10, 13, 18)
+	testBar.BackgroundTransparency = 0.12
+	testBar.BorderSizePixel = 0
+	testBar.Visible = false -- Mặc định đóng để HUD sạch chuẩn GTA V, bấm [H] mới hiện!
 	testBar.Parent = screen
-	local tbCorner = Instance.new("UICorner")
-	tbCorner.CornerRadius = UDim.new(0, 8)
-	tbCorner.Parent = testBar
+
+	local tbStroke = Instance.new("UIStroke")
+	tbStroke.Color = Color3.fromRGB(0, 0, 0)
+	tbStroke.Thickness = 2
+	tbStroke.Parent = testBar
+
+	-- Header xanh đậm đặc trưng của GTA V Interaction Menu
+	local menuHeader = Instance.new("Frame")
+	menuHeader.Size = UDim2.new(1, 0, 0, 42)
+	menuHeader.BackgroundColor3 = Color3.fromRGB(24, 74, 148)
+	menuHeader.BorderSizePixel = 0
+	menuHeader.Parent = testBar
+
+	local menuTitle = Instance.new("TextLabel")
+	menuTitle.Position = UDim2.fromOffset(12, 4)
+	menuTitle.Size = UDim2.new(1, -68, 0, 22)
+	menuTitle.BackgroundTransparency = 1
+	menuTitle.Font = Enum.Font.GothamBlack
+	menuTitle.TextSize = 15
+	menuTitle.TextXAlignment = Enum.TextXAlignment.Left
+	menuTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+	menuTitle.Text = "LOS SANTOS"
+	menuTitle.Parent = menuHeader
+
+	local menuSub = Instance.new("TextLabel")
+	menuSub.Position = UDim2.fromOffset(12, 23)
+	menuSub.Size = UDim2.new(1, -24, 0, 15)
+	menuSub.BackgroundTransparency = 1
+	menuSub.Font = Enum.Font.GothamBold
+	menuSub.TextSize = 10
+	menuSub.TextXAlignment = Enum.TextXAlignment.Left
+	menuSub.TextColor3 = Color3.fromRGB(191, 219, 254)
+	menuSub.Text = "MENU KIỂM THỬ HỆ THỐNG"
+	menuSub.Parent = menuHeader
+
+	local closeTag = Instance.new("TextButton")
+	closeTag.AnchorPoint = Vector2.new(1, 0.5)
+	closeTag.Position = UDim2.new(1, -8, 0.5, 0)
+	closeTag.Size = UDim2.fromOffset(52, 22)
+	closeTag.BackgroundColor3 = Color3.fromRGB(12, 24, 48)
+	closeTag.BackgroundTransparency = 0.25
+	closeTag.Font = Enum.Font.GothamBold
+	closeTag.TextSize = 10
+	closeTag.TextColor3 = Color3.fromRGB(226, 232, 240)
+	closeTag.Text = "[H] Đóng"
+	closeTag.Parent = menuHeader
+	local ctCorner = Instance.new("UICorner")
+	ctCorner.CornerRadius = UDim.new(0, 4)
+	ctCorner.Parent = closeTag
+
+	local function toggleTestMenu()
+		testBar.Visible = not testBar.Visible
+		openHintBtn.Visible = not testBar.Visible
+	end
+	openHintBtn.MouseButton1Click:Connect(toggleTestMenu)
+	closeTag.MouseButton1Click:Connect(toggleTestMenu)
 
 	local testButtonsSpec = {
-		{ label = "+1★ Truy Nã", cmd = "add_star", x = 8, w = 88, col = Color3.fromRGB(185, 48, 58) },
-		{ label = "Xoá ★", cmd = "clear_stars", x = 102, w = 60, col = Color3.fromRGB(52, 60, 76) },
-		{ label = "+$500", cmd = "add_cash", x = 168, w = 68, col = Color3.fromRGB(36, 132, 72) },
-		{ label = "+Giáp", cmd = "add_armor", x = 242, w = 68, col = Color3.fromRGB(37, 99, 235) },
-		{ label = "Test Máu [H ẩn]", cmd = "test_hp", x = 316, w = 104, col = Color3.fromRGB(75, 85, 99) },
+		{ label = "★  Tăng +1 Sao Truy Nã", right = "LSPD", cmd = "add_star", accent = Color3.fromRGB(239, 68, 68) },
+		{ label = "☆  Xoá Toàn Bộ Truy Nã", right = "0 ★", cmd = "clear_stars", accent = Color3.fromRGB(148, 163, 184) },
+		{ label = "$  Nhận +$500 Tiền Mặt", right = "+$500", cmd = "add_cash", accent = Color3.fromRGB(114, 204, 114) },
+		{ label = "◆  Nạp / Đổi Áo Giáp", right = "ARMOR", cmd = "add_armor", accent = Color3.fromRGB(59, 155, 232) },
+		{ label = "✚  Thử Sát Thương / Hồi Máu", right = "HP", cmd = "test_hp", accent = Color3.fromRGB(245, 158, 11) },
 	}
-	for _, bSpec in ipairs(testButtonsSpec) do
+	for idx, bSpec in ipairs(testButtonsSpec) do
+		local rowY = 46 + (idx - 1) * 35
 		local btn = Instance.new("TextButton")
-		btn.Position = UDim2.fromOffset(bSpec.x, 4)
-		btn.Size = UDim2.fromOffset(bSpec.w, 26)
-		btn.BackgroundColor3 = bSpec.col
+		btn.Position = UDim2.fromOffset(6, rowY)
+		btn.Size = UDim2.new(1, -12, 0, 31)
+		btn.BackgroundColor3 = Color3.fromRGB(22, 27, 36)
+		btn.BorderSizePixel = 0
 		btn.Font = Enum.Font.GothamBold
-		btn.TextSize = 11
-		btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-		btn.Text = bSpec.label
+		btn.TextSize = 12
+		btn.TextXAlignment = Enum.TextXAlignment.Left
+		btn.TextColor3 = Color3.fromRGB(241, 245, 249)
+		btn.Text = "   " .. bSpec.label
 		btn.Parent = testBar
-		local c = Instance.new("UICorner")
-		c.CornerRadius = UDim.new(0, 6)
-		c.Parent = btn
+
+		local barLeft = Instance.new("Frame")
+		barLeft.Size = UDim2.new(0, 3, 1, 0)
+		barLeft.BackgroundColor3 = bSpec.accent
+		barLeft.BorderSizePixel = 0
+		barLeft.Parent = btn
+
+		local rightTag = Instance.new("TextLabel")
+		rightTag.AnchorPoint = Vector2.new(1, 0.5)
+		rightTag.Position = UDim2.new(1, -8, 0.5, 0)
+		rightTag.Size = UDim2.fromOffset(54, 18)
+		rightTag.BackgroundTransparency = 1
+		rightTag.Font = Enum.Font.GothamBlack
+		rightTag.TextSize = 10
+		rightTag.TextXAlignment = Enum.TextXAlignment.Right
+		rightTag.TextColor3 = bSpec.accent
+		rightTag.Text = bSpec.right
+		rightTag.Parent = btn
+
 		btn.MouseButton1Click:Connect(function()
 			hudRemote:FireServer(bSpec.cmd)
 		end)
@@ -482,7 +571,7 @@ function GtaHud.mount(localPlayer: Player, hudRemote: RemoteEvent)
 		if input.KeyCode == Enum.KeyCode.LeftShift or input.KeyCode == Enum.KeyCode.RightShift then
 			isSprinting = true
 		elseif input.KeyCode == Enum.KeyCode.H then
-			testBar.Visible = not testBar.Visible
+			toggleTestMenu()
 		end
 	end)
 

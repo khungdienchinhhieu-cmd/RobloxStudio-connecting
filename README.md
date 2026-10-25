@@ -1,64 +1,53 @@
-# 🌴 Dự Án GTA V Roblox — Los Santos Modular
+# 🌴 Dự Án GTA V Roblox — Los Santos Modular (Destructible Edition)
 
-Dự án tái hiện thế giới mở phong cách **Grand Theft Auto V (Los Santos)** trên Roblox Studio theo phương pháp **chia nhỏ từng phân khu độc lập (Modular Architecture)**, kiểm thử trực quan trên **Trình duyệt (Browser Simulator)** trước khi ghép nối trực tiếp vào **Roblox Studio** qua **GitHub Live Bridge (CDN)**.
-
----
-
-## 🧭 Quy Trình Làm Việc Chuẩn (Áp dụng cho mọi Giai đoạn)
-
-1. **Thiết kế Module độc lập:** Mỗi hạng mục (UI, Nền đường, từng Khu phố, Xe cộ, Cửa hàng, LSPD...) nằm trong một `ModuleScript` riêng biệt trong `src/`, bám sát hệ trục tọa độ chuẩn `WorldGrid.luau`.
-2. **Kiểm thử trên Browser của Agent trước:** Chạy bộ mô phỏng 3D + UI từ chính mã Luau để xuất ảnh chụp thực tế, kiểm tra bố cục, màu sắc, tỷ lệ, độ tương phản và sửa cho thật chuẩn đẹp.
-3. **Đồng bộ sang Roblox Studio:** Sau khi đạt chuẩn thẩm mỹ trên Browser, đóng gói vào `studio-sync.json` và đẩy qua CDN để cập nhật tức thì vào `Workspace.LosSantos`.
+Dự án tái hiện thế giới mở **Grand Theft Auto V (Los Santos)** trên Roblox Studio theo kiến trúc **ghép từng phần siêu chi tiết** và **kết cấu khối vật lý có thể phá huỷ (`Modular Destructible Voxels`)**.
 
 ---
 
-## 🗺️ Quy Hoạch Bản Đồ Tổng Thể (`WorldGrid.luau` — `720 × 720 studs`)
+## ⚠️ 3 Nguyên Tắc Thiết Kế Bắt Buộc (Luôn Tuân Thủ)
 
-| Mã Ô Đất | Tên Khu Vực (Cảm hứng GTA V) | Tọa độ X (`studs`) | Tọa độ Z (`studs`) | Trạng thái |
-| :--- | :--- | :---: | :---: | :---: |
-| **North Ridge** | **Vinewood Hills** (Đồi xanh phân tầng phía Bắc) | `[-360, +360]` | `[-360, -240]` | ✅ Đã tạo nền đồi (GĐ 1) |
-| **Plot D1** | **Rockford Hills** (Khu Biệt Thự & Luxury Boutique) | `[-308, -128]` | `[-208, -54]` | ⏳ Ô đất sạch chờ GĐ 3 |
-| **Plot D2** | **Pillbox Hill** (Tháp Tài Chính Maze Bank Downtown) | `[-92, +92]` | `[-208, -54]` | ⏳ Ô đất sạch chờ GĐ 3 |
-| **Plot D3** | **Downtown Vinewood** (Đại lộ Điện Ảnh & Studio) | `[+128, +308]` | `[-208, -54]` | ⏳ Ô đất sạch chờ GĐ 3 |
-| **Plot C1** | **Del Perro** (Los Santos Customs & Cửa Hàng Ven Biển) | `[-308, -128]` | `[-18, +132]` | ⏳ Ô đất sạch chờ GĐ 3-4 |
-| **Plot C2** | **Legion Square** (Quảng Trường Trung Tâm, Hồ Nước & Điểm Spawn) | `[-92, +92]` | `[-18, +132]` | ✅ Đã hoàn thiện (GĐ 1) |
-| **Plot C3** | **Mission Row** (Sở Cảnh Sát LSPD & Khu Thương Mại) | `[+128, +308]` | `[-18, +132]` | ⏳ Ô đất sạch chờ GĐ 3-5 |
-| **South Coast** | **Vespucci Beach & Pacific Ocean** (Phố đi bộ, Cát vàng & Biển) | `[-360, +360]` | `[+164, +360]` | ✅ Đã tạo bờ biển (GĐ 1) |
-
-### Hệ thống 7 Đại lộ Đối xứng (Khít `0.000 stud`)
-- **Trục Đông – Tây (`X = -340 .. +340`):**
-  - `Vinewood Blvd` (`Z = -224`, rộng `32 studs`, 2 làn)
-  - `Olympic Fwy` (`Z = -36`, rộng `36 studs`, đại lộ trung tâm 4 làn vạch đôi vàng)
-  - `Vespucci Blvd` (`Z = +148`, rộng `32 studs`, đại lộ ven biển 2 làn)
-- **Trục Bắc – Nam (`Z = -240 .. +164`, đối xứng qua `X = 0`):**
-  - `Del Perro Fwy` (`X = -324`, rộng `32 studs`, 2 làn)
-  - `San Andreas Ave` (`X = -110`, rộng `36 studs`, 4 làn)
-  - `Alta St` (`X = +110`, rộng `36 studs`, 4 làn)
-  - `Elgin Ave` (`X = +324`, rộng `32 studs`, 2 làn)
+1. **MỘT CÔNG TRÌNH MỘT LẦN — CỰC KỲ CHỈNH CHU:**
+   - Tuyệt đối **không** dựng hàng loạt 5–6 căn nhà sơ sài trong một lượt.
+   - Khi sang phần công trình, **mỗi bước chỉ tập trung làm đúng 1 công trình duy nhất** nhưng đạt độ chi tiết cao nhất (tỷ lệ kiến trúc thật, phào chỉ, bậc tam cấp, khung cửa, ánh sáng, nội thất).
+2. **KẾT CẤU GHÉP KHỐI CHO CƠ CHẾ PHÁ HUỶ (`VoxelBuilder.luau`):**
+   - Toàn bộ hạng mục nổi trên mặt đất (dải phân cách bê tông Jersey, tường chắn đá, bồn cây xây gạch, cọc chắn vỉa hè, lan can bờ biển, bậc thềm, và mọi tòa nhà về sau) đều được ghép từ **các viên/khối vật lý độc lập** có gắn sẵn thuộc tính:
+     - `Destructible = true`
+     - `MaxIntegrity` & `Integrity` (độ bền chịu lực va chạm / vụ nổ)
+     - `FractureGroup` (nhóm kết cấu để tính sập mảng tường / bung gạch)
+   - Chỉ riêng cốt nền địa chất và mặt nhựa đường chính giữ `Destructible = false` để xe và người chơi không rơi xuyên đáy bản đồ.
+3. **TEST TRÊN BROWSER TRƯỚC KHI ĐƯA VÀO ROBLOX STUDIO:**
+   - Sau mỗi phần, chạy thực thi trực tiếp mã Luau trong máy ảo để kết xuất ảnh 3D đa góc độ (Toàn cảnh, Cận cảnh mặt đường/bờ biển/đồi núi, Giao diện HUD) và cập nhật trình mô phỏng trên Browser kiểm tra thật ưng ý rồi mới đồng bộ sang Studio.
 
 ---
 
-## 📋 Lộ Trình Từng Giai Đoạn Nhỏ (Checklist Tiến Độ)
+## 🗺️ Quy Hoạch Bản Đồ Đối Xứng (`WorldGrid.luau` — `720 × 720 studs`)
 
-- [x] **Giai đoạn 1 (Hiện tại): Giao diện GTA V (UI) & Nền Thành Phố Los Santos**
-  - **GTA V HUD (`src/client/UI/GtaHud.luau`):**
-    - Bản đồ nhỏ hình chữ nhật góc dưới trái (**Live Rectangular Minimap**) cuộn & xoay theo vị trí thực tế, hiển thị đường phố, bờ biển, hướng Bắc (`N`) và chớp Xanh-Đỏ khi bị truy nã.
-    - Bộ 3 thanh chỉ số sát đáy Minimap chuẩn GTA V: **Máu (Xanh lá 50%)** • **Giáp (Xanh dương 25%)** • **Thể lực / Kỹ năng (Vàng 25%)**.
-    - Góc trên phải: **5 Sao Truy Nã (`★`)** chớp sáng + **Tiền Mặt (`$`)** kèm hiệu ứng cộng/trừ tiền + Giờ trong game.
-    - Góc dưới phải: Chữ nghệ thuật báo **Tên Đường & Khu Phố** tự động hiện khi di chuyển sang đường mới.
-    - Hộp thông báo đen mờ phía trên Minimap + Phím **`[H]`** bật/tắt nhanh thanh Test thử Sao truy nã, Tiền, Giáp, Máu.
-  - **Nền Thành Phố (`src/shared/World/CityFoundation.luau`):**
-    - Mạng lưới đại lộ nhựa Asphalt đen mịn, vạch đôi vàng California, vạch phân làn trắng đứt nét, vạch dừng ngã tư & vạch qua đường.
-    - Vỉa hè bê tông giật cấp có bó vỉa xám/đỏ, cống thoát nước mưa, nắp hố ga kim loại và các **ô nền dự án (`Plot Pads`)** đánh dấu sẵn cho các giai đoạn sau.
-    - Bờ biển cát thoải **Vespucci Beach** nối ra mặt nước biển Thái Bình Dương xanh ngọc (phía Nam) và dải đồi **Vinewood Hills** phân tầng (phía Bắc).
-- [ ] **Giai đoạn 2: Quảng trường Legion Square, Hàng cọ California & Đèn đường đôi Los Santos**
-- [ ] **Giai đoạn 3: Hệ thống Siêu xe GTA V (Vật lý lái mượt, Đồng hồ tốc độ, Đài Radio) & Garage LS Customs**
-- [ ] **Giai đoạn 4: Cụm Cao ốc Downtown (Tháp Maze Bank & Căn hộ Eclipse Towers có thang máy)**
-- [ ] **Giai đoạn 5: Chuỗi Cửa hàng Tương tác (Siêu thị 24/7, Burger Shot, Cây ATM Maze Bank)**
-- [ ] **Giai đoạn 6: Khu vui chơi Cầu cảng Del Perro Pier & Vòng quay Mặt Trời phát sáng**
-- [ ] **Giai đoạn 7: Cư dân NPC, Xe cộ lưu thông & Hệ thống Cảnh sát LSPD theo Sao Truy Nã (1★–5★)**
+| Mã Khu | Tên Khu Vực (Los Santos) | Tọa độ X (`studs`) | Tọa độ Z (`studs`) | Trạng thái |
+| :--- | :--- | :---: | :---: | :--- |
+| **North Ridge** | **Vinewood Hills** (Đồi vát nghiêng tự nhiên, vách đá & tường chắn ghép khối) | `[-360, +360]` | `[-360, -240]` | ✅ Hoàn thành ở Nền v2 |
+| **Plot D1** | **Rockford Hills** (Ô móng kỹ thuật sạch chờ công trình) | `[-308, -128]` | `[-208, -54]` | ⏳ Chờ dựng từng công trình |
+| **Plot D2** | **Pillbox Hill** (Ô móng kỹ thuật sạch chờ Tháp Maze Bank) | `[-92, +92]` | `[-208, -54]` | ⏳ Chờ dựng từng công trình |
+| **Plot D3** | **Downtown Vinewood** (Ô móng kỹ thuật sạch chờ công trình) | `[+128, +308]` | `[-208, -54]` | ⏳ Chờ dựng từng công trình |
+| **Plot C1** | **Del Perro** (Ô móng kỹ thuật sạch chờ LS Customs) | `[-308, -128]` | `[-18, +132]` | ⏳ Chờ dựng từng công trình |
+| **Plot C2** | **Legion Square** (Nền quảng trường bậc cấp, hồ nước & tường gạch ghép khối) | `[-92, +92]` | `[-18, +132]` | ✅ Hoàn thành ở Nền v2 |
+| **Plot C3** | **Mission Row** (Ô móng kỹ thuật sạch chờ Đồn LSPD) | `[+128, +308]` | `[-18, +132]` | ⏳ Chờ dựng từng công trình |
+| **South Coast** | **Vespucci Beach** (Kè đá ghép khối, cầu thang xuống biển, sàn gỗ, kè chắn sóng) | `[-360, +360]` | `[+164, +360]` | ✅ Hoàn thành ở Nền v2 |
 
 ---
 
-## 🔗 Lệnh Kết Nối Trực Tiếp Vào Roblox Studio (Command Bar)
-Mở **View → Command Bar** trong Roblox Studio và dán dòng lệnh hiển thị trên bảng **Live Preview** (hoặc trong tin nhắn mới nhất của Agent) để đồng bộ tự động qua GitHub CDN.
+## 📋 Lộ Trình Triển Khai Từng Bước Nhỏ
+
+- [x] **Bước 1 (Đang hoàn thiện v2): GTA V HUD (Phím `[H]` mở Menu Test) + Đại Tu Toàn Bộ Nền Thành Phố Ghép Khối**
+  - **UI (`GtaHud.luau`):** Màn hình mặc định sạch chuẩn GTA V 100%; nhấn phím **`[H]`** để đóng/mở bảng **Los Santos Dev Menu** (thử Sao truy nã, Tiền, Giáp, Máu).
+  - **Nền Thành Phố Siêu Chi Tiết (`CityFoundation.luau` + `VoxelBuilder.luau`):**
+    - Hệ thống đường nhựa có rãnh thoát nước bê tông (`Gutter`), song chắn rác kim loại âm vỉa hè, dốc hạ vỉa hè cho người đi bộ tại 48 góc ngã tư, đinh phản quang phân làn (`Botts' Dots`), mũi tên chỉ hướng & vạch `STOP`.
+    - Đại lộ trung tâm `Olympic Fwy` có **dải phân cách bê tông K-Rail (Jersey Barriers) ghép từ từng khối rời `Destructible = true`**.
+    - Bờ biển **Vespucci Beach** có bờ kè đá xây từng viên gạch so le (`Destructible = true`), 3 cụm cầu thang đá đi bộ xuống bãi cát, đường dạo lát ván gỗ, mỏm đá chắn sóng vươn ra biển và 4 tầng màu nước biển chuyển sắc.
+    - Dãy đồi **Vinewood Hills** tạo hình sườn dốc tự nhiên bằng khối vát đa diện (`WedgePart`), vách đá sa thạch, đường mòn sườn đồi và tường kè đá ghép khối chống sạt lở.
+    - Nền quảng trường **Legion Square** lát gạch đa sắc, bồn cây xây từ từng viên đá rời, cọc tiêu bảo vệ vỉa hè (`Destructible = true`) và 5 ô móng công trình kỹ thuật phẳng phiu có lối xe chạy vào (`Driveway Apron`).
+- [ ] **Bước 2: Hạ tầng Đường phố (Đèn giao thông ngã tư, Đèn đường đôi & Hàng cọ California — ghép đoạn có thể húc đổ)**
+- [ ] **Bước 3: Công trình #1 — Garage Độ Xe Los Santos Customs (`Plot C1` — làm duy nhất 1 công trình cực chỉnh chu, tường gạch/cửa cuốn ghép khối phá huỷ)**
+- [ ] **Bước 4: Hệ thống Xe Hơi GTA V & Cơ chế Va chạm / Phá huỷ Khối Vật Lý (`DestructionEngine`)**
+- [ ] **Bước 5: Công trình #2 — Cửa hàng Tiện lợi 24/7 Supermarket (`Plot C3` — full nội thất kệ hàng & kính vỡ từng mảnh)**
+- [ ] **Bước 6: Công trình #3 — Đồn Cảnh Sát Mission Row LSPD (`Plot C3`)**
+- [ ] **Bước 7: Công trình #4 — Tháp Tài Chính Maze Bank Tower (`Plot D2`)**
