@@ -172,6 +172,39 @@
       },
       "modulePath": "src/shared/World/Modules/Infra_StreetLightsAndPalms.luau",
       "spec": "Đặt trụ đèn tín hiệu Đỏ-Vàng-Xanh vươn cần ngang tại các ngã tư chính (mép vỉa hè Y = 1.15, tuyệt đối không lấn xuống lòng đường nhựa hay chặn cổng garage/chỗ đậu xe của các ô khác — đọc kỹ agent-radio trước khi đặt!), hàng cây cọ thân đốt cong nhẹ dọc Vespucci Blvd & lối dạo biển, ghế đá & thùng rác công cộng — tất cả gắn máu ẩn integrity để siêu xe tông gãy vỡ."
+    },
+    {
+      "taskId": "UI_WEAPON_WHEEL",
+      "order": 35,
+      "status": "completed",
+      "title": "Đại tu HUD + Vòng chọn súng chuẩn GTA V",
+      "district": "CLIENT UI",
+      "plotId": "N/A",
+      "modulePath": "src/client/UI/GtaWeaponWheel.luau",
+      "spec": "8 ô vũ khí (Unarmed/Bat/Pistol/AP Pistol/Micro SMG/Carbine/Shotgun/Sniper), giữ TAB chọn theo hướng chuột, thả để trang bị, phím 1-8 đổi nhanh, đạn thật + [R] nạp, thẻ vũ khí góc dưới phải. HUD đại tu: radar bo góc, 3 thanh xếp chồng, panel tiền, feed, menu H. Demo /hud + 33 test PASS."
     }
-  ]
+  ],
+  "uiContract": {
+    "guide": "docs/UI_GUIDE.md",
+    "hudPalette": {
+      "panel": "#0A0C10",
+      "panelLight": "#12171F",
+      "line": "#26303F",
+      "text": "#F1F5F9",
+      "dim": "#94A3B8",
+      "cash": "#72CC72"
+    },
+    "reservedScreenAreas": {
+      "radar": "left 22, bottom 20, 258x168 (+ 3 thanh chỉ số cao 22 dưới radar)",
+      "topRightCash": "right 26, top 16, 292x110",
+      "weaponCard": "right 26, bottom 86, 252x76",
+      "location": "right 26, bottom 22"
+    },
+    "forbiddenUiPatterns": [
+      "TextScaled trên biển hiệu",
+      "Frame mới mỗi RenderStepped",
+      "che 4 vùng reservedScreenAreas"
+    ]
+  },
+  "workerPrompt": "agents/WORKER_PROMPT_V3.md"
 }

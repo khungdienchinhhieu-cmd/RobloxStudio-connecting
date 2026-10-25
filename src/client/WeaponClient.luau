@@ -13,7 +13,7 @@ local Workspace = game:GetService("Workspace")
 
 local WeaponClient = {}
 
-local function drawLocalTracer(startPos: Vector3, endPos: Vector3)
+local function drawLocalTracer(startPos: Vector3, endPos: Vector3, color: Color3?, thick: number?)
 	local dist = (endPos - startPos).Magnitude
 	if dist < 0.5 then
 		return
@@ -25,9 +25,10 @@ local function drawLocalTracer(startPos: Vector3, endPos: Vector3)
 	beam.CanQuery = false
 	beam.CastShadow = false
 	beam.Material = Enum.Material.Neon
-	beam.Color = Color3.fromRGB(255, 214, 102)
+	beam.Color = color or Color3.fromRGB(255, 214, 102)
 	beam.Transparency = 0.25
-	beam.Size = Vector3.new(0.09, 0.09, dist)
+	local t = thick or 0.09
+	beam.Size = Vector3.new(t, t, dist)
 	beam.CFrame = CFrame.lookAt((startPos + endPos) * 0.5, endPos)
 	beam.Parent = Workspace
 	Debris:AddItem(beam, 0.055)
@@ -107,7 +108,25 @@ function WeaponClient.mount(localPlayer: Player, fireRemote: RemoteEvent)
 		return nil
 	end
 
+	local function uiBlocksCombat(): boolean
+		if localPlayer:GetAttribute("WeaponWheelOpen") == true then
+			return true
+		end
+		if localPlayer:GetAttribute("UIMenuOpen") == true then
+			return true
+		end
+		local char = localPlayer.Character
+		local hum = if char then char:FindFirstChildOfClass("Humanoid") else nil
+		if hum and hum.SeatPart then
+			return true -- đang lái xe thì không bắn
+		end
+		return false
+	end
+
 	local function tryFireOnce(tool: Tool)
+		if uiBlocksCombat() then
+			return
+		end
 		local cd = tonumber(tool:GetAttribute("FireCooldown")) or 0.16
 		local now = os.clock()
 		if now - lastLocalShot < cd then
@@ -132,10 +151,36 @@ function WeaponClient.mount(localPlayer: Player, fireRemote: RemoteEvent)
 		params.FilterType = Enum.RaycastFilterType.Exclude
 		local char = localPlayer.Character
 		params.FilterDescendantsInstances = if char then { char } else {}
+		local isMelee = tool:GetAttribute("IsMelee") == true
+		local pellets = math.max(1, tonumber(tool:GetAttribute("Pellets")) or 1)
+
+		if isMelee then
+			-- Cận chiến: vệt chớp ngắn màu trắng thay cho tia đạn
+			local res = Workspace:Raycast(origin, dir.Unit * 7, params)
+			local endPt = if res then res.Position else (origin + dir.Unit * 5)
+			drawLocalTracer(origin, endPt, Color3.fromRGB(226, 232, 240), 0.16)
+			fireRemote:FireServer(origin, targetPos)
+			return
+		end
+
 		local res = Workspace:Raycast(origin, dir.Unit * 350, params)
 		local endPt = if res then res.Position else (origin + dir.Unit * 180)
 
-		drawLocalTracer(origin, endPt)
+		if pellets > 1 then
+			-- SHOTGUN: vẽ 3 tia loe nhẹ cho cảm giác tản đạn (server vẫn bắn đủ 8 viên)
+			for i = -1, 1 do
+				local spreadDir = (dir.Unit + Vector3.new(0.035 * i, 0.02 * math.abs(i), 0) + Vector3.new(
+					math.random() - 0.5,
+					math.random() - 0.5,
+					math.random() - 0.5
+				) * 0.03).Unit
+				local r = Workspace:Raycast(origin, spreadDir * 150, params)
+				local e = if r then r.Position else (origin + spreadDir * 120)
+				drawLocalTracer(origin, e, Color3.fromRGB(255, 196, 120), 0.12)
+			end
+		else
+			drawLocalTracer(origin, endPt)
+		end
 		fireRemote:FireServer(origin, targetPos)
 	end
 

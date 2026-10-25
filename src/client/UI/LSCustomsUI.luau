@@ -297,6 +297,8 @@ function LSCustomsUI.mount(localPlayer: Player)
 
 	local function setPanelOpen(open: boolean)
 		menuOpen = open
+		-- Cờ dùng chung: Vòng chọn súng / HUD sẽ nhường phím 1..8 & TAB khi menu này mở
+		localPlayer:SetAttribute("UIMenuOpen", open)
 		panel.Visible = open
 		if open then
 			panel.Size = UDim2.fromOffset(356, 268)

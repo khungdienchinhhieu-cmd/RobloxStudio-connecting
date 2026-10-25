@@ -1072,6 +1072,11 @@ const server = http.createServer(async (req, res) => {
 		res.end(fs.readFileSync(path.join(REPO_ROOT, "bridge", "lscustoms-demo.html"), "utf8"));
 		return;
 	}
+	if (url.pathname === "/hud" || url.pathname === "/weapon-wheel") {
+		res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" });
+		res.end(fs.readFileSync(path.join(REPO_ROOT, "bridge", "hud-demo.html"), "utf8"));
+		return;
+	}
 	if (url.pathname === "/api/radar") {
 		res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
 		res.end(JSON.stringify(cachedRadar));
