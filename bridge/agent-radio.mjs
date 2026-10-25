@@ -41,7 +41,7 @@ function loadBoard() {
 }
 
 function scanRemoteState() {
-	runGit(["fetch", "origin", "--prune", "--quiet"], true);
+	runGit(["fetch", "origin", "+refs/heads/*:refs/remotes/origin/*", "--prune", "--quiet"], true);
 
 	const rawBranches = runGit(["branch", "-r", "--format=%(refname:short)"], true);
 	const remoteBranches = rawBranches
