@@ -1,6 +1,7 @@
--- Arena ↔ Roblox Studio GitHub Live Bridge (Rojo Auto-Sync + Studio Build Actions)
--- Kết nối trực tiếp từ Roblox Studio tới nhánh làm việc trên GitHub (api.github.com)
--- Không cần cài Rojo CLI, không bị chặn cookie/proxy, hỗ trợ Ctrl+Z (Undo) đầy đủ.
+-- Arena ↔ Roblox Studio Live Bridge v3 (Atom Commit Stream + Raw CDN — Không giới hạn API 403!)
+-- Cơ chế:
+--   1. Đọc trực tiếp commit SHA mới nhất từ Atom Feed của github.com (max-age=0, không tốn quota 60 req/h của api.github.com)
+--   2. Tải gói đồng bộ từ raw.githubusercontent.com/<COMMIT_SHA>/studio-sync.json (tức thì, không dính cache cũ, không bị lỗi HTTP 403)
 
 local HttpService = game:GetService("HttpService")
 local RunService = game:GetService("RunService")
@@ -22,7 +23,7 @@ if hasPlugin and not RunService:IsEdit() then
 	return
 end
 
--- Dọn dẹp phiên cũ nếu chạy lại lệnh trong Command Bar hoặc reload plugin
+-- Dọn sạch vòng lặp cũ (bao gồm bản v1/v2 bị dính 403 trước đó)
 if _G.__ARENA_LIVE_BRIDGE_CLEANUP then
 	pcall(_G.__ARENA_LIVE_BRIDGE_CLEANUP)
 	_G.__ARENA_LIVE_BRIDGE_CLEANUP = nil
@@ -31,45 +32,34 @@ end
 local GITHUB_OWNER = "khungdienchinhhieu-cmd"
 local GITHUB_REPO = "RobloxStudio-connecting"
 local GITHUB_BRANCH = "arena/b37b6115-robloxstudio-connecting"
-local ENCODED_BRANCH = "arena%2Fb37b6115-robloxstudio-connecting"
 
-local SYNC_API_URL = string.format(
-	"https://api.github.com/repos/%s/%s/contents/studio-sync.json?ref=%s",
+local ATOM_FEED_URL = string.format(
+	"https://github.com/%s/%s/commits/%s.atom",
 	GITHUB_OWNER,
 	GITHUB_REPO,
-	ENCODED_BRANCH
+	GITHUB_BRANCH
 )
-local PLUGIN_API_URL = string.format(
-	"https://api.github.com/repos/%s/%s/contents/plugin/StudioLiveBridge.server.luau?ref=%s",
-	GITHUB_OWNER,
-	GITHUB_REPO,
-	ENCODED_BRANCH
-)
+
+local function buildRawUrl(refOrSha, filePath)
+	return string.format(
+		"https://raw.githubusercontent.com/%s/%s/%s/%s",
+		GITHUB_OWNER,
+		GITHUB_REPO,
+		refOrSha,
+		filePath
+	)
+end
 
 local state = {
 	connected = false,
 	running = true,
 	pollGen = 0,
-	lastEtag = "",
+	lastCommitSha = "",
 	syncedVersion = 0,
 	syncedHash = "",
 	syncedFiles = 0,
 	lastStatus = "Sẵn sàng kết nối",
-	forceBypassCache = false,
 }
-
-local function getHeaderCaseInsensitive(headers, targetName)
-	if type(headers) ~= "table" then
-		return nil
-	end
-	local lowerTarget = string.lower(targetName)
-	for k, v in pairs(headers) do
-		if string.lower(tostring(k)) == lowerTarget then
-			return tostring(v)
-		end
-	end
-	return nil
-end
 
 -- ============================================================================
 -- HỖ TRỢ UNDO / REDO (Ctrl + Z)
@@ -224,7 +214,7 @@ local function reconcileNode(parentInst, nodeName, nodeSpec, stats)
 end
 
 -- ============================================================================
--- THỰC THI CÁC TÁC VỤ DỰNG MAP / UI / INSTANCE TỪ AI (ACTIONS)
+-- THỰC THI CÁC TÁC VỤ DỰNG MAP / THÀNH PHỐ TỪ AI (ACTIONS)
 -- ============================================================================
 local function hasExecutedAction(actionId)
 	local raw = ServerStorage:GetAttribute("__ArenaExecutedActions") or ""
@@ -298,18 +288,16 @@ local function applyBundle(bundle)
 	state.syncedFiles = stats.totalScripts
 	state.lastStatus = string.format("Đã đồng bộ lúc %s", os.date("%H:%M:%S"))
 
-	if stats.created > 0 or stats.updated > 0 or stats.deleted > 0 or ranActions > 0 then
-		print(
-			string.format(
-				"[Arena Bridge] ✅ Đồng bộ thành công Rojo v%s (+%d mới, ~%d cập nhật, -%d xoá, %d tác vụ)",
-				tostring(bundle.version),
-				stats.created,
-				stats.updated,
-				stats.deleted,
-				ranActions
-			)
+	print(
+		string.format(
+			"[Arena Bridge] ✅ Đồng bộ thành công Rojo v%s (+%d mới, ~%d cập nhật, -%d xoá, %d tác vụ)",
+			tostring(bundle.version),
+			stats.created,
+			stats.updated,
+			stats.deleted,
+			ranActions
 		)
-	end
+	)
 	return true
 end
 
@@ -333,7 +321,6 @@ local function buildExplorerSummary()
 		"Workspace",
 		"ReplicatedStorage",
 		"ServerScriptService",
-		"ServerStorage",
 		"StarterGui",
 		"StarterPlayer",
 	}
@@ -341,20 +328,12 @@ local function buildExplorerSummary()
 		if depth > maxDepth then
 			return
 		end
-		local extra = ""
-		if inst:IsA("BasePart") then
-			local p = inst.Position
-			extra = string.format(" (Pos: %.1f, %.1f, %.1f)", p.X, p.Y, p.Z)
-		end
-		table.insert(lines, string.format("%s- %s [%s]%s", indent, inst.Name, inst.ClassName, extra))
+		table.insert(lines, string.format("%s- %s [%s]", indent, inst.Name, inst.ClassName))
 		local children = inst:GetChildren()
-		for i = 1, math.min(#children, 35) do
+		for i = 1, math.min(#children, 30) do
 			if children[i].Name ~= "Camera" and children[i].Name ~= "Terrain" then
 				dumpInst(children[i], indent .. "  ", depth + 1, maxDepth)
 			end
-		end
-		if #children > 35 then
-			table.insert(lines, indent .. "  ... (+" .. tostring(#children - 35) .. " đối tượng khác)")
 		end
 	end
 
@@ -363,7 +342,7 @@ local function buildExplorerSummary()
 			return game:GetService(srvName)
 		end)
 		if okS and srv then
-			dumpInst(srv, "", 1, 3)
+			dumpInst(srv, "", 1, 2)
 		end
 	end
 	return table.concat(lines, "\n")
@@ -381,6 +360,7 @@ end
 
 local startPolling
 local stopPolling
+local syncOnceNow
 
 local function createBridgeUi(container, isFloating)
 	local root = Instance.new("Frame")
@@ -396,7 +376,7 @@ local function createBridgeUi(container, isFloating)
 		corner.CornerRadius = UDim.new(0, 10)
 		corner.Parent = root
 		local stroke = Instance.new("UIStroke")
-		stroke.Color = Color3.fromRGB(59, 130, 246)
+		stroke.Color = Color3.fromRGB(16, 185, 129)
 		stroke.Thickness = 1.5
 		stroke.Parent = root
 	else
@@ -418,7 +398,7 @@ local function createBridgeUi(container, isFloating)
 	title.TextSize = 13
 	title.TextXAlignment = Enum.TextXAlignment.Left
 	title.TextColor3 = Color3.fromRGB(240, 245, 255)
-	title.Text = "⚡ Arena ↔ Studio Live Bridge"
+	title.Text = "⚡ Arena ↔ Studio Bridge v3 (CDN)"
 	title.Parent = root
 
 	if isFloating then
@@ -450,7 +430,7 @@ local function createBridgeUi(container, isFloating)
 	statusLabel.TextWrapped = true
 	statusLabel.TextXAlignment = Enum.TextXAlignment.Left
 	statusLabel.TextColor3 = Color3.fromRGB(110, 231, 183)
-	statusLabel.Text = "Đang khởi tạo..."
+	statusLabel.Text = "Đang kết nối CDN..."
 	statusLabel.Parent = root
 
 	local repoLabel = Instance.new("TextLabel")
@@ -461,7 +441,7 @@ local function createBridgeUi(container, isFloating)
 	repoLabel.TextSize = 10
 	repoLabel.TextXAlignment = Enum.TextXAlignment.Left
 	repoLabel.TextColor3 = Color3.fromRGB(148, 163, 184)
-	repoLabel.Text = GITHUB_REPO .. " @ " .. GITHUB_BRANCH
+	repoLabel.Text = "CDN Trực Tiếp • Không giới hạn 403"
 	repoLabel.Parent = root
 
 	local syncNowBtn = Instance.new("TextButton")
@@ -542,14 +522,12 @@ local function createBridgeUi(container, isFloating)
 		spCorner.Parent = savePluginBtn
 
 		savePluginBtn.MouseButton1Click:Connect(function()
-			local okP, resp = pcall(function()
-				return HttpService:RequestAsync({
-					Url = PLUGIN_API_URL,
-					Method = "GET",
-					Headers = { Accept = "application/vnd.github.raw+json" },
-				})
+			local ref = if state.lastCommitSha ~= "" then state.lastCommitSha else GITHUB_BRANCH
+			local rawPluginUrl = buildRawUrl(ref, "plugin/StudioLiveBridge.server.luau")
+			local okP, body = pcall(function()
+				return HttpService:GetAsync(rawPluginUrl, true)
 			end)
-			if okP and resp and resp.Success then
+			if okP and type(body) == "string" and #body > 100 then
 				local old = ServerStorage:FindFirstChild("ArenaLiveBridgePlugin")
 				if old then
 					old:Destroy()
@@ -557,7 +535,7 @@ local function createBridgeUi(container, isFloating)
 				local s = Instance.new("Script")
 				s.Name = "ArenaLiveBridgePlugin"
 				s.Archivable = false
-				s.Source = resp.Body
+				s.Source = body
 				s.Parent = ServerStorage
 				Selection:Set({ s })
 				state.lastStatus = "Chuột phải ArenaLiveBridgePlugin -> Save as Local Plugin"
@@ -566,20 +544,17 @@ local function createBridgeUi(container, isFloating)
 					"[Arena Bridge] Đã tạo ServerStorage.ArenaLiveBridgePlugin! Hãy chuột phải vào nó trong Explorer -> chọn 'Save as Local Plugin...'"
 				)
 			else
-				warn("[Arena Bridge] Không tải được mã nguồn plugin từ GitHub.")
+				warn("[Arena Bridge] Không tải được mã nguồn plugin từ CDN.")
 			end
 		end)
 	end
 
 	syncNowBtn.MouseButton1Click:Connect(function()
-		state.lastEtag = ""
+		state.lastCommitSha = ""
 		state.syncedHash = ""
-		state.forceBypassCache = true
-		state.lastStatus = "Đang kiểm tra bản mới trên GitHub..."
+		state.lastStatus = "Đang tải bản mới nhất từ GitHub CDN..."
 		updateUi()
-		if not state.connected then
-			startPolling()
-		end
+		task.spawn(syncOnceNow)
 	end)
 
 	toggleBtn.MouseButton1Click:Connect(function()
@@ -603,7 +578,7 @@ local function createBridgeUi(container, isFloating)
 	table.insert(uiUpdaters, function()
 		if state.connected then
 			statusLabel.Text = string.format(
-				"● ĐÃ KẾT NỐI TRỰC TIẾP | Rojo v%d (%d script)\n%s",
+				"● ĐÃ KẾT NỐI CDN | Rojo v%d (%d script)\n%s",
 				state.syncedVersion,
 				state.syncedFiles,
 				state.lastStatus
@@ -621,8 +596,73 @@ local function createBridgeUi(container, isFloating)
 end
 
 -- ============================================================================
--- VÒNG LẶP ĐỒNG BỘ QUA GITHUB REST API + ETAG (0 TỐN RATE LIMIT KHI CHỜ)
+-- CƠ CHẾ ĐỒNG BỘ QUA ATOM FEED + RAW CDN (KHÔNG BAO GIỜ BỊ HTTP 403!)
 -- ============================================================================
+local syncingLock = false
+
+syncOnceNow = function()
+	if syncingLock then
+		return
+	end
+	syncingLock = true
+
+	local okAtom, atomResp = pcall(function()
+		return HttpService:RequestAsync({
+			Url = ATOM_FEED_URL .. "?_t=" .. tostring(os.time()),
+			Method = "GET",
+			Headers = {
+				["Cache-Control"] = "no-cache",
+			},
+		})
+	end)
+
+	local targetRef = GITHUB_BRANCH
+	local detectedSha = ""
+
+	if okAtom and atomResp and atomResp.StatusCode == 200 and type(atomResp.Body) == "string" then
+		detectedSha = string.match(atomResp.Body, "Commit/(%x+)") or ""
+		if detectedSha ~= "" then
+			targetRef = detectedSha
+		end
+	end
+
+	-- Nếu SHA không đổi so với lần trước thì không cần tải lại file lớn
+	if detectedSha ~= "" and detectedSha == state.lastCommitSha and state.syncedHash ~= "" then
+		state.lastStatus = "Trực tuyến (Đã ở bản mới nhất)"
+		updateUi()
+		syncingLock = false
+		return
+	end
+
+	local bundleUrl = buildRawUrl(targetRef, "studio-sync.json") .. "?_t=" .. tostring(os.time())
+	local okRaw, rawBody = pcall(function()
+		return HttpService:GetAsync(bundleUrl, true)
+	end)
+
+	if okRaw and type(rawBody) == "string" then
+		local okJson, bundle = pcall(function()
+			return HttpService:JSONDecode(rawBody)
+		end)
+		if okJson and type(bundle) == "table" then
+			if detectedSha ~= "" then
+				state.lastCommitSha = detectedSha
+			end
+			if tostring(bundle.hash or "") ~= state.syncedHash then
+				applyBundle(bundle)
+			else
+				state.lastStatus = "Trực tuyến (Đã đồng bộ mới nhất)"
+			end
+		else
+			state.lastStatus = "Lỗi đọc dữ liệu JSON"
+		end
+	else
+		state.lastStatus = "Đang thử lại CDN..."
+	end
+
+	updateUi()
+	syncingLock = false
+end
+
 stopPolling = function(reason)
 	state.connected = false
 	state.pollGen += 1
@@ -634,65 +674,13 @@ startPolling = function()
 	state.pollGen += 1
 	local myGen = state.pollGen
 	state.connected = true
-	state.lastStatus = "Đang kết nối tới GitHub..."
+	state.lastStatus = "Đang tải Thành Phố từ GitHub CDN..."
 	updateUi()
 
 	task.spawn(function()
 		while state.running and state.connected and state.pollGen == myGen do
-			local reqHeaders = {
-				["Accept"] = "application/vnd.github.raw+json",
-			}
-			local targetUrl = SYNC_API_URL
-			if state.forceBypassCache then
-				state.forceBypassCache = false
-				reqHeaders["Cache-Control"] = "no-cache"
-				targetUrl = SYNC_API_URL .. "&_t=" .. tostring(os.time())
-			elseif state.lastEtag ~= "" then
-				reqHeaders["If-None-Match"] = state.lastEtag
-			end
-
-			local okReq, resp = pcall(function()
-				return HttpService:RequestAsync({
-					Url = targetUrl,
-					Method = "GET",
-					Headers = reqHeaders,
-				})
-			end)
-
-			if not (state.running and state.connected and state.pollGen == myGen) then
-				break
-			end
-
-			if okReq and resp then
-				if resp.StatusCode == 200 then
-					local newEtag = getHeaderCaseInsensitive(resp.Headers, "etag")
-					if newEtag and newEtag ~= "" then
-						state.lastEtag = newEtag
-					end
-					local okJson, bundle = pcall(function()
-						return HttpService:JSONDecode(resp.Body)
-					end)
-					if okJson and type(bundle) == "table" then
-						if tostring(bundle.hash or "") ~= state.syncedHash then
-							applyBundle(bundle)
-						else
-							state.lastStatus = "Trực tuyến (Đã đồng bộ mới nhất)"
-						end
-					end
-					updateUi()
-				elseif resp.StatusCode == 304 then
-					state.lastStatus = "Trực tuyến (Đang theo dõi thay đổi...)"
-					updateUi()
-				else
-					state.lastStatus = "GitHub HTTP " .. tostring(resp.StatusCode)
-					updateUi()
-				end
-			else
-				state.lastStatus = "Lỗi mạng/HTTP: " .. string.sub(tostring(resp), 1, 42)
-				updateUi()
-			end
-
-			task.wait(3.5)
+			syncOnceNow()
+			task.wait(8)
 		end
 	end)
 end
@@ -703,7 +691,7 @@ if hasPlugin then
 	local toolbar = pluginObj:CreateToolbar("Arena Bridge")
 	local pluginBtn = toolbar:CreateButton(
 		"Arena Live Bridge",
-		"Mở bảng kết nối trực tiếp với Arena AI qua GitHub",
+		"Mở bảng kết nối trực tiếp với Arena AI qua GitHub CDN",
 		"rbxassetid://4458901886"
 	)
 	pluginBtn.ClickableWhenViewportHidden = true
@@ -717,8 +705,8 @@ if hasPlugin then
 		300,
 		205
 	)
-	local dockWidget = pluginObj:CreateDockWidgetPluginGui("ArenaGitHubBridgeWidget_v2", widgetInfo)
-	dockWidget.Title = "Arena Live Bridge"
+	local dockWidget = pluginObj:CreateDockWidgetPluginGui("ArenaGitHubBridgeWidget_v3", widgetInfo)
+	dockWidget.Title = "Arena Live Bridge v3"
 	createBridgeUi(dockWidget, false)
 
 	pluginBtn.Click:Connect(function()
@@ -750,5 +738,5 @@ _G.__ARENA_LIVE_BRIDGE_CLEANUP = function()
 	end
 end
 
-print("[Arena Bridge] 🚀 Đang kết nối trực tiếp tới GitHub (" .. GITHUB_OWNER .. "/" .. GITHUB_REPO .. ")...")
+print("[Arena Bridge v3] 🚀 Kết nối trực tiếp qua GitHub CDN (không giới hạn API 403)...")
 startPolling()

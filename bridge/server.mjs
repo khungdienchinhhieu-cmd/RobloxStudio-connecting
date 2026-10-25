@@ -1,6 +1,7 @@
 import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
+import { execFileSync } from "node:child_process";
 import {
 	REPO_ROOT,
 	GITHUB_OWNER,
@@ -10,6 +11,14 @@ import {
 	compileSyncBundle,
 	buildGitHubCommandBarOneLiner,
 } from "./compiler.mjs";
+
+function getHeadSha() {
+	try {
+		return execFileSync("git", ["rev-parse", "HEAD"], { cwd: REPO_ROOT, encoding: "utf8" }).trim();
+	} catch {
+		return GITHUB_BRANCH;
+	}
+}
 
 const PORT = Number(process.env.BRIDGE_PORT || 8080);
 const HOST = "0.0.0.0";
@@ -216,7 +225,7 @@ const server = http.createServer((req, res) => {
 			JSON.stringify({
 				repo: `${GITHUB_OWNER}/${GITHUB_REPO}`,
 				branch: GITHUB_BRANCH,
-				oneLiner: buildGitHubCommandBarOneLiner(),
+				oneLiner: buildGitHubCommandBarOneLiner(getHeadSha()),
 				bundle,
 			})
 		);

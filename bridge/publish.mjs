@@ -62,10 +62,11 @@ async function main() {
 	}
 	runGit(["push", "-u", "origin", GITHUB_BRANCH]);
 
-	const headSha = runGit(["rev-parse", "--short", "HEAD"]);
+	const fullSha = runGit(["rev-parse", "HEAD"]);
+	const headSha = fullSha.slice(0, 7);
 	console.log(`✅ Đã đồng bộ lên GitHub (${GITHUB_BRANCH} @ ${headSha}) — Sync v${bundle.version}`);
 	console.log(`📁 Số file Rojo: ${bundle.files.length} | Tác vụ Studio: ${bundle.actions.length}`);
-	console.log(`🔗 Lệnh Command Bar:\n${buildGitHubCommandBarOneLiner()}`);
+	console.log(`🔗 Lệnh Command Bar:\n${buildGitHubCommandBarOneLiner(fullSha)}`);
 }
 
 main().catch((err) => {

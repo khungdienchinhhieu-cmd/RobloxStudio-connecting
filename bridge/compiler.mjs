@@ -210,8 +210,8 @@ export function compileSyncBundle(extraAction = null) {
 	};
 }
 
-export function buildGitHubCommandBarOneLiner() {
-	const encodedRef = encodeURIComponent(GITHUB_BRANCH);
-	const apiUrl = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/plugin/StudioLiveBridge.server.luau?ref=${encodedRef}`;
-	return `local h=game:GetService("HttpService") h.HttpEnabled=true loadstring(h:RequestAsync({Url="${apiUrl}",Method="GET",Headers={Accept="application/vnd.github.raw+json"}}).Body)()`;
+export function buildGitHubCommandBarOneLiner(commitSha = null) {
+	const ref = commitSha || GITHUB_BRANCH;
+	const rawUrl = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/${ref}/plugin/StudioLiveBridge.server.luau`;
+	return `local h=game:GetService("HttpService") h.HttpEnabled=true loadstring(h:GetAsync("${rawUrl}",true))()`;
 }
