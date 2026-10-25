@@ -2,19 +2,16 @@
   "name": "RobloxStudio-connecting",
   "tree": {
     "$className": "DataModel",
-
     "ReplicatedStorage": {
       "Shared": {
         "$path": "src/shared"
       }
     },
-
     "ServerScriptService": {
       "Server": {
         "$path": "src/server"
       }
     },
-
     "StarterPlayer": {
       "StarterPlayerScripts": {
         "Client": {
@@ -22,10 +19,15 @@
         }
       }
     },
-
     "Workspace": {
       "$properties": {
-        "FilteringEnabled": true
+        "FilteringEnabled": true,
+        "StreamingEnabled": true,
+        "StreamingMinRadius": 64,
+        "StreamingTargetRadius": 1024,
+        "StreamingIntegrityMode": "PauseOutsideLoadedArea",
+        "ModelStreamingBehavior": "Improved",
+        "StreamOutBehavior": "Opportunistic"
       },
       "Baseplate": {
         "$className": "Part",
@@ -50,7 +52,6 @@
         }
       }
     },
-
     "Lighting": {
       "$properties": {
         "Ambient": [
@@ -64,7 +65,6 @@
         "Technology": "Voxel"
       }
     },
-
     "SoundService": {
       "$properties": {
         "RespectFilteringEnabled": true

@@ -4,9 +4,8 @@
 	BỘ TỰ ĐỘNG NẠP MODULE ĐA-AGENT (MULTI-AGENT PLUG-AND-PLAY REGISTRY):
 	- Tự động quét toàn bộ các ModuleScript nằm trong `ReplicatedStorage.Shared.World.Modules`
 	  và gọi `mod.build(modulesRoot)` theo thứ tự `Order` tăng dần.
-	- Nhờ cơ chế này, N phiên Arena.ai chạy song song chỉ cần mỗi Agent tạo 1 file riêng biệt trong
-	  `src/shared/World/Modules/<Plot_X_TenCongTrinh>.luau` mà KHÔNG CẦN SỬA CHUNG bất kỳ file hệ thống nào
-	  -> Gộp nhánh (Merge PR) về `main` mượt 100%, KHÔNG BAO GIỜ XUNG ĐỘT CODE (0% Git Conflict)!
+	- Tự động dọn tường rào tạm (`PerimeterWall_*` / `SurveyMonument*`) của ô móng trống tương ứng
+	  trong `02_SidewalksAndLots` để cổng ra vào công trình thông thoáng 100%.
 ]]
 
 export type WorldModuleSpec = {
@@ -17,9 +16,66 @@ export type WorldModuleSpec = {
 	build: (modulesContainer: Instance) -> Instance?,
 }
 
+export type BuildSummary = {
+	container: Folder,
+	loadedCount: number,
+	failedCount: number,
+}
+
 local DistrictRegistry = {}
 
-function DistrictRegistry.buildAll(losSantosRoot: Instance): Folder
+local function clearPlotPlaceholders(losSantosRoot: Instance, rawPlotId: string?)
+	if not rawPlotId or rawPlotId == "" or rawPlotId == "StreetProps" then
+		return
+	end
+
+	local lotsFolder = losSantosRoot:FindFirstChild("02_SidewalksAndLots")
+	if not lotsFolder then
+		return
+	end
+
+	-- Hỗ trợ cả Plot_C3_West / Plot_C3_East ánh xạ về thư mục Plot_C3_*
+	local basePlotId = rawPlotId
+	local halfMode: string? = nil
+	if rawPlotId == "Plot_C3_West" then
+		basePlotId = "Plot_C3"
+		halfMode = "WEST"
+	elseif rawPlotId == "Plot_C3_East" then
+		basePlotId = "Plot_C3"
+		halfMode = "EAST"
+	end
+
+	for _, lotChild in ipairs(lotsFolder:GetChildren()) do
+		if string.sub(lotChild.Name, 1, #basePlotId + 1) == (basePlotId .. "_") then
+			for _, item in ipairs(lotChild:GetChildren()) do
+				local isPlaceholder = string.sub(item.Name, 1, 14) == "PerimeterWall_"
+					or string.sub(item.Name, 1, 14) == "SurveyMonument"
+				if isPlaceholder then
+					if halfMode == nil then
+						item:Destroy()
+					else
+						-- Với ô đôi Plot_C3 (tâm X = 218), chỉ xoá các khối nằm bên nửa Tây (<218) hoặc Đông (>=218)
+						if item:IsA("BasePart") then
+							if (halfMode == "WEST" and item.Position.X <= 218.5) or (halfMode == "EAST" and item.Position.X >= 217.5) then
+								item:Destroy()
+							end
+						else
+							for _, sub in ipairs(item:GetDescendants()) do
+								if sub:IsA("BasePart") then
+									if (halfMode == "WEST" and sub.Position.X <= 218.5) or (halfMode == "EAST" and sub.Position.X >= 217.5) then
+										sub:Destroy()
+									end
+								end
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+end
+
+function DistrictRegistry.buildAll(losSantosRoot: Instance): BuildSummary
 	local existing = losSantosRoot:FindFirstChild("DistrictModules")
 	if existing then
 		existing:Destroy()
@@ -28,10 +84,17 @@ function DistrictRegistry.buildAll(losSantosRoot: Instance): Folder
 	local container = Instance.new("Folder")
 	container.Name = "DistrictModules"
 	container.Parent = losSantosRoot
+	container:SetAttribute("MultiAgentRegistryActive", true)
+
+	local summary: BuildSummary = {
+		container = container,
+		loadedCount = 0,
+		failedCount = 0,
+	}
 
 	local modulesFolder = script.Parent:FindFirstChild("Modules")
 	if not modulesFolder then
-		return container
+		return summary
 	end
 
 	type LoadedEntry = {
@@ -54,6 +117,7 @@ function DistrictRegistry.buildAll(losSantosRoot: Instance): Folder
 					})
 				end
 			else
+				summary.failedCount += 1
 				warn("[DistrictRegistry] Lỗi nạp module", child.Name, result)
 			end
 		end
@@ -67,15 +131,20 @@ function DistrictRegistry.buildAll(losSantosRoot: Instance): Folder
 	end)
 
 	for _, item in ipairs(entries) do
+		clearPlotPlaceholders(losSantosRoot, item.spec.PlotId)
 		local okBuild, err = pcall(function()
 			item.spec.build(container)
 		end)
-		if not okBuild then
+		if okBuild then
+			summary.loadedCount += 1
+		else
+			summary.failedCount += 1
 			warn("[DistrictRegistry] Lỗi dựng công trình", item.name, err)
 		end
 	end
 
-	return container
+	container:SetAttribute("LoadedModuleCount", summary.loadedCount)
+	return summary
 end
 
 return DistrictRegistry

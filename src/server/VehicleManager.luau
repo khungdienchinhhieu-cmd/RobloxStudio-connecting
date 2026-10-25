@@ -22,6 +22,36 @@ local trackedCars: { [Model]: boolean } = {}
 local partHitCooldown: { [BasePart]: number } = {}
 local carSelfHitCooldown: { [Model]: number } = {}
 
+-- =====================================================================
+-- BỘ NHỚ ĐỆM HIỆU NĂNG (tránh cấp phát mỗi frame -> giảm rác GC)
+-- =====================================================================
+local SWEEP_INTERVAL = 3 -- quét va chạm mỗi 3 Heartbeat (~20 Hz) thay vì 60 Hz
+local frameTick = 0
+local cachedDebris: Instance? = nil
+local sweepParamsCache: { [Model]: OverlapParams } = {}
+local brakeStateCache: { [Model]: boolean } = {}
+
+local function getDebrisFolderCached(): Instance?
+	if cachedDebris and cachedDebris.Parent then
+		return cachedDebris
+	end
+	cachedDebris = Workspace:FindFirstChild("LosSantos_Debris")
+	return cachedDebris
+end
+
+local function getSweepParams(car: Model): OverlapParams
+	local cached = sweepParamsCache[car]
+	if cached then
+		return cached
+	end
+	local params = OverlapParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	local debFolder = getDebrisFolderCached()
+	params.FilterDescendantsInstances = if debFolder then { car, debFolder } else { car }
+	sweepParamsCache[car] = params
+	return params
+end
+
 local PRESET_CYCLE = {
 	VehicleBuilder.PRESETS.CrimsonBanshee,
 	VehicleBuilder.PRESETS.ObsidianGauntlet,
@@ -51,6 +81,23 @@ local function pickVehicleZonePart(car: Model, zone: string): BasePart?
 end
 
 local function updateBrakeLights(car: Model, braking: boolean)
+	local cached = brakeStateCache[car]
+	if cached == nil then
+		local bodyFolder0 = car:FindFirstChild("DestructibleBodywork")
+		local tl0 = if bodyFolder0 then bodyFolder0:FindFirstChild("LeftTaillight") else nil
+		if tl0 and tl0:IsA("BasePart") then
+			local r = tl0.Color.R
+			brakeStateCache[car] = r < 0.75
+		else
+			brakeStateCache[car] = false
+		end
+		cached = brakeStateCache[car]
+	end
+	if cached == braking then
+		return
+	end
+	brakeStateCache[car] = braking
+
 	local bodyFolder = car:FindFirstChild("DestructibleBodywork")
 	if not bodyFolder then
 		return
@@ -326,6 +373,8 @@ function VehicleManager.init()
 
 	RunService.Heartbeat:Connect(function(_dt)
 		local now = os.clock()
+		frameTick += 1
+		local doSweep = (frameTick % SWEEP_INTERVAL) == 0
 
 		-- Dọn bảng cooldown cũ định kỳ
 		for p, expTime in pairs(partHitCooldown) do
@@ -337,6 +386,8 @@ function VehicleManager.init()
 		for car in pairs(trackedCars) do
 			if not car.Parent or car:GetAttribute("_Exploded") == true then
 				trackedCars[car] = nil
+				sweepParamsCache[car] = nil
+				brakeStateCache[car] = nil
 				continue
 			end
 
@@ -404,16 +455,14 @@ function VehicleManager.init()
 			end
 
 			-- QUÉT VA CHẠM TỐC ĐỘ CAO: Xe đụng khối có máu ẩn -> Trừ PartHealth -> Hết máu tự vỡ!
-			if speed >= 13.5 then
+			if speed >= 13.5 and doSweep then
 				local goingForward = fwdSpeed >= -1.0
 				local zoneOffsetZ = if goingForward then -8.15 else 8.15
 				local zoneName = if goingForward then "Front" else "Rear"
 				local sweepCF = cf * CFrame.new(0, 0.55, zoneOffsetZ)
 
-				local params = OverlapParams.new()
-				params.FilterType = Enum.RaycastFilterType.Exclude
-				local debFolder = Workspace:FindFirstChild("LosSantos_Debris")
-				params.FilterDescendantsInstances = if debFolder then { car, debFolder } else { car }
+				-- OverlapParams được TÁI SỬ DỤNG (không cấp phát mới mỗi frame)
+				local params = getSweepParams(car)
 
 				local hits = Workspace:GetPartBoundsInBox(sweepCF, Vector3.new(7.5, 2.5, 2.4), params)
 				local hitSolidObstacle = false

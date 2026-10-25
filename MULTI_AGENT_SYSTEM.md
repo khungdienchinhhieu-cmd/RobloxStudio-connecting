@@ -137,6 +137,11 @@ node bridge/publish.mjs \
 
 ## 6. CÁC PROMPT MẪU COPY-PASTE CHO TỪNG TAB ARENA.AI SONG SONG
 
+> ⚠️ **BẢN MỚI NHẤT (v3) đã chuyển sang file riêng: [`agents/WORKER_PROMPT_V3.md`](agents/WORKER_PROMPT_V3.md)**
+> Bản v3 bổ sung 3 luật bắt buộc: đọc `docs/PERFORMANCE.md` (part nhỏ không va chạm, sàn/mái giữ va chạm),
+> đọc `docs/UI_GUIDE.md` (đồng bộ bảng màu HUD mới), và nghiệm thu bằng **số liệu** (0 tràn biên ·
+> 0 Z-fighting · 0 khối lơ lửng · ≥ 10 ảnh render). Prompt dưới đây chỉ giữ để tham khảo lịch sử.
+
 Bạn chỉ cần copy nguyên văn từng khung dưới đây dán vào mỗi tab Arena.ai mới:
 
 ### 🔹 Tab Agent #1 — Garage Độ Xe Los Santos Customs (`Plot_C1`)
