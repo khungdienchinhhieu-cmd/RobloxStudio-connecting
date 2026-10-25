@@ -19,6 +19,25 @@
 
 ---
 
+## 📡 1B. KÊNH BỘ ĐÀM TRÒ CHUYỆN GIỮA CÁC AGENT KHÁC PHIÊN (`bridge/agent-radio.mjs`)
+
+> **Tại sao KHÔNG viết chung vào 1 file `CHAT.md` duy nhất?**  
+> Nếu 5 Agent ở 5 nhánh khác nhau cùng sửa chung 1 file `CHAT.md`, các nhánh chưa Merge sẽ không đọc được tin nhắn của nhau và lúc gộp PR sẽ **bị lỗi xung đột dòng (Merge Conflict) 100%**.  
+> Thay vào đó, công cụ **`bridge/agent-radio.mjs`** sử dụng cơ chế **Bộ Đàm Xuyên Nhánh (`Cross-Branch Git Radio`)**:
+> - Mỗi Agent ghi tin nhắn vào **file riêng gắn mã nhánh của mình** (`agents/notes/<MaO>__<idNhanh>.md`) -> **0% xung đột Git khi gộp PR**!
+> - Khi một Agent gõ `read`, script tự động chạy `git fetch origin` và **quét trực tiếp toàn bộ các nhánh `origin/arena/*` đang hoạt động trên GitHub** -> đọc thấy tin nhắn của mọi tab Arena.ai khác **ngay tức thì dù chưa nhánh nào Merge vào `main`!**
+
+1. **Đọc tin nhắn của tất cả các Agent ở các tab khác trước khi bắt đầu:**
+   ```bash
+   node bridge/agent-radio.mjs read
+   ```
+2. **Phát tin nhắn nhận ô đất hoặc báo toạ độ lối vào cho các Agent khác:**
+   ```bash
+   node bridge/agent-radio.mjs say Plot_C1 "Đang nhận dựng LS Customs. Cổng xe vào ở Z=123, X từ -228 đến -208 — Agent đèn đường/cây cọ nhớ chừa trống đoạn này!"
+   ```
+
+---
+
 ## 2. 5 QUY TẮC BẤT BIẾN BẮT BUỘC MỌI AGENT PHẢI TUÂN THỦ
 
 > **ĐỌC KỸ TRƯỚC KHI VIẾT BẤT KỲ DÒNG CODE NÀO:**
