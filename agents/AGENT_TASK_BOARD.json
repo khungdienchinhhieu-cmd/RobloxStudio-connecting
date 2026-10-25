@@ -1,0 +1,210 @@
+{
+  "schemaVersion": 2,
+  "project": "GTA V Roblox — Los Santos Modular City",
+  "repository": "khungdienchinhhieu-cmd/RobloxStudio-connecting",
+  "masterCoordinatorBranch": "arena/b37b6115-robloxstudio-connecting",
+  "baseGroundY": 1.15,
+  "asphaltRoadY": 0.5,
+  "r15ScaleRules": {
+    "avatarStandingHeightStuds": 5.45,
+    "minWalkDoorHeightStuds": 8.0,
+    "minCeilingHeightStuds": 14.0,
+    "minVehicleGarageBayWidthStuds": 15.0,
+    "minVehicleGarageBayHeightStuds": 11.0
+  },
+  "zeroConflictContract": {
+    "dropInDirectory": "src/shared/World/Modules",
+    "autoLoader": "src/shared/World/DistrictRegistry.luau",
+    "forbiddenSharedEdits": [
+      "studio-sync.json",
+      "src/shared/WorldGrid.luau",
+      "src/shared/World/PartBuilder.luau",
+      "src/shared/World/CityFoundation.luau",
+      "src/shared/World/DistrictRegistry.luau",
+      "src/shared/Vehicles/VehicleBuilder.luau",
+      "src/server/DestructionManager.luau",
+      "src/server/VehicleManager.luau",
+      "src/server/WeaponManager.luau",
+      "src/server/init.server.luau",
+      "src/client/init.client.luau",
+      "src/client/UI/GtaHud.luau",
+      "src/client/UI/VehiclePromptUI.luau"
+    ],
+    "doNotCommitSyncBundleInFeaturePRs": true
+  },
+  "tasks": [
+    {
+      "taskId": "PLOT_C2_LEGION_SQUARE",
+      "order": 10,
+      "status": "completed",
+      "title": "Quảng Trường Trung Tâm Legion Square",
+      "district": "LEGION SQUARE",
+      "plotId": "Plot_C2",
+      "buildableBounds": {
+        "minX": -83,
+        "maxX": 83,
+        "minZ": -9,
+        "maxZ": 123,
+        "groundY": 1.15
+      },
+      "modulePath": "src/shared/World/CityFoundation.luau",
+      "spec": "Đã hoàn thành bởi Agent Chính."
+    },
+    {
+      "taskId": "AGENT_1_LS_CUSTOMS",
+      "order": 20,
+      "status": "completed",
+      "title": "Garage Độ Xe Los Santos Customs",
+      "district": "DEL PERRO",
+      "plotId": "Plot_C1",
+      "buildableBounds": {
+        "minX": -299,
+        "maxX": -137,
+        "minZ": -9,
+        "maxZ": 123,
+        "groundY": 1.15
+      },
+      "modulePath": "src/shared/World/Modules/Plot_C1_LSCustoms.luau",
+      "spec": "Kiến trúc công nghiệp chuẩn GTA V: Sân đỗ bê tông phía Nam nhìn ra Vespucci Blvd (+Z), 2 khoang cửa cuốn ô tô mở cao rộng >= 15x11 studs (xe rộng 8.2 cao 7.0 chạy lọt vào trong), bảng hiệu chữ nổi Neon 'LOS SANTOS CUSTOMS', tường gạch ghép khối bằng PartBuilder.brickWall/box gắn máu ẩn integrity, FULL nội thất (cầu nâng thuỷ lực 2 trụ, tủ đồ nghề đỏ, giá lốp xe, bàn thu ngân, đèn tuýp trần)."
+    },
+    {
+      "taskId": "AGENT_2_SUPERMARKET_247",
+      "order": 30,
+      "status": "completed",
+      "title": "Siêu Thị Tiện Lợi 24/7 Supermarket",
+      "district": "MISSION ROW (WEST)",
+      "plotId": "Plot_C3_West",
+      "buildableBounds": {
+        "minX": 137,
+        "maxX": 212,
+        "minZ": 20,
+        "maxZ": 123,
+        "groundY": 1.15
+      },
+      "modulePath": "src/shared/World/Modules/Plot_C3_Supermarket247.luau",
+      "spec": "Mặt tiền chuẩn 24/7 GTA V (mái hiên sọc Xanh Lá - Trắng - Đỏ Cam phát sáng, vách kính lớn chia từng ô kính rời integrity = 45 bắn vỡ từng ô, cửa đôi cao >= 8.5 studs, bãi đậu xe có gờ chặn bánh phía trước). Full nội thất: Quầy thu ngân + máy tính tiền, máy ATM góc tường, 3 dãy kệ hàng đầy sản phẩm nhiều màu có máu ẩn, tủ lạnh nước ngọt cửa kính phát sáng cuối tiệm, máy pha cà phê/Slushie.",
+      "completedBy": "bc783dbc",
+      "approvedBranch": "arena/bc783dbc-robloxstudio-connecting@52d0eff",
+      "approvedCommit": "52d0eff",
+      "reviewNote": "agents/notes/APPROVED_AGENT_2_SUPERMARKET_247__b37b6115.md"
+    },
+    {
+      "taskId": "AGENT_3_MISSION_ROW_LSPD",
+      "order": 40,
+      "status": "ready_for_parallel_agent",
+      "title": "Đồn Cảnh Sát Mission Row LSPD",
+      "district": "MISSION ROW (EAST)",
+      "plotId": "Plot_C3_East",
+      "buildableBounds": {
+        "minX": 222,
+        "maxX": 299,
+        "minZ": -9,
+        "maxZ": 123,
+        "groundY": 1.15
+      },
+      "modulePath": "src/shared/World/Modules/Plot_C3_MissionRowLSPD.luau",
+      "spec": "Kiến trúc chuẩn LSPD: Bậc tam cấp sảnh chính, cột đá, bảng hiệu huy hiệu 'LOS SANTOS POLICE DEPT — OBEY & SURVIVE', sân đáp trực thăng chữ H trên sân thượng, tường gạch & kính chia khối có máu ẩn integrity, cùng nội thất tầng trệt chi tiết (quầy trực ban, dãy bàn làm việc thám tử, phòng giam song sắt thép phía sau)."
+    },
+    {
+      "taskId": "AGENT_4_MAZE_BANK_TOWER",
+      "order": 50,
+      "status": "ready_for_parallel_agent",
+      "title": "Tháp Tài Chính Maze Bank Plaza & Tower",
+      "district": "PILLBOX HILL",
+      "plotId": "Plot_D2",
+      "buildableBounds": {
+        "minX": -83,
+        "maxX": 83,
+        "minZ": -199,
+        "maxZ": -63,
+        "groundY": 1.15
+      },
+      "modulePath": "src/shared/World/Modules/Plot_D2_MazeBankTower.luau",
+      "spec": "Khối đế Plaza bậc thang + đài phun nước tiền sảnh + thân tháp biểu tượng vát góc thu dần lên đỉnh có bãi đáp trực thăng tròn 'MAZE BANK' đỏ trắng trên nóc; sảnh tầng trệt thông tầng cao 18 studs có quầy lễ tân đá cẩm thạch, cổng an ninh, thang máy & các ô kính mặt dựng tầng thấp có máu ẩn integrity bắn vỡ được."
+    },
+    {
+      "taskId": "AGENT_5_ROCKFORD_LUXURY_AUTOS",
+      "order": 60,
+      "status": "ready_for_parallel_agent",
+      "title": "Showroom Siêu Xe Luxury Autos (Simeon / Rockford Hills)",
+      "district": "ROCKFORD HILLS",
+      "plotId": "Plot_D1",
+      "buildableBounds": {
+        "minX": -299,
+        "maxX": -137,
+        "minZ": -199,
+        "maxZ": -63,
+        "groundY": 1.15
+      },
+      "modulePath": "src/shared/World/Modules/Plot_D1_RockfordShowroom.luau",
+      "spec": "Showroom kính cong cao cấp nhìn ra đại lộ Olympic Fwy (+Z): Mặt dựng kính tấm lớn chia ô có máu ẩn integrity = 40 (xe tông xuyên kính giống nhiệm vụ mở đầu GTA V!), sàn đá bóng + 2 bục xoay trưng bày siêu xe có đèn rọi trần, phòng làm việc kính của quản lý, bàn tiếp khách sofa da."
+    },
+    {
+      "taskId": "AGENT_6_VINEWOOD_THEATER",
+      "order": 70,
+      "status": "ready_for_parallel_agent",
+      "title": "Rạp Chiếu Phim Oriental / Vinewood Cinema",
+      "district": "DOWNTOWN VINEWOOD",
+      "plotId": "Plot_D3",
+      "buildableBounds": {
+        "minX": 137,
+        "maxX": 299,
+        "minZ": -199,
+        "maxZ": -63,
+        "groundY": 1.15
+      },
+      "modulePath": "src/shared/World/Modules/Plot_D3_VinewoodCinema.luau",
+      "spec": "Rạp phim Art Deco biểu tượng Vinewood: Bảng đèn Marquee Neon rực rỡ phía trước ghi tên phim đang chiếu, quầy vé tròn ngoài sảnh, thảm đỏ, quầy bắp rang bơ + nước ngọt bên trong và khán phòng màn chiếu lớn kèm các hàng ghế nhung đỏ xếp bậc thang (có máu ẩn integrity)."
+    },
+    {
+      "taskId": "AGENT_7_STREET_INFRASTRUCTURE",
+      "order": 80,
+      "status": "ready_for_parallel_agent",
+      "title": "Đèn Giao Thông Ngã Tư, Đèn Đường & Hàng Cọ California",
+      "district": "CITYWIDE SIDEWALKS",
+      "plotId": "StreetProps",
+      "buildableBounds": {
+        "minX": -340,
+        "maxX": 340,
+        "minZ": -240,
+        "maxZ": 220,
+        "groundY": 1.15
+      },
+      "modulePath": "src/shared/World/Modules/Infra_StreetLightsAndPalms.luau",
+      "spec": "Đặt trụ đèn tín hiệu Đỏ-Vàng-Xanh vươn cần ngang tại các ngã tư chính (mép vỉa hè Y = 1.15, tuyệt đối không lấn xuống lòng đường nhựa hay chặn cổng garage/chỗ đậu xe của các ô khác — đọc kỹ agent-radio trước khi đặt!), hàng cây cọ thân đốt cong nhẹ dọc Vespucci Blvd & lối dạo biển, ghế đá & thùng rác công cộng — tất cả gắn máu ẩn integrity để siêu xe tông gãy vỡ."
+    },
+    {
+      "taskId": "UI_WEAPON_WHEEL",
+      "order": 35,
+      "status": "completed",
+      "title": "Đại tu HUD + Vòng chọn súng chuẩn GTA V",
+      "district": "CLIENT UI",
+      "plotId": "N/A",
+      "modulePath": "src/client/UI/GtaWeaponWheel.luau",
+      "spec": "8 ô vũ khí (Unarmed/Bat/Pistol/AP Pistol/Micro SMG/Carbine/Shotgun/Sniper), giữ TAB chọn theo hướng chuột, thả để trang bị, phím 1-8 đổi nhanh, đạn thật + [R] nạp, thẻ vũ khí góc dưới phải. HUD đại tu: radar bo góc, 3 thanh xếp chồng, panel tiền, feed, menu H. Demo /hud + 33 test PASS."
+    }
+  ],
+  "uiContract": {
+    "guide": "docs/UI_GUIDE.md",
+    "hudPalette": {
+      "panel": "#0A0C10",
+      "panelLight": "#12171F",
+      "line": "#26303F",
+      "text": "#F1F5F9",
+      "dim": "#94A3B8",
+      "cash": "#72CC72"
+    },
+    "reservedScreenAreas": {
+      "radar": "left 22, bottom 20, 258x168 (+ 3 thanh chỉ số cao 22 dưới radar)",
+      "topRightCash": "right 26, top 16, 292x110",
+      "weaponCard": "right 26, bottom 86, 252x76",
+      "location": "right 26, bottom 22"
+    },
+    "forbiddenUiPatterns": [
+      "TextScaled trên biển hiệu",
+      "Frame mới mỗi RenderStepped",
+      "che 4 vùng reservedScreenAreas"
+    ]
+  },
+  "workerPrompt": "agents/WORKER_PROMPT_V3.md"
+}
