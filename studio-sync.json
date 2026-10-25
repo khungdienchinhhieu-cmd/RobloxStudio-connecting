@@ -1,10 +1,10 @@
 {
-  "version": 10,
-  "hash": "fe3d6a49f95385b8",
+  "version": 11,
+  "hash": "6cabe516c5500806",
   "projectName": "RobloxStudio-connecting",
   "repo": "khungdienchinhhieu-cmd/RobloxStudio-connecting",
   "branch": "arena/b37b6115-robloxstudio-connecting",
-  "updatedAt": "2026-10-25T10:43:07.867Z",
+  "updatedAt": "2026-10-25T10:43:31.920Z",
   "files": [
     {
       "repoPath": "src/shared/Vehicles/VehicleBuilder.luau",
@@ -364,5 +364,12 @@
       "children": {}
     }
   },
-  "actions": []
+  "actions": [
+    {
+      "id": "act-1792925011898",
+      "description": "Sync v11: PerfOptimizer 3 tang + bao cao hieu nang + nhac StreamingEnabled",
+      "code": "local ReplicatedStorage = game:GetService(\"ReplicatedStorage\")\nlocal shared = ReplicatedStorage:FindFirstChild(\"Shared\")\nif shared then\n\t-- Nhân bản tạm thời Shared để phá bộ nhớ đệm require() của Roblox Studio Edit Mode\n\tlocal freshShared = shared:Clone()\n\tfreshShared.Name = \"_TempBuildSharedMultiAgent\"\n\tfreshShared.Parent = ReplicatedStorage\n\n\tlocal ok, err = pcall(function()\n\t\tlocal CityFoundation = require(freshShared:WaitForChild(\"World\"):WaitForChild(\"CityFoundation\"))\n\t\tlocal DistrictRegistry = require(freshShared:WaitForChild(\"World\"):WaitForChild(\"DistrictRegistry\"))\n\t\tlocal PerfOptimizer = require(freshShared:WaitForChild(\"World\"):WaitForChild(\"PerfOptimizer\"))\n\t\tlocal VehicleBuilder = require(freshShared:WaitForChild(\"Vehicles\"):WaitForChild(\"VehicleBuilder\"))\n\t\tlocal root = CityFoundation.build(true)\n\t\tDistrictRegistry.buildAll(root)\n\t\tVehicleBuilder.spawnDefaultFleet(root)\n\t\t-- Tối ưu hiệu năng ngay trong Edit Mode để bản lưu xuống Studio cũng nhẹ\n\t\tlocal report = PerfOptimizer.optimize(root)\n\t\tprint(string.format(\n\t\t\t\"[Sync v11] Dựng xong %d part | va chạm %d | đổ bóng %d | SurfaceGui %d\",\n\t\t\treport.totalParts,\n\t\t\treport.collidableAfter,\n\t\t\treport.shadowCastersAfter,\n\t\t\treport.surfaceGuis\n\t\t))\n\t\t-- StreamingEnabled KHÔNG thể bật bằng script -> nhắc Chủ dự án bật tay 1 lần\n\t\tif not workspace.StreamingEnabled then\n\t\t\twarn(\"[Hiệu năng] HÃY BẬT: chọn Workspace > Properties > StreamingEnabled = true (StreamingTargetRadius = 1024). Giảm ~78% part phải nạp.\")\n\t\tend\n\tend)\n\n\tfreshShared:Destroy()\n\tif not ok then\n\t\twarn(\"[Los Santos Multi-Agent Build Error]\", err)\n\tend\nend\n",
+      "createdAt": "2026-10-25T10:43:31.898Z"
+    }
+  ]
 }
