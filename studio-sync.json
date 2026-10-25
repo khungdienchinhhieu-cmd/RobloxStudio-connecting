@@ -1,0 +1,144 @@
+{
+  "version": 1,
+  "hash": "74a3314e9ee43d8a",
+  "projectName": "RobloxStudio-connecting",
+  "repo": "khungdienchinhhieu-cmd/RobloxStudio-connecting",
+  "branch": "arena/b37b6115-robloxstudio-connecting",
+  "updatedAt": "2026-10-25T06:25:30.622Z",
+  "files": [
+    {
+      "repoPath": "src/shared/Hello.luau",
+      "className": "ModuleScript",
+      "bytes": 233
+    },
+    {
+      "repoPath": "src/server/init.server.luau",
+      "className": "Script",
+      "bytes": 213
+    },
+    {
+      "repoPath": "src/client/init.client.luau",
+      "className": "LocalScript",
+      "bytes": 334
+    }
+  ],
+  "services": {
+    "ReplicatedStorage": {
+      "className": "ReplicatedStorage",
+      "isService": true,
+      "managed": false,
+      "children": {
+        "Shared": {
+          "className": "Folder",
+          "managed": true,
+          "children": {
+            "Hello": {
+              "className": "ModuleScript",
+              "managed": true,
+              "repoPath": "src/shared/Hello.luau",
+              "source": "--!strict\n\nlocal Hello = {}\n\nHello.ProjectName = \"RobloxStudio-connecting\"\n\nfunction Hello.greet(scope: string): string\n\treturn string.format(\"[%s] Kết nối Rojo thành công từ %s!\", Hello.ProjectName, scope)\nend\n\nreturn Hello\n",
+              "children": {}
+            }
+          }
+        }
+      }
+    },
+    "ServerScriptService": {
+      "className": "ServerScriptService",
+      "isService": true,
+      "managed": false,
+      "children": {
+        "Server": {
+          "className": "Script",
+          "managed": true,
+          "children": {},
+          "source": "--!strict\n\nlocal ReplicatedStorage = game:GetService(\"ReplicatedStorage\")\n\nlocal Shared = ReplicatedStorage:WaitForChild(\"Shared\")\nlocal Hello = require(Shared:WaitForChild(\"Hello\"))\n\nprint(Hello.greet(\"Server\"))\n",
+          "repoPath": "src/server/init.server.luau"
+        }
+      }
+    },
+    "StarterPlayer": {
+      "className": "StarterPlayer",
+      "isService": true,
+      "managed": false,
+      "children": {
+        "StarterPlayerScripts": {
+          "className": "StarterPlayerScripts",
+          "isService": false,
+          "managed": false,
+          "children": {
+            "Client": {
+              "className": "LocalScript",
+              "managed": true,
+              "children": {},
+              "source": "--!strict\n\nlocal Players = game:GetService(\"Players\")\nlocal ReplicatedStorage = game:GetService(\"ReplicatedStorage\")\n\nlocal Shared = ReplicatedStorage:WaitForChild(\"Shared\")\nlocal Hello = require(Shared:WaitForChild(\"Hello\"))\n\nlocal localPlayer = Players.LocalPlayer\nprint(Hello.greet(string.format(\"Client (%s)\", localPlayer.Name)))\n",
+              "repoPath": "src/client/init.client.luau"
+            }
+          }
+        }
+      }
+    },
+    "Workspace": {
+      "className": "Workspace",
+      "isService": true,
+      "managed": false,
+      "properties": {
+        "FilteringEnabled": true
+      },
+      "children": {
+        "Baseplate": {
+          "className": "Part",
+          "isService": false,
+          "managed": false,
+          "properties": {
+            "Anchored": true,
+            "Color": [
+              0.38823,
+              0.37254,
+              0.38823
+            ],
+            "Locked": true,
+            "Position": [
+              0,
+              -10,
+              0
+            ],
+            "Size": [
+              512,
+              20,
+              512
+            ]
+          },
+          "children": {}
+        }
+      }
+    },
+    "Lighting": {
+      "className": "Lighting",
+      "isService": true,
+      "managed": false,
+      "properties": {
+        "Ambient": [
+          0,
+          0,
+          0
+        ],
+        "Brightness": 2,
+        "GlobalShadows": true,
+        "Outlines": false,
+        "Technology": "Voxel"
+      },
+      "children": {}
+    },
+    "SoundService": {
+      "className": "SoundService",
+      "isService": true,
+      "managed": false,
+      "properties": {
+        "RespectFilteringEnabled": true
+      },
+      "children": {}
+    }
+  },
+  "actions": []
+}
