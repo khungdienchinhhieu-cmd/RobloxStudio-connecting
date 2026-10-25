@@ -10,8 +10,10 @@ local weaponRemote = remotes:WaitForChild("WeaponFire") :: RemoteEvent
 
 local GtaHud = require(script:WaitForChild("UI"):WaitForChild("GtaHud"))
 local VehiclePromptUI = require(script:WaitForChild("UI"):WaitForChild("VehiclePromptUI"))
+local LSCustomsUI = require(script:WaitForChild("UI"):WaitForChild("LSCustomsUI"))
 local WeaponClient = require(script:WaitForChild("WeaponClient"))
 
 GtaHud.mount(localPlayer, hudRemote)
 VehiclePromptUI.mount(localPlayer)
+LSCustomsUI.mount(localPlayer)
 WeaponClient.mount(localPlayer, weaponRemote)
