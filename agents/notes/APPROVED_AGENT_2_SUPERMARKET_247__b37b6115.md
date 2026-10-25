@@ -26,7 +26,7 @@
 
 ## 2. Kiểm tra "đọc được bằng mắt" (render 3D offline)
 
-Đã render 7 góc (`docs/qa/plot_c3_*.png`) từ chính dữ liệu scene:
+Đã render 7 góc từ chính dữ liệu scene (ảnh của tác giả: [`agents/reviews/Plot_C3_Supermarket247/`](../../agents/reviews/Plot_C3_Supermarket247/)):
 
 - ✅ **Mặt tiền 24/7**: mái hiên sọc xanh lá – trắng – đỏ cam, bảng hiệu lớn `46 × 4,4` stud,
   cột pylon đứng `(175, 24, 86)`.
@@ -58,4 +58,4 @@
                 SurfaceGui 36 | -11392 attributes
 ```
 
-Chi tiết đầy đủ: `docs/PERFORMANCE.md`.
+Chi tiết đầy đủ: [`docs/PERFORMANCE.md`](../../docs/PERFORMANCE.md).
