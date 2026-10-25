@@ -9,6 +9,7 @@
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
@@ -63,6 +64,185 @@ local function updateBrakeLights(car: Model, braking: boolean)
 	end
 end
 
+local function setCabinLight(car: Model, active: boolean)
+	local interior = car:FindFirstChild("InteriorDetails")
+	local dome = if interior then interior:FindFirstChild("CabinDomeLight") else nil
+	if dome and dome:IsA("BasePart") then
+		dome.Material = if active then Enum.Material.Neon else Enum.Material.SmoothPlastic
+		local pl = dome:FindFirstChildOfClass("PointLight")
+		if pl then
+			pl.Brightness = if active then 1.65 else 0
+		end
+	end
+end
+
+-- Diễn hoạt xoay mở / đóng cánh cửa quanh bản lề trước (LeftDoorHinge / RightDoorHinge)
+function VehicleManager.animateDoor(
+	car: Model,
+	tag: "Left" | "Right",
+	angleDeg: number,
+	duration: number,
+	easingStyle: Enum.EasingStyle?
+)
+	local bodyFolder = car:FindFirstChild("DestructibleBodywork")
+	local doorPart = if bodyFolder then bodyFolder:FindFirstChild(tag .. "Door") else nil
+	if not doorPart then
+		return -- Cánh cửa đã bị đâm / bắn văng khỏi xe!
+	end
+
+	local hinge = car:FindFirstChild(tag .. "DoorHinge")
+	local weld = if hinge then hinge:FindFirstChild("DoorHingeWeld") :: Weld? else nil
+	if not hinge or not weld then
+		return
+	end
+
+	local cx = tonumber(hinge:GetAttribute("ClosedX")) or 0
+	local cy = tonumber(hinge:GetAttribute("ClosedY")) or 0
+	local cz = tonumber(hinge:GetAttribute("ClosedZ")) or 0
+	local sideSign = tonumber(hinge:GetAttribute("SideSign")) or -1
+
+	local targetC0 = CFrame.new(cx, cy, cz) * CFrame.Angles(0, sideSign * math.rad(angleDeg), 0)
+	setCabinLight(car, angleDeg > 4)
+
+	TweenService:Create(
+		weld,
+		TweenInfo.new(duration, easingStyle or Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
+		{ C0 = targetC0 }
+	):Play()
+end
+
+local function wireDoorAndSeat(car: Model, chassis: BasePart, tag: "Left" | "Right", seatObj: BasePart)
+	local sideSign = if tag == "Left" then -1 else 1
+	local bodyFolder = car:FindFirstChild("DestructibleBodywork")
+	local handle = if bodyFolder then bodyFolder:FindFirstChild(tag .. "OuterDoorHandle") else nil
+	local prompt = if handle then handle:FindFirstChild("EnterDoorPrompt") :: ProximityPrompt? else nil
+
+	local animToken = 0
+	local enteringViaPrompt = false
+	local lastOccupant: Humanoid? = nil
+
+	local function getOccupant(): Humanoid?
+		if seatObj:IsA("VehicleSeat") then
+			return seatObj.Occupant
+		elseif seatObj:IsA("Seat") then
+			return seatObj.Occupant
+		end
+		return nil
+	end
+
+	local function sitHumanoid(hum: Humanoid)
+		if seatObj:IsA("VehicleSeat") then
+			seatObj:Sit(hum)
+		elseif seatObj:IsA("Seat") then
+			seatObj:Sit(hum)
+		end
+	end
+
+	-- 1) Khi bấm phím [F] cạnh tay nắm cửa -> Mở rộng cửa 64° -> Bước vào ngồi -> Kéo đóng cửa!
+	if prompt then
+		prompt.Triggered:Connect(function(player)
+			if getOccupant() ~= nil or enteringViaPrompt then
+				return
+			end
+			local char = player.Character
+			local hum = if char then char:FindFirstChildOfClass("Humanoid") else nil
+			local hrp = if char then char:FindFirstChild("HumanoidRootPart") else nil
+			if not hum or hum.Health <= 0 or hum.SeatPart ~= nil or not hrp or not hrp:IsA("BasePart") then
+				return
+			end
+
+			enteringViaPrompt = true
+			animToken += 1
+			local myTok = animToken
+			prompt.Enabled = false
+
+			-- Bước 1: Tung cánh cửa mở rộng 64° + bật đèn trần ca-bin
+			VehicleManager.animateDoor(car, tag, 64, 0.28, Enum.EasingStyle.Quart)
+
+			-- Đưa nhân vật đứng ngay sát bậc cửa đang mở, quay mặt vào khoang lái
+			local standPos = (chassis.CFrame * CFrame.new(sideSign * 4.55, 0.65, 0.25)).Position
+			local seatWorld = seatObj.Position
+			hrp.CFrame = CFrame.lookAt(standPos, Vector3.new(seatWorld.X, standPos.Y, seatWorld.Z))
+
+			-- Bước 2: Sau 0.22s khi cửa đã hé rộng, đặt nhân vật ngồi êm vào ghế đua
+			task.delay(0.22, function()
+				if animToken ~= myTok or not car.Parent then
+					enteringViaPrompt = false
+					return
+				end
+				if hum.Health > 0 and getOccupant() == nil then
+					sitHumanoid(hum)
+				end
+
+				-- Bước 3: Ngồi yên trong ghế xong -> kéo cánh cửa sập đóng lại!
+				task.delay(0.34, function()
+					enteringViaPrompt = false
+					if animToken == myTok and car.Parent then
+						VehicleManager.animateDoor(car, tag, 0, 0.30, Enum.EasingStyle.Back)
+					end
+				end)
+			end)
+		end)
+	end
+
+	-- 2) Theo dõi khi ngồi trực tiếp (chạm ghế) HOẶC khi nhảy ra khỏi xe (Space) -> Tự động mở & đóng cửa!
+	seatObj:GetPropertyChangedSignal("Occupant"):Connect(function()
+		pcall(function()
+			chassis:SetNetworkOwner(nil)
+		end)
+
+		local occ = getOccupant()
+		if occ ~= nil then
+			lastOccupant = occ
+			if prompt then
+				prompt.Enabled = false
+			end
+			if not enteringViaPrompt then
+				animToken += 1
+				local myTok = animToken
+				VehicleManager.animateDoor(car, tag, 56, 0.18, Enum.EasingStyle.Quad)
+				task.delay(0.26, function()
+					if animToken == myTok and car.Parent then
+						VehicleManager.animateDoor(car, tag, 0, 0.28, Enum.EasingStyle.Back)
+					end
+				end)
+			end
+		else
+			-- Người chơi vừa bước xuống xe -> Mở bung cửa 62°, đặt nhân vật ra cạnh cửa thoáng đãng rồi khép cửa lại!
+			if prompt and prompt.Parent then
+				prompt.Enabled = true
+			end
+			animToken += 1
+			local myTok = animToken
+			VehicleManager.animateDoor(car, tag, 62, 0.22, Enum.EasingStyle.Quart)
+
+			local prevHum = lastOccupant
+			lastOccupant = nil
+			if prevHum and prevHum.Parent then
+				local prevChar = prevHum.Parent
+				local prevHrp = prevChar:FindFirstChild("HumanoidRootPart")
+				if prevHrp and prevHrp:IsA("BasePart") then
+					task.defer(function()
+						if prevHrp.Parent and chassis.Parent then
+							local exitCF = chassis.CFrame * CFrame.new(sideSign * 5.25, 0.75, 0.30)
+							prevHrp.CFrame = CFrame.lookAt(
+								exitCF.Position,
+								exitCF.Position + chassis.CFrame.LookVector
+							)
+						end
+					end)
+				end
+			end
+
+			task.delay(0.55, function()
+				if animToken == myTok and car.Parent then
+					VehicleManager.animateDoor(car, tag, 0, 0.32, Enum.EasingStyle.Quad)
+				end
+			end)
+		end
+	end)
+end
+
 function VehicleManager.registerCar(car: Model)
 	if trackedCars[car] then
 		return
@@ -70,18 +250,18 @@ function VehicleManager.registerCar(car: Model)
 	trackedCars[car] = true
 
 	local chassis = car:FindFirstChild("Chassis") :: BasePart?
-	local seat = car:FindFirstChild("DriverSeat") :: VehicleSeat?
+	local driverSeat = car:FindFirstChild("DriverSeat") :: VehicleSeat?
+	local passSeat = car:FindFirstChild("PassengerSeat") :: Seat?
 	if chassis then
 		pcall(function()
 			chassis:SetNetworkOwner(nil)
 		end)
-	end
-	if seat and chassis then
-		seat:GetPropertyChangedSignal("Occupant"):Connect(function()
-			pcall(function()
-				chassis:SetNetworkOwner(nil)
-			end)
-		end)
+		if driverSeat then
+			wireDoorAndSeat(car, chassis, "Left", driverSeat)
+		end
+		if passSeat then
+			wireDoorAndSeat(car, chassis, "Right", passSeat)
+		end
 	end
 end
 

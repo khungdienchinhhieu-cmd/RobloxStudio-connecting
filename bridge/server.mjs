@@ -390,18 +390,22 @@ window.addEventListener("keydown", e => {
   if (e.code === "Space") { e.preventDefault(); fireGun(); }
   if (e.code === "KeyF") {
     if (state.drivingCar) {
-      state.px = state.drivingCar.cx + 7; state.pz = state.drivingCar.cz;
-      state.drivingCar.spd = 0; state.drivingCar = null;
-      showFeed("Đã xuống xe. Nhấn <b>[Space]</b> bắn thử gạch &amp; xe!", "#94a3b8");
+      const exited = state.drivingCar;
+      exited.doorTimer = 0.72;
+      state.px = exited.cx - Math.cos(exited.yaw) * 7.5;
+      state.pz = exited.cz - Math.sin(exited.yaw) * 7.5;
+      exited.spd = 0; state.drivingCar = null;
+      showFeed("🚪 Mở cửa bước xuống xe! Nhấn <b>[Space]</b> bắn thử gạch &amp; xe.", "#94a3b8");
     } else {
-      let near = null, bd = 22;
+      let near = null, bd = 24;
       for (const c of CARS) {
         const d = Math.hypot(c.cx - state.px, c.cz - state.pz);
         if (d < bd) { bd = d; near = c; }
       }
       if (near) {
-        state.drivingCar = near;
-        showFeed("Đã lên siêu xe <b>" + near.name + "</b>! Lái WASD đâm thử tường gạch!", "#38bdf8");
+        near.doorTimer = 0.75;
+        setTimeout(() => { state.drivingCar = near; }, 220);
+        showFeed("🚪 Mở cửa 64° lên siêu xe <b>" + near.name + "</b>! Lái WASD đâm thử tường gạch!", "#38bdf8");
       } else {
         showFeed("Lại gần xe hơn hoặc bấm <b>[H] -> Gọi Siêu Xe</b>!", "#f59e0b");
       }
@@ -703,16 +707,23 @@ function tick(now) {
     ...DEBRIS.map(d => ({ ...d, tall: true })),
   ];
   for (const c of CARS) {
+    if (c.doorTimer && c.doorTimer > 0) c.doorTimer = Math.max(0, c.doorTimer - dt);
     const sy = Math.sin(c.yaw), cy = Math.cos(c.yaw);
-    dynBlocks.push({ cx: c.cx, cy: 1.5, cz: c.cz, sx: 8.5, sy: 1.8, sz: 8.5, col: c.col, tall: true });
+    // Thân xe cao thoáng + Khoang lái hiển thị đồng hồ cyan bên trong + Cánh cửa mở xoay khi bấm [F]!
+    dynBlocks.push({ cx: c.cx, cy: 1.9, cz: c.cz, sx: 8.8, sy: 2.3, sz: 8.8, col: c.col, tall: true });
+    dynBlocks.push({ cx: c.cx + sy*1.2, cy: 3.3, cz: c.cz - cy*1.2, sx: 3.4, sy: 0.7, sz: 3.4, col: "#38bdf8", tall: true });
     if (c.hoodHp > 0) {
-      dynBlocks.push({ cx: c.cx + sy*3.2, cy: 2.3, cz: c.cz - cy*3.2, sx: 5.2, sy: 0.4, sz: 5.2, col: c.col, tall: true });
+      dynBlocks.push({ cx: c.cx + sy*3.4, cy: 2.8, cz: c.cz - cy*3.4, sx: 5.4, sy: 0.5, sz: 5.4, col: c.col, tall: true });
     } else {
-      // Lộ khoang máy V8 xám kim loại khi bung nắp capo!
-      dynBlocks.push({ cx: c.cx + sy*3.2, cy: 2.1, cz: c.cz - cy*3.2, sx: 3.4, sy: 0.6, sz: 3.4, col: "#475569", tall: true });
+      dynBlocks.push({ cx: c.cx + sy*3.4, cy: 2.4, cz: c.cz - cy*3.4, sx: 3.5, sy: 0.7, sz: 3.5, col: "#475569", tall: true });
     }
     if (c.glassHp > 0) {
-      dynBlocks.push({ cx: c.cx - sy*0.6, cy: 2.8, cz: c.cz + cy*0.6, sx: 5.2, sy: 0.9, sz: 5.2, col: "#334155", tall: true });
+      dynBlocks.push({ cx: c.cx - sy*0.6, cy: 3.8, cz: c.cz + cy*0.6, sx: 5.5, sy: 1.45, sz: 5.5, col: "#334155", tall: true });
+    }
+    if (c.doorTimer && c.doorTimer > 0.02) {
+      const openAmt = Math.sin((c.doorTimer / 0.75) * Math.PI);
+      const dx = -cy * (4.2 + openAmt * 3.2), dz = -sy * (4.2 + openAmt * 3.2);
+      dynBlocks.push({ cx: c.cx + dx, cy: 2.4, cz: c.cz + dz, sx: 2.4, sy: 2.1, sz: 2.4, col: c.col, tall: true });
     }
   }
   dynBlocks.sort((a,b) => Math.hypot(b.cx-camX, b.cz-camZ) - Math.hypot(a.cx-camX, a.cz-camZ));

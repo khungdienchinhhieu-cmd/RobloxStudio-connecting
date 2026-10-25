@@ -189,9 +189,29 @@ local function detachVehiclePanel(part: BasePart, impulse: Vector3)
 		return
 	end
 
+	local parentFolder = part.Parent
 	local weld = part:FindFirstChildOfClass("WeldConstraint")
 	if weld then
 		weld:Destroy()
+	end
+
+	-- Nếu là Cánh Cửa Xe (LeftDoor / RightDoor): tắt ProximityPrompt & cho các chi tiết gắn trên cửa bay theo cùng cánh cửa!
+	if parentFolder then
+		for _, sib in ipairs(parentFolder:GetChildren()) do
+			if sib ~= part and sib:IsA("BasePart") then
+				local sw = sib:FindFirstChildOfClass("WeldConstraint")
+				if sw and sw.Part0 == part then
+					local pr = sib:FindFirstChildOfClass("ProximityPrompt")
+					if pr then
+						pr.Enabled = false
+						pr:Destroy()
+					end
+					sib:SetAttribute("Destructible", false)
+					sib.CanQuery = false
+					spawnTrackedDebris(sib, 8.0)
+				end
+			end
+		end
 	end
 
 	part:SetAttribute("Destructible", false)

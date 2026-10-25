@@ -618,7 +618,7 @@ function GtaHud.mount(localPlayer: Player, hudRemote: RemoteEvent)
 	mphLabel.Parent = speedoCluster
 
 	showFeed(
-		"Los Santos sẵn sàng! Lên xe quanh quảng trường hoặc cầm Pistol [1] / Rifle [2] bắn thử gạch & xe • [H] Menu Test.",
+		"Los Santos sẵn sàng! Lại gần xe bấm [F] mở cửa lên xe • Cầm Pistol [1] / Rifle [2] bắn thử • [H] Menu Test.",
 		Color3.fromRGB(86, 186, 86)
 	)
 
