@@ -1,0 +1,7 @@
+# Danh sách công cụ quản lý bởi Rokit (https://github.com/rojo-rbx/rokit)
+# Chạy `rokit install` trên máy tính của bạn để tự động tải đúng phiên bản công cụ.
+
+[tools]
+rojo = "rojo-rbx/rojo@7.7.1"
+stylua = "JohnnyMorganz/StyLua@2.6.0"
+selene = "Kampfkarren/selene@0.32.0"
