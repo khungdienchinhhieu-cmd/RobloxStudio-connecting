@@ -232,7 +232,7 @@ const HTML = `<!DOCTYPE html>
       <div id="filesList" class="list"></div>
     </div>
     <div class="card">
-      <h2>✨ Lịch sử Tác vụ Dựng Thế Giới (`Workspace.LosSantos`)</h2>
+      <h2>✨ Lịch sử Tác vụ Dựng Thế Giới (<code>Workspace.LosSantos</code>)</h2>
       <p class="sub">Hỗ trợ hoàn tác <code>Ctrl + Z</code> trực tiếp trong Studio.</p>
       <div id="actionsList" class="list"></div>
     </div>
