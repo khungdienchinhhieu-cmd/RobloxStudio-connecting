@@ -33,7 +33,7 @@ Dự án tái hiện thế giới mở **Grand Theft Auto V (Los Santos)** trên
 | **Plot D3** | **Downtown Vinewood** (Ô móng kỹ thuật sạch chờ công trình) | `[+128, +308]` | `[-208, -54]` | ⏳ Chờ dựng từng công trình |
 | **Plot C1** | **Del Perro — Los Santos Customs** (`3,462` parts, `98.1%` máu ẩn, 2 khoang độ xe **có chức năng thật** `[E]`) | `[-308, -128]` | `[-18, +132]` | ✅ Nghiệm thu v10 — đã lên Studio (`Sync v9`) |
 | **Plot C2** | **Legion Square** (Nền quảng trường bậc cấp, hồ nước & tường gạch ghép khối) | `[-92, +92]` | `[-18, +132]` | ✅ Hoàn thành ở Nền v2 |
-| **Plot C3** | **Mission Row** (Nửa Tây: Siêu thị 24/7 `934` parts, `99.9%` máu ẩn • Nửa Đông: chờ Đồn LSPD) | `[+128, +308]` | `[-18, +132]` | ✅ Nửa Tây nghiệm thu — `Sync v10/v11` |
+| **Plot C3** | **Mission Row** (Nửa Tây: Siêu thị 24/7 `934` parts • Nửa Đông: **Đồn LSPD Mission Row `4 639` parts, `99.6%` máu ẩn**) | `[+128, +308]` | `[-18, +132]` | ✅ **Cả 2 nửa nghiệm thu** — `Sync v13` |
 | **South Coast** | **Vespucci Beach** (Kè đá ghép khối, cầu thang xuống biển, sàn gỗ, kè chắn sóng) | `[-360, +360]` | `[+164, +360]` | ✅ Hoàn thành ở Nền v2 |
 
 ---
@@ -68,5 +68,11 @@ Dự án tái hiện thế giới mở **Grand Theft Auto V (Los Santos)** trên
   - Nội thất full: 3 dãy kệ hàng đầy sản phẩm, quầy thu ngân + máy tính tiền, ATM, tủ lạnh nước ngọt phát sáng, máy Slushie.
   - Ảnh nghiệm thu: [`01_hero_southeast`](agents/reviews/Plot_C3_Supermarket247/01_hero_southeast.jpg), [`06_interior_from_door`](agents/reviews/Plot_C3_Supermarket247/06_interior_from_door.jpg), [`09_interior_aisles`](agents/reviews/Plot_C3_Supermarket247/09_interior_aisles.jpg), [`10_interior_coolers`](agents/reviews/Plot_C3_Supermarket247/10_interior_coolers.jpg)
   - **Tối ưu hiệu năng đi kèm (Sync v11):** lớp `src/shared/World/PerfOptimizer.luau` + tách nhịp cập nhật HUD/radar + cache server — xem [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md).
-- [ ] **Bước 6: Công trình #3 — Đồn Cảnh Sát Mission Row LSPD (`Plot C3`)**
+- [x] **Bước 6: Công trình #3 — Đồn Cảnh Sát Mission Row LSPD (`Plot C3`)** ✅ *(xong — `AGENT_3` `fb6a68f`, nghiệm thu ĐẠT **9.0/10**: `4 639` khối, `99,59 %` phá huỷ, `0` tràn biên/trùng/lơ lửng, `0` z-fighting nhìn thấy được, vỏ công trình kín; biên bản: [`MASTER_QA__b37b6115.md`](agents/reviews/AGENT_3_MISSION_ROW_LSPD/MASTER_QA__b37b6115.md))*
+  - `src/shared/World/Modules/Plot_C3_MissionRowLSPD.luau`: khối 2 tầng `50 × 66` stud, mặt tiền trụ gạch ốp + **5 vịnh cửa sổ** mỗi tầng, dải chữ nổi **"LOS SANTOS POLICE DEPT"** và khẩu hiệu **"OBEY & SURVIVE"**, 2 huy hiệu LSPD tròn.
+  - Nội thất tầng trệt: quầy trực ban xanh + vách kính giao dịch + cột dây xếp hàng, bullpen bàn thám tử, hành lang phòng giam song sắt; tầng 2 có phòng họp và sân thượng.
+  - Sân thượng: **sân đáp trực thăng chữ H** (vòng tròn 96 mảnh, 8 đèn tiếp cận, lan can + gờ chắn chân, 4 đèn hiệu đỏ/xanh, chong chóng gió, cửa sập mái).
+  - Ngoại thất: bậc tam cấp, cửa đôi `8 × 9` stud, cửa cuốn **Sally Port `18 × 12`** mặt Đông, bãi đỗ xe cảnh sát 3 ô có vạch kẻ, cột cờ, barrier, trụ nước cứu hoả, chữ "POLICE" trên mặt đường.
+  - Agent Chính vá **7 chỗ** trước khi duyệt: khe hở góc Nam (`wallWithOpenings` dùng `IN_Z1 - WT`), sàn sân trước, mái, 2 cụm bụi cây z-fighting, vòng đáp trực thăng.
+  - Ảnh nghiệm thu: [`01_facade_front`](agents/reviews/AGENT_3_MISSION_ROW_LSPD/01_facade_front.png), [`07_lobby_interior`](agents/reviews/AGENT_3_MISSION_ROW_LSPD/07_lobby_interior.png), [`13_roof_helipad`](agents/reviews/AGENT_3_MISSION_ROW_LSPD/13_roof_helipad.png), [`15_parking`](agents/reviews/AGENT_3_MISSION_ROW_LSPD/15_parking.png)
 - [ ] **Bước 7: Công trình #4 — Tháp Tài Chính Maze Bank Tower (`Plot D2`)**
