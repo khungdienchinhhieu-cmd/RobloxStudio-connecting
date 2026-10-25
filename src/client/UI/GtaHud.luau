@@ -54,7 +54,7 @@ function GtaHud.mount(localPlayer: Player, hudRemote: RemoteEvent)
 	radarCluster.Name = "RadarCluster"
 	radarCluster.AnchorPoint = Vector2.new(0, 1)
 	radarCluster.Position = UDim2.new(0, 22, 1, -20)
-	radarCluster.Size = UDim2.fromOffset(RADAR_W, RADAR_H + 14)
+	radarCluster.Size = UDim2.fromOffset(RADAR_W, RADAR_H + 32)
 	radarCluster.BackgroundTransparency = 1
 	radarCluster.Parent = screen
 
@@ -67,10 +67,32 @@ function GtaHud.mount(localPlayer: Player, hudRemote: RemoteEvent)
 	radarOuter.ClipsDescendants = true
 	radarOuter.Parent = radarCluster
 
+	local radarCorner = Instance.new("UICorner")
+	radarCorner.CornerRadius = UDim.new(0, 10)
+	radarCorner.Parent = radarOuter
+
 	local radarStroke = Instance.new("UIStroke")
-	radarStroke.Color = Color3.fromRGB(10, 12, 16)
+	radarStroke.Color = Color3.fromRGB(6, 8, 12)
 	radarStroke.Thickness = 2.5
+	radarStroke.Transparency = 0.08
 	radarStroke.Parent = radarOuter
+
+	-- Viền kính mảnh bên trong (chi tiết nhỏ tạo cảm giác HUD GTA V thật)
+	local radarInner = Instance.new("Frame")
+	radarInner.Name = "RadarGlass"
+	radarInner.Position = UDim2.fromOffset(1, 1)
+	radarInner.Size = UDim2.new(1, -2, 1, -2)
+	radarInner.BackgroundTransparency = 1
+	radarInner.ZIndex = 8
+	radarInner.Parent = radarOuter
+	local rgCorner = Instance.new("UICorner")
+	rgCorner.CornerRadius = UDim.new(0, 9)
+	rgCorner.Parent = radarInner
+	local rgStroke = Instance.new("UIStroke")
+	rgStroke.Color = Color3.fromRGB(255, 255, 255)
+	rgStroke.Transparency = 0.84
+	rgStroke.Thickness = 1
+	rgStroke.Parent = radarInner
 
 	-- Lớp bản đồ thế giới xoay & cuộn theo tọa độ thực tế từ WorldGrid
 	local mapPivot = Instance.new("Frame")
@@ -187,23 +209,26 @@ function GtaHud.mount(localPlayer: Player, hudRemote: RemoteEvent)
 	nbCorner.CornerRadius = UDim.new(1, 0)
 	nbCorner.Parent = northBadge
 
-	-- Bộ 3 Thanh Chỉ Số Sát Đáy Radar Chuẩn GTA V (Health 50% | Armor 25% | Stamina 25%)
+	-- 3 Thanh Chỉ Số XẾP CHỒNG Chuẩn GTA V: Máu (xanh) | Giáp (xanh dương) | Thể lực (vàng)
 	local barsRow = Instance.new("Frame")
 	barsRow.Name = "StatusBarsRow"
-	barsRow.Position = UDim2.fromOffset(0, RADAR_H + 4)
-	barsRow.Size = UDim2.fromOffset(RADAR_W, 10)
-	barsRow.BackgroundColor3 = Color3.fromRGB(10, 12, 16)
-	barsRow.BorderSizePixel = 0
+	barsRow.Position = UDim2.fromOffset(0, RADAR_H + 7)
+	barsRow.Size = UDim2.fromOffset(RADAR_W, 22)
+	barsRow.BackgroundTransparency = 1
 	barsRow.Parent = radarCluster
 
-	local function makeStatBar(name: string, xPos: number, width: number, trackCol: Color3, fillCol: Color3): Frame
+	local function makeStatBar(name: string, yPos: number, trackCol: Color3, fillCol: Color3): Frame
 		local track = Instance.new("Frame")
 		track.Name = name .. "Track"
-		track.Position = UDim2.fromOffset(xPos + 2, 2)
-		track.Size = UDim2.fromOffset(width, 6)
+		track.Position = UDim2.fromOffset(2, yPos)
+		track.Size = UDim2.fromOffset(RADAR_W - 4, 5)
 		track.BackgroundColor3 = trackCol
+		track.BackgroundTransparency = 0.35
 		track.BorderSizePixel = 0
 		track.Parent = barsRow
+		local tCorner = Instance.new("UICorner")
+		tCorner.CornerRadius = UDim.new(0, 3)
+		tCorner.Parent = track
 
 		local fill = Instance.new("Frame")
 		fill.Name = "Fill"
@@ -211,13 +236,15 @@ function GtaHud.mount(localPlayer: Player, hudRemote: RemoteEvent)
 		fill.BackgroundColor3 = fillCol
 		fill.BorderSizePixel = 0
 		fill.Parent = track
+		local fCorner = Instance.new("UICorner")
+		fCorner.CornerRadius = UDim.new(0, 3)
+		fCorner.Parent = fill
 		return fill
 	end
 
-	-- 124 + 3 + 62 + 3 + 62 + 4(viền) = 258px khớp khít với chiều rộng Radar!
-	local healthFill = makeStatBar("Health", 0, 124, Color3.fromRGB(28, 52, 28), Color3.fromRGB(86, 186, 86))
-	local armorFill = makeStatBar("Armor", 127, 62, Color3.fromRGB(22, 42, 62), Color3.fromRGB(59, 155, 232))
-	local staminaFill = makeStatBar("Stamina", 192, 62, Color3.fromRGB(58, 48, 20), Color3.fromRGB(238, 193, 53))
+	local healthFill = makeStatBar("Health", 0, Color3.fromRGB(28, 52, 28), Color3.fromRGB(86, 186, 86))
+	local armorFill = makeStatBar("Armor", 7, Color3.fromRGB(22, 42, 62), Color3.fromRGB(59, 155, 232))
+	local staminaFill = makeStatBar("Stamina", 14, Color3.fromRGB(58, 48, 20), Color3.fromRGB(238, 193, 53))
 
 	-- ========================================================================
 	-- 2. HỘP THÔNG BÁO ĐEN MỜ PHÍA TRÊN MINIMAP (GTA V FEED BOX)
@@ -225,13 +252,21 @@ function GtaHud.mount(localPlayer: Player, hudRemote: RemoteEvent)
 	local feedBox = Instance.new("Frame")
 	feedBox.Name = "GtaFeedNotification"
 	feedBox.AnchorPoint = Vector2.new(0, 1)
-	feedBox.Position = UDim2.new(0, 22, 1, -(RADAR_H + 44))
+	feedBox.Position = UDim2.new(0, 22, 1, -(RADAR_H + 60))
 	feedBox.Size = UDim2.fromOffset(RADAR_W, 56)
 	feedBox.BackgroundColor3 = Color3.fromRGB(10, 12, 16)
 	feedBox.BackgroundTransparency = 0.22
 	feedBox.BorderSizePixel = 0
 	feedBox.Visible = false
 	feedBox.Parent = screen
+	local fbCorner = Instance.new("UICorner")
+	fbCorner.CornerRadius = UDim.new(0, 7)
+	fbCorner.Parent = feedBox
+	local fbStroke = Instance.new("UIStroke")
+	fbStroke.Color = Color3.fromRGB(0, 0, 0)
+	fbStroke.Transparency = 0.55
+	fbStroke.Thickness = 1
+	fbStroke.Parent = feedBox
 
 	local feedAccent = Instance.new("Frame")
 	feedAccent.Size = UDim2.new(0, 4, 1, 0)
@@ -281,11 +316,16 @@ function GtaHud.mount(localPlayer: Player, hudRemote: RemoteEvent)
 	local starsRow = Instance.new("Frame")
 	starsRow.Name = "WantedStarsRow"
 	starsRow.AnchorPoint = Vector2.new(1, 0)
-	starsRow.Position = UDim2.new(1, 0, 0, 0)
-	starsRow.Size = UDim2.fromOffset(165, 28)
-	starsRow.BackgroundTransparency = 1
+	starsRow.Position = UDim2.new(1, 4, 0, -2)
+	starsRow.Size = UDim2.fromOffset(173, 32)
+	starsRow.BackgroundColor3 = Color3.fromRGB(6, 9, 13)
+	starsRow.BackgroundTransparency = 0.55
+	starsRow.BorderSizePixel = 0
 	starsRow.Visible = false
 	starsRow.Parent = topRight
+	local srCorner = Instance.new("UICorner")
+	srCorner.CornerRadius = UDim.new(1, 0)
+	srCorner.Parent = starsRow
 
 	local starLabels: { TextLabel } = {}
 	for i = 1, 5 do
@@ -303,6 +343,37 @@ function GtaHud.mount(localPlayer: Player, hudRemote: RemoteEvent)
 		star.Parent = starsRow
 		table.insert(starLabels, star)
 	end
+
+	-- Nền kính mờ phía sau số tiền (giúp con số nổi bật trên mọi bối cảnh)
+	local cashPanel = Instance.new("Frame")
+	cashPanel.Name = "CashPanel"
+	cashPanel.AnchorPoint = Vector2.new(1, 0)
+	cashPanel.Position = UDim2.new(1, 8, 0, 26)
+	cashPanel.Size = UDim2.fromOffset(292, 78)
+	cashPanel.BackgroundColor3 = Color3.fromRGB(6, 9, 13)
+	cashPanel.BackgroundTransparency = 0.46
+	cashPanel.BorderSizePixel = 0
+	cashPanel.ZIndex = 0
+	cashPanel.Parent = topRight
+	local cpc = Instance.new("UICorner")
+	cpc.CornerRadius = UDim.new(0, 8)
+	cpc.Parent = cashPanel
+	local cps = Instance.new("UIStroke")
+	cps.Color = Color3.fromRGB(0, 0, 0)
+	cps.Transparency = 0.62
+	cps.Thickness = 1
+	cps.Parent = cashPanel
+	local cashAccent = Instance.new("Frame")
+	cashAccent.AnchorPoint = Vector2.new(1, 0.5)
+	cashAccent.Position = UDim2.new(1, -6, 0.5, 0)
+	cashAccent.Size = UDim2.fromOffset(3, 44)
+	cashAccent.BackgroundColor3 = Color3.fromRGB(114, 204, 114)
+	cashAccent.BackgroundTransparency = 0.15
+	cashAccent.BorderSizePixel = 0
+	cashAccent.Parent = cashPanel
+	local cac = Instance.new("UICorner")
+	cac.CornerRadius = UDim.new(1, 0)
+	cac.Parent = cashAccent
 
 	-- Hiển thị Tiền Mặt chuẩn xanh lá GTA V
 	local cashLabel = Instance.new("TextLabel")
@@ -395,17 +466,50 @@ function GtaHud.mount(localPlayer: Player, hudRemote: RemoteEvent)
 	local openHintBtn = Instance.new("TextButton")
 	openHintBtn.Name = "OpenTestHint"
 	openHintBtn.Position = UDim2.fromOffset(22, 16)
-	openHintBtn.Size = UDim2.fromOffset(112, 24)
-	openHintBtn.BackgroundColor3 = Color3.fromRGB(10, 12, 16)
-	openHintBtn.BackgroundTransparency = 0.42
+	openHintBtn.Size = UDim2.fromOffset(118, 26)
+	openHintBtn.BackgroundColor3 = Color3.fromRGB(8, 11, 16)
+	openHintBtn.BackgroundTransparency = 0.34
 	openHintBtn.Font = Enum.Font.GothamBold
 	openHintBtn.TextSize = 11
-	openHintBtn.TextColor3 = Color3.fromRGB(215, 224, 236)
-	openHintBtn.Text = "[H] Mở Menu Test"
+	openHintBtn.TextColor3 = Color3.fromRGB(226, 232, 240)
+	openHintBtn.Text = "[H]  MENU TEST"
+	openHintBtn.AutoButtonColor = false
 	openHintBtn.Parent = screen
 	local ohCorner = Instance.new("UICorner")
-	ohCorner.CornerRadius = UDim.new(0, 4)
+	ohCorner.CornerRadius = UDim.new(0, 6)
 	ohCorner.Parent = openHintBtn
+	local ohStroke = Instance.new("UIStroke")
+	ohStroke.Color = Color3.fromRGB(0, 0, 0)
+	ohStroke.Transparency = 0.55
+	ohStroke.Thickness = 1
+	ohStroke.Parent = openHintBtn
+	openHintBtn.MouseEnter:Connect(function()
+		TweenService:Create(openHintBtn, TweenInfo.new(0.12), { BackgroundTransparency = 0.12 }):Play()
+	end)
+	openHintBtn.MouseLeave:Connect(function()
+		TweenService:Create(openHintBtn, TweenInfo.new(0.12), { BackgroundTransparency = 0.34 }):Play()
+	end)
+
+	-- Chip nhắc phím [TAB] mở VÒNG CHỌN SÚNG (chuẩn GTA V)
+	local weaponHint = Instance.new("TextLabel")
+	weaponHint.Name = "WeaponWheelHint"
+	weaponHint.Position = UDim2.fromOffset(148, 16)
+	weaponHint.Size = UDim2.fromOffset(126, 26)
+	weaponHint.BackgroundColor3 = Color3.fromRGB(8, 11, 16)
+	weaponHint.BackgroundTransparency = 0.34
+	weaponHint.Font = Enum.Font.GothamBold
+	weaponHint.TextSize = 11
+	weaponHint.TextColor3 = Color3.fromRGB(226, 232, 240)
+	weaponHint.Text = "[TAB]  VŨ KHÍ"
+	weaponHint.Parent = screen
+	local whCorner = Instance.new("UICorner")
+	whCorner.CornerRadius = UDim.new(0, 6)
+	whCorner.Parent = weaponHint
+	local whStroke = Instance.new("UIStroke")
+	whStroke.Color = Color3.fromRGB(0, 0, 0)
+	whStroke.Transparency = 0.55
+	whStroke.Thickness = 1
+	whStroke.Parent = weaponHint
 
 	local testBar = Instance.new("Frame")
 	testBar.Name = "DevHudTestBar"
@@ -420,14 +524,26 @@ function GtaHud.mount(localPlayer: Player, hudRemote: RemoteEvent)
 	local tbStroke = Instance.new("UIStroke")
 	tbStroke.Color = Color3.fromRGB(0, 0, 0)
 	tbStroke.Thickness = 2
+	tbStroke.Transparency = 0.25
 	tbStroke.Parent = testBar
+	local tbCorner = Instance.new("UICorner")
+	tbCorner.CornerRadius = UDim.new(0, 7)
+	tbCorner.Parent = testBar
 
 	-- Header xanh đậm đặc trưng của GTA V Interaction Menu
 	local menuHeader = Instance.new("Frame")
-	menuHeader.Size = UDim2.new(1, 0, 0, 42)
+	menuHeader.Size = UDim2.new(1, 0, 0, 44)
 	menuHeader.BackgroundColor3 = Color3.fromRGB(24, 74, 148)
 	menuHeader.BorderSizePixel = 0
 	menuHeader.Parent = testBar
+	local mhCorner = Instance.new("UICorner")
+	mhCorner.CornerRadius = UDim.new(0, 7)
+	mhCorner.Parent = menuHeader
+	-- Dải gradient đậm dần sang phải cho header đỡ phẳng
+	local mhGradient = Instance.new("UIGradient")
+	mhGradient.Color = ColorSequence.new(Color3.fromRGB(32, 92, 178), Color3.fromRGB(16, 52, 112))
+	mhGradient.Rotation = 12
+	mhGradient.Parent = menuHeader
 
 	local menuTitle = Instance.new("TextLabel")
 	menuTitle.Position = UDim2.fromOffset(12, 4)
@@ -493,7 +609,17 @@ function GtaHud.mount(localPlayer: Player, hudRemote: RemoteEvent)
 		btn.TextXAlignment = Enum.TextXAlignment.Left
 		btn.TextColor3 = Color3.fromRGB(241, 245, 249)
 		btn.Text = "   " .. bSpec.label
+		btn.AutoButtonColor = false
 		btn.Parent = testBar
+		local bCorner = Instance.new("UICorner")
+		bCorner.CornerRadius = UDim.new(0, 5)
+		bCorner.Parent = btn
+		btn.MouseEnter:Connect(function()
+			TweenService:Create(btn, TweenInfo.new(0.1), { BackgroundColor3 = Color3.fromRGB(34, 42, 56) }):Play()
+		end)
+		btn.MouseLeave:Connect(function()
+			TweenService:Create(btn, TweenInfo.new(0.1), { BackgroundColor3 = Color3.fromRGB(22, 27, 36) }):Play()
+		end)
 
 		local barLeft = Instance.new("Frame")
 		barLeft.Size = UDim2.new(0, 3, 1, 0)
@@ -586,15 +712,36 @@ function GtaHud.mount(localPlayer: Player, hudRemote: RemoteEvent)
 	local speedoCluster = Instance.new("Frame")
 	speedoCluster.Name = "VehicleSpeedometer"
 	speedoCluster.AnchorPoint = Vector2.new(1, 1)
-	speedoCluster.Position = UDim2.new(1, -26, 1, -82)
-	speedoCluster.Size = UDim2.fromOffset(190, 44)
-	speedoCluster.BackgroundTransparency = 1
+	speedoCluster.Position = UDim2.new(1, -26, 1, -84)
+	speedoCluster.Size = UDim2.fromOffset(196, 52)
+	speedoCluster.BackgroundColor3 = Color3.fromRGB(6, 9, 13)
+	speedoCluster.BackgroundTransparency = 0.42
+	speedoCluster.BorderSizePixel = 0
 	speedoCluster.Visible = false
 	speedoCluster.Parent = screen
+	local sCorner = Instance.new("UICorner")
+	sCorner.CornerRadius = UDim.new(0, 7)
+	sCorner.Parent = speedoCluster
+	local sStroke = Instance.new("UIStroke")
+	sStroke.Color = Color3.fromRGB(0, 0, 0)
+	sStroke.Transparency = 0.6
+	sStroke.Thickness = 1
+	sStroke.Parent = speedoCluster
+	local sAccent = Instance.new("Frame")
+	sAccent.AnchorPoint = Vector2.new(1, 0.5)
+	sAccent.Position = UDim2.new(1, -5, 0.5, 0)
+	sAccent.Size = UDim2.fromOffset(3, 30)
+	sAccent.BackgroundColor3 = Color3.fromRGB(56, 189, 248)
+	sAccent.BorderSizePixel = 0
+	sAccent.Parent = speedoCluster
+	local saCorner = Instance.new("UICorner")
+	saCorner.CornerRadius = UDim.new(1, 0)
+	saCorner.Parent = sAccent
 
 	local carNameTag = Instance.new("TextLabel")
 	carNameTag.Position = UDim2.fromOffset(0, 0)
-	carNameTag.Size = UDim2.new(1, 0, 0, 15)
+	carNameTag.Size = UDim2.new(1, -14, 0, 15)
+	carNameTag.Position = UDim2.fromOffset(0, 6)
 	carNameTag.BackgroundTransparency = 1
 	carNameTag.Font = Enum.Font.GothamBold
 	carNameTag.TextSize = 12
@@ -605,8 +752,8 @@ function GtaHud.mount(localPlayer: Player, hudRemote: RemoteEvent)
 	carNameTag.Parent = speedoCluster
 
 	local mphLabel = Instance.new("TextLabel")
-	mphLabel.Position = UDim2.fromOffset(0, 15)
-	mphLabel.Size = UDim2.new(1, 0, 0, 28)
+	mphLabel.Position = UDim2.fromOffset(0, 21)
+	mphLabel.Size = UDim2.new(1, -14, 0, 26)
 	mphLabel.BackgroundTransparency = 1
 	mphLabel.Font = Enum.Font.GothamBlack
 	mphLabel.TextSize = 26
@@ -618,18 +765,52 @@ function GtaHud.mount(localPlayer: Player, hudRemote: RemoteEvent)
 	mphLabel.Parent = speedoCluster
 
 	showFeed(
-		"Los Santos sẵn sàng! Lại gần xe bấm [F] mở cửa lên xe • Cầm Pistol [1] / Rifle [2] bắn thử • [H] Menu Test.",
+		"Los Santos sẵn sàng! Giữ [TAB] mở VÒNG CHỌN SÚNG • [F] lên xe • [R] nạp đạn • [H] Menu Test.",
 		Color3.fromRGB(86, 186, 86)
 	)
 
-	RunService.RenderStepped:Connect(function(dt)
-		-- Cập nhật đồng hồ giờ game
+	local lastCarName = ""
+	local lastMphText = ""
+
+	-- =====================================================================
+	-- TỐI ƯU HIỆU NĂNG: tách nhịp cập nhật HUD
+	--   • 60 FPS : chỉ radar xoay/dịch + thanh máu/thể lực (phép tính rẻ, mượt)
+	--   •  10 FPS : chữ đồng hồ, sao truy nã, tên xe, số MPH (string.format rất tốn)
+	--   •   3 FPS : getLocationInfo() (dò khu vực/tên đường nặng nhất)
+	-- Trước đây TOÀN BỘ chạy 60 FPS -> ~180 string.format + 240 FindFirstChild mỗi giây.
+	-- =====================================================================
+	local TEXT_INTERVAL = 0.1
+	local LOCATION_INTERVAL = 0.34
+	local textAccum = TEXT_INTERVAL
+	local locationAccum = LOCATION_INTERVAL
+
+	-- Cache nhân vật: tránh gọi FindFirstChild/FindFirstChildOfClass mỗi frame
+	local cachedChar: Model? = nil
+	local cachedHrp: BasePart? = nil
+	local cachedHum: Humanoid? = nil
+
+	local function refreshCharacterCache()
+		local char = localPlayer.Character
+		if char ~= cachedChar then
+			cachedChar = char
+			cachedHrp = if char then char:FindFirstChild("HumanoidRootPart") :: BasePart? else nil
+			cachedHum = if char then char:FindFirstChildOfClass("Humanoid") else nil
+		end
+		if cachedHrp and not cachedHrp.Parent then
+			cachedChar = nil
+			cachedHrp = nil
+			cachedHum = nil
+		end
+	end
+
+	local function updateTextLayer(dt: number, hum: Humanoid, hrp: BasePart)
+		-- Đồng hồ giờ game
 		local ct = Lighting.ClockTime
 		local hh = math.floor(ct)
 		local mm = math.floor((ct - hh) * 60)
 		clockChip.Text = string.format("LOS SANTOS • %02d:%02d", hh, mm)
 
-		-- Cập nhật hiệu ứng chớp Sao Truy Nã + Chớp Xanh-Đỏ trên Radar
+		-- Sao truy nã + chớp Xanh-Đỏ
 		local wanted = math.clamp(tonumber(localPlayer:GetAttribute("WantedLevel")) or 0, 0, 5)
 		starsRow.Visible = wanted > 0
 		if wanted > 0 then
@@ -638,7 +819,6 @@ function GtaHud.mount(localPlayer: Player, hudRemote: RemoteEvent)
 				then Color3.fromRGB(239, 68, 68)
 				else Color3.fromRGB(59, 130, 246)
 			wantedFlash.BackgroundTransparency = 0.84
-
 			for i = 1, 5 do
 				local st = starLabels[i]
 				if i <= wanted then
@@ -655,21 +835,55 @@ function GtaHud.mount(localPlayer: Player, hudRemote: RemoteEvent)
 			wantedFlash.BackgroundTransparency = 1
 		end
 
-		local char = localPlayer.Character
-		local hrp = if char then char:FindFirstChild("HumanoidRootPart") else nil
-		local hum = if char then char:FindFirstChildOfClass("Humanoid") else nil
-		if not hrp or not hrp:IsA("BasePart") or not hum then
+		-- Đồng hồ tốc độ MPH
+		local seatPart = hum.SeatPart
+		local activeCar = if seatPart then seatPart:FindFirstAncestorOfClass("Model") else nil
+		if activeCar and activeCar:GetAttribute("IsGtaVehicle") == true then
+			local mph = tonumber(activeCar:GetAttribute("CurrentMPH")) or 0
+			local cname = tostring(activeCar:GetAttribute("VehicleDisplayName") or activeCar.Name)
+			if cname ~= lastCarName then
+				lastCarName = cname
+				carNameTag.Text = string.upper(cname)
+			end
+			local mphText = string.format("%d MPH", mph)
+			if mphText ~= lastMphText then
+				lastMphText = mphText
+				mphLabel.Text = mphText
+			end
+			speedoCluster.Visible = true
+		else
+			speedoCluster.Visible = false
+			lastMphText = ""
+		end
+	end
+
+	RunService.RenderStepped:Connect(function(dt)
+		textAccum += dt
+		locationAccum += dt
+		local doText = textAccum >= TEXT_INTERVAL
+		local doLocation = locationAccum >= LOCATION_INTERVAL
+		if doText then
+			textAccum = 0
+		end
+		if doLocation then
+			locationAccum = 0
+		end
+
+		refreshCharacterCache()
+		local hrp = cachedHrp
+		local hum = cachedHum
+		if not hrp or not hum then
 			return
 		end
 
-		-- Máu (Health)
+		-- Máu (Health) — mượt mỗi frame
 		local hpRatio = math.clamp(hum.Health / math.max(1, hum.MaxHealth), 0, 1)
 		healthFill.Size = UDim2.fromScale(hpRatio, 1)
 		healthFill.BackgroundColor3 = if hpRatio < 0.3
 			then Color3.fromRGB(220, 56, 56)
 			else Color3.fromRGB(86, 186, 86)
 
-		-- Thể lực chạy nhanh (Stamina)
+		-- Thể lực chạy nhanh (Stamina) — mượt mỗi frame
 		local moving = hum.MoveDirection.Magnitude > 0.05
 		if isSprinting and moving and stamina > 1 then
 			stamina = math.max(0, stamina - 22 * dt)
@@ -680,7 +894,7 @@ function GtaHud.mount(localPlayer: Player, hudRemote: RemoteEvent)
 		end
 		staminaFill.Size = UDim2.fromScale(stamina / 100, 1)
 
-		-- Cuộn & xoay Minimap theo Camera và vị trí người chơi
+		-- Radar xoay/dịch theo Camera — mượt mỗi frame
 		local cam = workspace.CurrentCamera
 		local camLook = if cam then cam.CFrame.LookVector else Vector3.new(0, 0, -1)
 		local camHeadingRad = math.atan2(camLook.X, -camLook.Z)
@@ -690,38 +904,31 @@ function GtaHud.mount(localPlayer: Player, hudRemote: RemoteEvent)
 		mapPivot.Rotation = mapRotDeg
 		mapContent.Position = UDim2.fromOffset(-pos.X * RADAR_SCALE, -pos.Z * RADAR_SCALE)
 
-		-- Xoay mũi tên người chơi tương đối so với góc xoay Camera
 		local charLook = hrp.CFrame.LookVector
 		local charHeadingRad = math.atan2(charLook.X, -charLook.Z)
 		playerBlip.Rotation = math.deg(charHeadingRad - camHeadingRad) + 45
 
-		-- Đưa chữ 'N' (Hướng Bắc = -Z) chạy dọc mép khung chữ nhật Radar
 		local northAngle = -camHeadingRad - math.pi / 2
 		local nx = math.clamp(0.5 + math.cos(northAngle) * 0.46, 0.06, 0.94)
 		local ny = math.clamp(0.5 + math.sin(northAngle) * 0.46, 0.07, 0.93)
 		northBadge.Position = UDim2.new(nx, 0, 0, ny * RADAR_H)
 
-		-- Cập nhật đồng hồ tốc độ MPH khi ngồi trên xe GTA V
-		local seatPart = hum.SeatPart
-		local activeCar = if seatPart then seatPart:FindFirstAncestorOfClass("Model") else nil
-		if activeCar and activeCar:GetAttribute("IsGtaVehicle") == true then
-			local mph = tonumber(activeCar:GetAttribute("CurrentMPH")) or 0
-			local cname = tostring(activeCar:GetAttribute("VehicleDisplayName") or activeCar.Name)
-			carNameTag.Text = string.upper(cname)
-			mphLabel.Text = string.format("%d MPH", mph)
-			speedoCluster.Visible = true
-		else
-			speedoCluster.Visible = false
+		-- Tầng chữ: 10 lần/giây
+		if doText then
+			updateTextLayer(dt, hum, hrp)
 		end
 
-		-- Cập nhật chữ Khu Vực & Tên Đường góc dưới phải
-		local distName, stName = WorldGrid.getLocationInfo(pos)
-		local locKey = distName .. "|" .. stName
-		if locKey ~= lastLocationKey then
-			lastLocationKey = locKey
-			districtLabel.Text = distName
-			streetLabel.Text = stName
+		-- Khu vực & tên đường: 3 lần/giây (nặng nhất)
+		if doLocation then
+			local distName, stName = WorldGrid.getLocationInfo(pos)
+			local locKey = distName .. "|" .. stName
+			if locKey ~= lastLocationKey then
+				lastLocationKey = locKey
+				districtLabel.Text = distName
+				streetLabel.Text = stName
+			end
 		end
+
 	end)
 
 	return screen

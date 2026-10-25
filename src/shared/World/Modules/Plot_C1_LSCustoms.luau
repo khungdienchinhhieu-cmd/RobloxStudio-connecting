@@ -900,7 +900,7 @@ local function buildFloor(root: Instance)
 			f,
 			"OilStain" .. tostring(i),
 			Vector3.new(s[3], 0.03, s[3] * 0.72),
-			Vector3.new(s[1], FLOOR_TOP + 0.03, s[2]),
+			Vector3.new(s[1], FLOOR_TOP + 0.055, s[2]),
 			C.OIL,
 			M.Slate,
 			15,
@@ -1243,10 +1243,10 @@ local function buildSignage(root: Instance)
 	local mainText = "LOS SANTOS CUSTOMS"
 	local pixel = 0.72
 	local tw = textWidth(mainText, pixel)
-	drawText(f, "MainSignLetters", mainText, -218.0 - tw * 0.5, 18.4, 52.35, 0.5, pixel, C.NEON_YELLOW, M.Neon, 55, signGrp .. "_Letters", 3)
+	drawText(f, "MainSignLetters", mainText, -218.0 - tw * 0.5, 18.4, 52.55, 0.55, pixel, C.NEON_YELLOW, M.Neon, 55, signGrp .. "_Letters", 3)
 	-- 2 dải neon gạch chân
 	for i, yy in ipairs({ 16.6, 16.15 }) do
-		box(f, "MainSignUnderline" .. i, Vector3.new(tw * 0.82, 0.28, 0.3), Vector3.new(-218.0, yy, 52.35), if i == 1 then C.NEON_ORANGE else C.NEON_RED, M.Neon, 40, signGrp .. "_Underline" .. i, 3, { canCollide = false, castShadow = false })
+		box(f, "MainSignUnderline" .. i, Vector3.new(tw * 0.82, 0.28, 0.35), Vector3.new(-218.0, yy, 52.55), if i == 1 then C.NEON_ORANGE else C.NEON_RED, M.Neon, 40, signGrp .. "_Underline" .. i, 3, { canCollide = false, castShadow = false })
 	end
 	-- Đèn rọi bảng hiệu
 	for i = 1, 3 do
@@ -1652,7 +1652,7 @@ local function buildCustomerLounge(root: Instance)
 	box(f, "CounterFront", Vector3.new(13.0, 4.2, 3.0), Vector3.new(-204.5, FLOOR_TOP + 2.1, 42.5), C.LSC_BLUE, M.Metal, 240, cg .. "_Front", 1)
 	box(f, "CounterReturn", Vector3.new(3.0, 4.2, 6.5), Vector3.new(-212.5, FLOOR_TOP + 2.1, 39.0), C.LSC_BLUE, M.Metal, 240, cg .. "_Return", 1)
 	box(f, "CounterTop", Vector3.new(13.8, 0.35, 3.6), Vector3.new(-204.5, FLOOR_TOP + 4.35, 42.4), C.GRANITE, M.Granite, 200, cg .. "_Top", 2)
-	box(f, "CounterTopReturn", Vector3.new(3.6, 0.35, 7.0), Vector3.new(-212.4, FLOOR_TOP + 4.35, 39.0), C.GRANITE, M.Granite, 200, cg .. "_Top", 2)
+	box(f, "CounterTopReturn", Vector3.new(3.6, 0.32, 7.0), Vector3.new(-212.4, FLOOR_TOP + 4.32, 39.0), C.GRANITE, M.Granite, 200, cg .. "_Top", 2)
 	box(f, "CounterKick", Vector3.new(12.6, 0.9, 0.3), Vector3.new(-204.5, FLOOR_TOP + 0.45, 44.1), C.CHROME, M.Metal, 90, cg .. "_Kick", 1, { canCollide = false })
 	-- Logo LSC trên mặt quầy
 	drawText(f, "CounterLogo", "LSC", -210.35, FLOOR_TOP + 1.5, 44.16, 0.14, 0.45, C.NEON_WHITE, M.Neon, 30, cg .. "_Logo", 3)
@@ -2053,7 +2053,7 @@ local function buildForecourt(root: Instance)
 				string.format("ForecourtSlab_%d_%d", ix, iz),
 				Vector3.new(cellW - 0.32, 0.22, cellD - 0.32),
 				Vector3.new(x0 + (cellW - 0.32) * 0.5, FC_TOP - 0.11, z0 + (cellD - 0.32) * 0.5),
-				jitter(C.CONCRETE, ix * 7 + iz * 3, 10),
+				jitter(C.CONCRETE, ix * 7 + iz * 3, 2),
 				M.Concrete,
 				380,
 				string.format("LSC_ForecourtSlab_%d_%d", ix, iz),
@@ -2067,23 +2067,41 @@ local function buildForecourt(root: Instance)
 	box(f, "DrivewayApron", Vector3.new(60.0, 0.2, 2.6), Vector3.new(-238.0, FC_TOP - 0.1, 121.6), C.ASPHALT, M.Asphalt, 380, "LSC_DrivewayApron", 1, { castShadow = false })
 	box(f, "DrivewayStopLine", Vector3.new(58.0, 0.05, 0.5), Vector3.new(-238.0, FC_TOP + 0.03, 118.6), C.WHITE, M.SmoothPlastic, 40, "LSC_StopLine", 1, { canCollide = false, castShadow = false })
 
-	-- Logo "LSC" sơn phẳng giữa sân
-	drawTextFlat(f, "ForecourtLogo", "LSC", -238.0, 78.0, FC_TOP + 0.06, 2.6, C.WHITE, M.SmoothPlastic, 60, "LSC_PavementLogo", 1)
-	drawTextFlat(f, "ForecourtSubLogo", "CUSTOMS", -238.0, 92.0, FC_TOP + 0.06, 0.95, C.YELLOW, M.SmoothPlastic, 40, "LSC_PavementLogo2", 1)
+	-- Logo "LSC" sơn phẳng giữa sân — MỘT dòng duy nhất, gọn mắt (bỏ dòng CUSTOMS chồng chéo cũ)
+	drawTextFlat(f, "ForecourtLogo", "LSC", -238.0, 82.0, FC_TOP + 0.06, 2.15, C.WHITE, M.SmoothPlastic, 60, "LSC_PavementLogo", 1)
+	-- 2 mũi tên chỉ hướng vào 2 khoang: thân thẳng + 2 cánh chéo 45° (sơn vàng phẳng)
+	for i, ax in ipairs({ -256.25, -230.75 }) do
+		box(f, "LaneArrowShaft" .. i, Vector3.new(1.5, 0.05, 12.0), Vector3.new(ax, FC_TOP + 0.05, 104.0), C.YELLOW, M.SmoothPlastic, 45, "LSC_LaneArrow" .. i, 1, { canCollide = false, castShadow = false })
+		for k, sgn in ipairs({ -1, 1 }) do
+			rbox(
+				f,
+				"LaneArrowWing" .. i .. "_" .. k,
+				Vector3.new(1.4, 0.05, 6.6),
+				CFrame.new(ax + sgn * 1.85, FC_TOP + 0.05, 99.4) * CFrame.Angles(0, math.rad(sgn * 42), 0),
+				C.YELLOW,
+				M.SmoothPlastic,
+				45,
+				"LSC_LaneArrow" .. i,
+				2,
+				{ canCollide = false, castShadow = false }
+			)
+		end
+	end
 
 	-- Bãi đỗ khách phía Tây + Đông (vạch sơn trắng + gờ chặn bánh)
 	for side, sx in ipairs({ { -296.0, -274.0, -1 }, { -163.0, -141.0, 1 } }) do
 		local xA, xB, inward = sx[1], sx[2], sx[3]
 		local grp = "LSC_ParkingSide" .. tostring(side)
-		for i = 0, 3 do
-			local z = 60.0 + i * 18.0
+		-- 3 vạch ô đỗ gọn gàng (bỏ mảng nhựa tối StallNumber cho đỡ rối mắt)
+		for i = 0, 2 do
+			local z = 60.0 + i * 24.0
 			box(f, "StallLine" .. side .. "_" .. i, Vector3.new(xB - xA, 0.05, 0.4), Vector3.new((xA + xB) * 0.5, FC_TOP + 0.04, z), C.WHITE, M.SmoothPlastic, 45, grp .. "_Line" .. i, 1, { canCollide = false, castShadow = false })
 		end
-		for i = 0, 2 do
-			local z = 69.0 + i * 18.0
+		-- 2 gờ chặn bánh mỗi bên
+		for i = 0, 1 do
+			local z = 72.0 + i * 24.0
 			local wheelX = if inward < 0 then xB - 1.4 else xA + 1.4
 			box(f, "WheelStop" .. side .. "_" .. i, Vector3.new(2.6, 0.7, 8.0), Vector3.new(wheelX, FC_TOP + 0.35, z), C.CONCRETE_DARK, M.Concrete, 90, grp .. "_WheelStop" .. i, 1)
-			box(f, "StallNumber" .. side .. "_" .. i, Vector3.new(5.0, 0.05, 4.0), Vector3.new((xA + xB) * 0.5, FC_TOP + 0.05, z), C.ASPHALT, M.Asphalt, 30, grp .. "_Num" .. i, 1, { canCollide = false, castShadow = false })
 		end
 	end
 
@@ -2154,21 +2172,18 @@ local function buildForecourt(root: Instance)
 	})
 
 	-- Đồ nghề ngoài sân: lốp, phuy, pallet, cọc nón, băng ghế khách
+	-- Góc đồ nghề ngoài sân gọn gàng: 1 chồng lốp + 2 phuy dầu (bớt 60% vật dụng lặt vặt)
 	tireStack(f, "ForecourtTireStack1", Vector3.new(-283.0, FC_TOP + 0.5, 110.0), 4, "LSC_OutdoorTires1", 70)
-	tireStack(f, "ForecourtTireStack2", Vector3.new(-279.5, FC_TOP + 0.5, 110.0), 3, "LSC_OutdoorTires2", 70)
-	for i, dp in ipairs({ { -288.0, 104.0 }, { -284.5, 104.0 }, { -281.0, 104.0 } }) do
+	for i, dp in ipairs({ { -287.6, 104.0 }, { -284.2, 104.0 } }) do
 		oilDrum(f, "OutdoorDrum" .. i, Vector3.new(dp[1], FC_TOP + 1.7, dp[2]), if i == 2 then C.BLUE_DRUM else C.GREEN_DRUM, "LSC_OutdoorDrum" .. tostring(i), 110)
 	end
-	box(f, "PalletBase", Vector3.new(8.0, 0.5, 6.0), Vector3.new(-158.0, FC_TOP + 0.25, 66.0), C.WOOD, M.WoodPlanks, 80, "LSC_Pallet1", 1)
-	for i = 1, 3 do
-		box(f, "Crate" .. i, Vector3.new(2.4, 2.2, 2.4), Vector3.new(-159.6 + (i - 1) * 2.6, FC_TOP + 1.6, 66.0), C.WOOD, M.WoodPlanks, 60, "LSC_Crate" .. tostring(i), 2)
-	end
-	local conePositions = { { -268.0, 112.0 }, { -262.0, 108.0 }, { -256.0, 112.0 }, { -214.0, 112.0 }, { -209.0, 108.0 }, { -230.0, 62.0 } }
+	-- 3 cọc tiêu đặt thẳng hàng trước 3 trụ nhà (không còn cọc nằm giữa làn xe)
+	local conePositions = { { -266.0, 108.0 }, { -243.5, 108.0 }, { -218.0, 108.0 } }
 	for i, cp in ipairs(conePositions) do
 		trafficCone(f, "Cone" .. i, Vector3.new(cp[1], FC_TOP, cp[2]), "LSC_Cone" .. tostring(i))
 	end
-	-- Băng ghế khách ngoài trời
-	for i, bx in ipairs({ -226.0, -190.0 }) do
+	-- 1 băng ghế khách ngoài trời đặt chính giữa dưới mái hiên kính
+	for i, bx in ipairs({ -190.0 }) do
 		local grp = "LSC_OutdoorBench" .. tostring(i)
 		box(f, "BenchSeat" .. i, Vector3.new(9.0, 0.4, 2.2), Vector3.new(bx, FC_TOP + 2.0, 59.6), C.WOOD, M.WoodPlanks, 80, grp .. "_Seat", 1)
 		box(f, "BenchBack" .. i, Vector3.new(9.0, 2.0, 0.3), Vector3.new(bx, FC_TOP + 3.1, 58.6), C.WOOD, M.WoodPlanks, 70, grp .. "_Back", 2)
@@ -2176,12 +2191,13 @@ local function buildForecourt(root: Instance)
 			box(f, "BenchLeg" .. i .. tostring(lx), Vector3.new(0.35, 2.0, 2.0), Vector3.new(bx + lx, FC_TOP + 1.0, 59.6), C.DARK_STEEL, M.Metal, 70, grp .. "_Leg" .. tostring(lx), 1)
 		end
 	end
-	-- Chậu cây + thùng rác
-	for i, p in ipairs({ { -274.0, 54.0 }, { -186.0, 54.0 }, { -142.0, 100.0 } }) do
+	-- 2 chậu cây đối xứng 2 bên cửa đi bộ (bỏ chậu lẻ ở góc Đông cho gọn mắt)
+	for i, p in ipairs({ { -213.5, 56.5 }, { -199.5, 56.5 } }) do
 		vcyl(f, "OutdoorPlanter" .. i, Vector3.new(3.2, 3.4, 3.4), Vector3.new(p[1], FC_TOP + 1.6, p[2]), C.CONCRETE, M.Concrete, 150, "LSC_OutdoorPlanter" .. i, 1)
 		ball(f, "OutdoorBush" .. i, 4.4, Vector3.new(p[1], FC_TOP + 4.4, p[2]), Color3.fromRGB(58, 112, 64), M.Grass, 60, "LSC_OutdoorPlanter" .. i, 2)
 	end
-	for i, p in ipairs({ { -243.5, 56.0 }, { -170.0, 57.0 } }) do
+	-- 1 thùng rác duy nhất sát trụ Đông
+	for i, p in ipairs({ { -218.0, 56.0 } }) do
 		vcyl(f, "TrashBin" .. i, Vector3.new(3.4, 2.6, 2.6), Vector3.new(p[1], FC_TOP + 1.7, p[2]), C.STEEL, M.Metal, 90, "LSC_TrashBin" .. i, 1)
 		vcyl(f, "TrashLid" .. i, Vector3.new(0.4, 2.9, 2.9), Vector3.new(p[1], FC_TOP + 3.6, p[2]), C.DARK_STEEL, M.Metal, 50, "LSC_TrashBin" .. i, 2)
 	end
@@ -2196,6 +2212,42 @@ local function buildForecourt(root: Instance)
 	end
 	-- Vòi nước + ống tưới rửa sân
 	box(f, "HoseBib", Vector3.new(0.6, 0.6, 1.2), Vector3.new(-176.0, FC_TOP + 1.6, BZ1 + 0.7), C.CHROME, M.Metal, 25, "LSC_HoseBib", 1, { canCollide = false })
+
+	-- =========================================================================
+	-- [CHỨC NĂNG THẬT] 2 KHOANG ĐỘ XE: VÙNG KÍCH HOẠT + ĐÈN BÁO TRẠNG THÁI
+	-- LSCustomsService (server) sẽ dùng các part này để biết xe nào đang nằm
+	-- trong khoang, bật đèn Xanh và mở bảng độ xe [E] cho người chơi.
+	-- =========================================================================
+	local fnFolder = folder("90_BayInteractions", f)
+	local baySpans = { { BAY1A, BAY1B }, { BAY2A, BAY2B } }
+	for i, span in ipairs(baySpans) do
+		local x0, x1 = span[1], span[2]
+		local xc = (x0 + x1) * 0.5
+		local halfW = (x1 - x0) * 0.5
+
+		-- Vùng kích hoạt vô hình (quét xe chạy vào khoang)
+		local zone = box(fnFolder, "BayZone" .. i, Vector3.new(halfW * 2 - 1.2, 13.0, 46.0), Vector3.new(xc, FLOOR_TOP + 6.5, 25.0), Color3.fromRGB(0, 255, 140), M.SmoothPlastic, nil, nil, nil, { canCollide = false, transparency = 1, castShadow = false })
+		zone.CanTouch = true
+		zone.CanQuery = false
+		zone:SetAttribute("BayIndex", i)
+		zone:SetAttribute("LSCustomsTrigger", true)
+		zone:SetAttribute("BayCenter", Vector3.new(xc, FLOOR_TOP, 24.0))
+
+		-- Dải đèn neon mặt sàn ngay trong cửa cuốn (Đỏ = trống / Xanh = có xe)
+		box(fnFolder, "BayStatusStrip" .. i, Vector3.new(halfW * 2 - 2.6, 0.16, 1.20), Vector3.new(xc, FLOOR_TOP + 0.08, 49.40), Color3.fromRGB(220, 42, 42), M.Neon, 220, "LSC_BayStatus" .. i, 1, { canCollide = false, castShadow = false })
+
+		-- Đèn cầu treo trong khoang (sáng lên khi khoang có xe)
+		local lamp = ball(fnFolder, "BayStatusLamp" .. i, 1.60, Vector3.new(xc, 13.10, 49.20), Color3.fromRGB(220, 42, 42), M.Neon, 220, "LSC_BayStatus" .. i, 2)
+		lamp.CanCollide = false
+		lamp.CanQuery = false
+		box(fnFolder, "BayLampHousing" .. i, Vector3.new(2.40, 0.30, 2.40), Vector3.new(xc, 13.85, 49.20), C.DARK_STEEL, M.Metal, 200, "LSC_BayStatus" .. i, 2, { canCollide = false, castShadow = false })
+	end
+	-- Bảng tên dịch vụ "MOD SHOP" gắn sát đỉnh vách kính (không che tầm nhìn vào phòng chờ)
+	box(f, "ServicePlaque", Vector3.new(9.0, 1.4, 0.16), Vector3.new(-190.0, FC_TOP + 10.32, BZ1 + 1.05), C.LSC_BLUE, M.Metal, 90, "LSC_ServicePlaque", 1, { canCollide = false, castShadow = false })
+	local plaqueText = "MOD SHOP"
+	local plaquePixel = 0.15
+	local plaqueWidth = textWidth(plaqueText, plaquePixel)
+	drawText(f, "ServicePlaqueText", plaqueText, -190.0 - plaqueWidth * 0.5, FC_TOP + 10.32, BZ1 + 1.16, 0.06, plaquePixel, C.NEON_WHITE, M.Neon, 40, "LSC_ServicePlaque", 2)
 end
 
 -- =============================================================================
@@ -2204,8 +2256,8 @@ end
 local function buildSideYards(root: Instance)
 	local f = folder("13_SideYards", root)
 
-	-- Sân hông Tây
-	box(f, "WestYardSlab", Vector3.new(26.0, 0.22, 129.0), Vector3.new(-284.5, FC_TOP - 0.11, 57.0), C.CONCRETE_DARK, M.Asphalt, 380, "LSC_WestYardSlab", 1, { castShadow = false })
+	-- Sân hông Tây — CHỈ lát dải phía Bắc (Z < 51), không chồng lấn ô sân trước nữa
+	box(f, "WestYardSlab", Vector3.new(26.0, 0.22, 58.7), Vector3.new(-284.5, FC_TOP - 0.14, 21.85), C.CONCRETE_DARK, M.Asphalt, 380, "LSC_WestYardSlab", 1, { castShadow = false })
 	for i = 0, 2 do
 		local z = 70.0 + i * 17.0
 		box(f, "WestStallLine" .. i, Vector3.new(24.0, 0.05, 0.4), Vector3.new(-284.5, FC_TOP + 0.03, z), C.WHITE, M.SmoothPlastic, 40, "LSC_WestStallLine" .. i, 1, { canCollide = false, castShadow = false })
@@ -2219,8 +2271,8 @@ local function buildSideYards(root: Instance)
 	box(f, "WestUtilityCabinet", Vector3.new(4.0, 6.0, 3.0), Vector3.new(-294.0, FC_TOP + 3.0, 4.0), C.GALV, M.Metal, 170, "LSC_WestUtilityCabinet", 1)
 	vcyl(f, "FireHydrant", Vector3.new(2.6, 1.3, 1.3), Vector3.new(-296.5, FC_TOP + 1.3, 60.0), C.RED, M.Metal, 90, "LSC_FireHydrant", 1)
 
-	-- Sân hông Đông: bãi rác + bình gas + giàn nóng điều hoà gắn tường
-	box(f, "EastYardSlab", Vector3.new(26.0, 0.22, 129.0), Vector3.new(-151.5, FC_TOP - 0.11, 57.0), C.CONCRETE_DARK, M.Concrete, 380, "LSC_EastYardSlab", 1, { castShadow = false })
+	-- Sân hông Đông — CHỈ lát dải phía Bắc (Z < 51), không chồng lấn ô sân trước nữa
+	box(f, "EastYardSlab", Vector3.new(26.0, 0.22, 58.7), Vector3.new(-151.5, FC_TOP - 0.14, 21.85), C.CONCRETE_DARK, M.Concrete, 380, "LSC_EastYardSlab", 1, { castShadow = false })
 	local dg = "LSC_Dumpster"
 	box(f, "DumpsterBody", Vector3.new(9.0, 5.2, 6.0), Vector3.new(-153.0, FC_TOP + 2.6, 30.0), Color3.fromRGB(46, 84, 60), M.Metal, 260, dg .. "_Body", 1)
 	box(f, "DumpsterLidA", Vector3.new(4.5, 0.3, 6.2), Vector3.new(-155.2, FC_TOP + 5.4, 30.0), Color3.fromRGB(40, 72, 52), M.Metal, 110, dg .. "_LidA", 2)
@@ -2242,10 +2294,29 @@ local function buildSideYards(root: Instance)
 		cyl(f, "ACUFan" .. i, Vector3.new(0.4, 3.6, 3.6), CFrame.new(EAST_XC + 2.9, FC_TOP + 2.4, zp), C.DARK_STEEL, M.Metal, 90, grp .. "_Fan", 2)
 		box(f, "ACUPad" .. i, Vector3.new(3.0, 0.4, 5.4), Vector3.new(EAST_XC + 1.6, FC_TOP + 0.2, zp), C.CONCRETE_DARK, M.Concrete, 120, grp .. "_Pad", 1)
 	end
-	box(f, "EastPalletRack", Vector3.new(2.0, 8.0, 9.0), Vector3.new(-141.5, FC_TOP + 4.0, 86.0), C.ORANGE_TOOL, M.Metal, 200, "LSC_EastPalletRack", 1)
-	for i = 1, 3 do
-		box(f, "EastRackBeam" .. i, Vector3.new(2.2, 0.24, 9.2), Vector3.new(-141.5, FC_TOP + 1.6 + (i - 1) * 2.4, 86.0), C.ORANGE_TOOL, M.Metal, 90, "LSC_EastPalletRackBeam" .. i, 2)
-		box(f, "EastRackBox" .. i, Vector3.new(2.6, 1.8, 3.4), Vector3.new(-141.5, FC_TOP + 2.8 + (i - 1) * 2.4, 86.0), C.WOOD, M.WoodPlanks, 60, "LSC_EastRackBox" .. i, 3)
+	-- =========================================================================
+	-- Giá kệ sắt HỞ 3 tầng: 4 chân đứng + dầm ngang, thùng gỗ NẰM TRÊN dầm
+	-- (bản cũ là 1 khối đặc 2×8×9 bị thùng gỗ xuyên qua -> đã sửa 100% chồng lấn)
+	-- =========================================================================
+	local rackZ0, rackZ1 = 81.6, 90.4
+	local rackXA, rackXB = -142.55, -140.45
+	local rackZc = (rackZ0 + rackZ1) * 0.5
+	local upIdx = 1
+	for _, zz in ipairs({ rackZ0, rackZ1 }) do
+		for _, xx in ipairs({ rackXA, rackXB }) do
+			box(f, "EastRackUpright" .. upIdx, Vector3.new(0.26, 8.40, 0.26), Vector3.new(xx, FC_TOP + 4.20, zz), C.ORANGE_TOOL, M.Metal, 110, "LSC_EastRackFrame", 1)
+			upIdx += 1
+		end
+	end
+	local shelfY = { FC_TOP + 1.45, FC_TOP + 3.95, FC_TOP + 6.45 }
+	for i, sy in ipairs(shelfY) do
+		for k, xx in ipairs({ rackXA + 0.14, rackXB - 0.14 }) do
+			box(f, "EastRackRail" .. i .. "_" .. k, Vector3.new(0.14, 0.18, rackZ1 - rackZ0 + 0.42), Vector3.new(xx, sy, rackZc), C.ORANGE_TOOL, M.Metal, 70, "LSC_EastRackShelf" .. i, 2)
+		end
+		for k, zz in ipairs({ rackZ0, rackZ1 }) do
+			box(f, "EastRackCross" .. i .. "_" .. k, Vector3.new(rackXB - rackXA + 0.30, 0.18, 0.14), Vector3.new((rackXA + rackXB) * 0.5, sy, zz), C.ORANGE_TOOL, M.Metal, 70, "LSC_EastRackShelf" .. i, 2)
+		end
+		box(f, "EastRackBox" .. i, Vector3.new(1.50, 1.50, 3.00), Vector3.new((rackXA + rackXB) * 0.5, sy + 0.84, rackZc), C.WOOD, M.WoodPlanks, 60, "LSC_EastRackBox" .. i, 3)
 	end
 	-- Hàng rào sân hông Đông
 	local cursor = -6.0
