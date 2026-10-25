@@ -141,51 +141,61 @@ Bạn chỉ cần copy nguyên văn từng khung dưới đây dán vào mỗi t
 
 ### 🔹 Tab Agent #1 — Garage Độ Xe Los Santos Customs (`Plot_C1`)
 ```text
-Hãy đọc kỹ file `MULTI_AGENT_SYSTEM.md`, `src/shared/WorldGrid.luau` và `src/shared/World/PartBuilder.luau` trước khi làm.
+(Nếu chưa thấy file `MULTI_AGENT_SYSTEM.md` trong repo, hãy chạy `git fetch origin && git merge --no-edit origin/arena/b37b6115-robloxstudio-connecting` trước).
+Hãy đọc kỹ `MULTI_AGENT_SYSTEM.md`, `src/shared/WorldGrid.luau`, `src/shared/World/PartBuilder.luau` và chạy `node bridge/agent-radio.mjs read` để xem tin nhắn từ các Agent phiên khác, sau đó chạy `node bridge/agent-radio.mjs say Plot_C1 "Nhận ô Plot_C1 xây Garage LS Customs"` để báo danh.
+
 Nhiệm vụ của phiên này: Xây dựng DUY NHẤT 1 công trình cực kỳ chỉnh chu là **Garage Độ Xe Los Santos Customs** tại ô `Plot_C1` (vùng xây dựng lõi X từ -299 đến -137, Z từ -9 đến +123, mặt nền Y = 1.15).
 Yêu cầu bắt buộc:
-1. Chỉ tạo file mới `src/shared/World/Modules/Plot_C1_LSCustoms.luau` (TUYỆT ĐỐI không sửa các file lõi chung để không xung đột Git).
-2. Thiết kế chuẩn kiến trúc công nghiệp GTA V: Sân đỗ bê tông phía Nam nhìn ra Vespucci Blvd, 2 khoang cửa cuốn ô tô cao rộng (>= 15x11 studs để xe rộng 8.2 cao 7.0 chạy thẳng vào trong được!), bảng hiệu chữ nổi Neon "LOS SANTOS CUSTOMS", tường gạch ghép khối bằng `PartBuilder.brickWall` / `PartBuilder.box` có máu ẩn `integrity` (để xe tông hoặc bắn hết máu tự vỡ!), cùng FULL nội thất bên trong (cầu nâng thuỷ lực 2 trụ, tủ đồ nghề đỏ, giá lốp xe, bàn thu ngân, đèn tuýp trần).
-3. Kiểm thử cú pháp Luau bằng `@luau-rs/luau` và dựng ảnh 3D kiểm tra bằng mắt từ nhiều góc trước khi commit & mở PR về nhánh `main` (lưu ý không commit thay đổi `studio-sync.json` vào PR để tránh conflict với các Agent khác).
+1. Chỉ tạo file module mới `src/shared/World/Modules/Plot_C1_LSCustoms.luau` (TUYỆT ĐỐI không sửa các file lõi chung và không commit đè `studio-sync.json` vào PR để 0% xung đột Git).
+2. Kiến trúc công nghiệp chuẩn GTA V: Sân đỗ bê tông phía Nam nhìn ra Vespucci Blvd, 2 khoang cửa cuốn ô tô cao rộng (>= 15x11 studs để xe rộng 8.2 cao 7.0 chạy thẳng vào trong được!), bảng hiệu chữ nổi Neon "LOS SANTOS CUSTOMS", tường gạch ghép khối bằng `PartBuilder.brickWall` / `PartBuilder.box` có máu ẩn `integrity` (xe tông hoặc bắn hết máu tự vỡ!), cùng FULL nội thất bên trong (cầu nâng thuỷ lực 2 trụ, tủ đồ nghề đỏ, giá lốp xe, bàn thu ngân, đèn tuýp trần).
+3. Kiểm thử cú pháp Luau bằng `@luau-rs/luau` và dựng ảnh 3D kiểm tra bằng mắt từ nhiều góc, sau đó dùng `node bridge/agent-radio.mjs say Plot_C1 "..."` báo lại toạ độ cổng xe ra vào cho các Agent khác biết rồi mở PR về nhánh `main`.
 ```
 
 ### 🔹 Tab Agent #2 — Siêu Thị Tiện Lợi 24/7 Supermarket (`Nửa Tây Plot_C3`)
 ```text
-Hãy đọc kỹ file `MULTI_AGENT_SYSTEM.md`, `src/shared/WorldGrid.luau` và `src/shared/World/PartBuilder.luau` trước khi làm.
+(Nếu chưa thấy file `MULTI_AGENT_SYSTEM.md` trong repo, hãy chạy `git fetch origin && git merge --no-edit origin/arena/b37b6115-robloxstudio-connecting` trước).
+Hãy đọc kỹ `MULTI_AGENT_SYSTEM.md`, `src/shared/WorldGrid.luau`, `src/shared/World/PartBuilder.luau` và chạy `node bridge/agent-radio.mjs read` để xem tin nhắn từ các Agent phiên khác, sau đó chạy `node bridge/agent-radio.mjs say Plot_C3_West "Nhận nửa Tây Plot_C3 xây Siêu thị 24/7"` để báo danh.
+
 Nhiệm vụ của phiên này: Xây dựng DUY NHẤT 1 công trình cực kỳ chỉnh chu là **Cửa hàng tiện lợi 24/7 Supermarket** tại nửa Tây ô `Plot_C3` (giới hạn X từ +137 đến +212, Z từ +20 đến +123, mặt nền Y = 1.15, mặt tiền quay ra ngã tư Alta St & Vespucci Blvd).
 Yêu cầu bắt buộc:
-1. Chỉ tạo file mới `src/shared/World/Modules/Plot_C3_Supermarket247.luau` (không sửa file chung, không chạm `studio-sync.json` trong PR).
+1. Chỉ tạo file module mới `src/shared/World/Modules/Plot_C3_Supermarket247.luau` (không sửa file chung, không chạm `studio-sync.json` trong PR).
 2. Mặt tiền chuẩn 24/7 GTA V (mái hiên sọc Xanh Lá - Trắng - Đỏ Cam phát sáng, hệ vách kính lớn chia từng tấm kính rời có máu ẩn `integrity = 45` bắn vỡ từng ô, cửa đôi mở rộng cao 8.5 studs, bãi đậu xe có gờ chặn bánh phía trước).
 3. Full nội thất bên trong cực chi tiết: Quầy thu ngân + máy tính tiền, máy ATM góc tường, 3 dãy kệ hàng đầy sản phẩm nhiều màu (cũng có máu ẩn bắn vỡ được!), tủ lạnh nước ngọt cửa kính phát sáng phía cuối tiệm, máy pha cà phê/Slushie.
-4. Kiểm thử Luau + render 3D kiểm tra ngoại thất & nội thất trước khi mở PR về `main`.
+4. Kiểm thử Luau + render 3D kiểm tra ngoại thất & nội thất, báo toạ độ lối vào qua `node bridge/agent-radio.mjs say Plot_C3_West "..."` rồi mở PR về `main`.
 ```
 
 ### 🔹 Tab Agent #3 — Đồn Cảnh Sát Mission Row LSPD (`Nửa Đông Plot_C3`)
 ```text
-Hãy đọc kỹ file `MULTI_AGENT_SYSTEM.md`, `src/shared/WorldGrid.luau` và `src/shared/World/PartBuilder.luau` trước khi làm.
+(Nếu chưa thấy file `MULTI_AGENT_SYSTEM.md` trong repo, hãy chạy `git fetch origin && git merge --no-edit origin/arena/b37b6115-robloxstudio-connecting` trước).
+Hãy đọc kỹ `MULTI_AGENT_SYSTEM.md`, `src/shared/WorldGrid.luau`, `src/shared/World/PartBuilder.luau` và chạy `node bridge/agent-radio.mjs read` để xem tin nhắn từ các Agent phiên khác, sau đó chạy `node bridge/agent-radio.mjs say Plot_C3_East "Nhận nửa Đông Plot_C3 xây Đồn Cảnh Sát Mission Row LSPD"` để báo danh.
+
 Nhiệm vụ của phiên này: Xây dựng DUY NHẤT 1 công trình cực kỳ chỉnh chu là **Đồn Cảnh Sát Mission Row LSPD** tại nửa Đông ô `Plot_C3` (giới hạn X từ +222 đến +299, Z từ -9 đến +123, mặt nền Y = 1.15).
 Yêu cầu bắt buộc:
-1. Chỉ tạo file mới `src/shared/World/Modules/Plot_C3_MissionRowLSPD.luau` (không sửa file chung, không chạm `studio-sync.json` trong PR).
-2. Kiến trúc tân cổ điển kết hợp hiện đại chuẩn LSPD: Bậc tam cấp sảnh chính, cột đá, bảng hiệu huy hiệu "LOS SANTOS POLICE DEPT — OBEY & SURVIVE", sân đáp trực thăng chữ H trên sân thượng, tường gạch & kính chia khối có máu ẩn `integrity`, cùng nội thất tầng trệt (quầy trực ban, dãy bàn làm việc thám tử, phòng giam song sắt thép phía sau).
-3. Kiểm thử Luau + render 3D nhiều góc kiểm tra kỹ trước khi mở PR về `main`.
+1. Chỉ tạo file module mới `src/shared/World/Modules/Plot_C3_MissionRowLSPD.luau` (không sửa file chung, không chạm `studio-sync.json` trong PR).
+2. Kiến trúc chuẩn LSPD: Bậc tam cấp sảnh chính, cột đá, bảng hiệu huy hiệu "LOS SANTOS POLICE DEPT — OBEY & SURVIVE", sân đáp trực thăng chữ H trên sân thượng, tường gạch & kính chia khối có máu ẩn `integrity`, cùng nội thất tầng trệt (quầy trực ban, dãy bàn làm việc thám tử, phòng giam song sắt thép phía sau).
+3. Kiểm thử Luau + render 3D nhiều góc kiểm tra kỹ, báo toạ độ cổng chính qua `node bridge/agent-radio.mjs say Plot_C3_East "..."` rồi mở PR về `main`.
 ```
 
 ### 🔹 Tab Agent #4 — Tháp Tài Chính Maze Bank Tower (`Plot_D2`)
 ```text
-Hãy đọc kỹ file `MULTI_AGENT_SYSTEM.md`, `src/shared/WorldGrid.luau` và `src/shared/World/PartBuilder.luau` trước khi làm.
+(Nếu chưa thấy file `MULTI_AGENT_SYSTEM.md` trong repo, hãy chạy `git fetch origin && git merge --no-edit origin/arena/b37b6115-robloxstudio-connecting` trước).
+Hãy đọc kỹ `MULTI_AGENT_SYSTEM.md`, `src/shared/WorldGrid.luau`, `src/shared/World/PartBuilder.luau` và chạy `node bridge/agent-radio.mjs read` để xem tin nhắn từ các Agent phiên khác, sau đó chạy `node bridge/agent-radio.mjs say Plot_D2 "Nhận ô trung tâm Plot_D2 xây Tháp Maze Bank Tower"` để báo danh.
+
 Nhiệm vụ của phiên này: Xây dựng DUY NHẤT 1 công trình biểu tượng cực kỳ chỉnh chu là **Tháp Tài Chính Maze Bank Plaza & Tower** tại ô trung tâm `Plot_D2` (giới hạn X từ -83 đến +83, Z từ -199 đến -63, mặt nền Y = 1.15, nhìn thẳng xuống Quảng trường Legion Square).
 Yêu cầu bắt buộc:
-1. Chỉ tạo file mới `src/shared/World/Modules/Plot_D2_MazeBankTower.luau` (không sửa file chung, không chạm `studio-sync.json` trong PR).
-2. Thiết kế khối đế Plaza bậc thang + đài phun nước tiền sảnh + thân tháp lục giác/vuông vát góc thu dần lên đỉnh có bãi đáp trực thăng tròn "MAZE BANK" đỏ trắng trên nóc; sảnh tầng trệt thông tầng cao 18 studs có quầy lễ tân đá cẩm thạch, cổng an ninh, thang máy & các ô kính mặt dựng tầng thấp có máu ẩn `integrity` bắn vỡ được!
-3. Kiểm thử Luau + render 3D kiểm tra cả tổng thể tháp lẫn cận cảnh sảnh tầng trệt trước khi mở PR về `main`.
+1. Chỉ tạo file module mới `src/shared/World/Modules/Plot_D2_MazeBankTower.luau` (không sửa file chung, không chạm `studio-sync.json` trong PR).
+2. Khối đế Plaza bậc thang + đài phun nước tiền sảnh + thân tháp vát góc thu dần lên đỉnh có bãi đáp trực thăng tròn "MAZE BANK" đỏ trắng trên nóc; sảnh tầng trệt thông tầng cao 18 studs có quầy lễ tân đá cẩm thạch, cổng an ninh, thang máy & các ô kính mặt dựng tầng thấp có máu ẩn `integrity` bắn vỡ được!
+3. Kiểm thử Luau + render 3D kiểm tra cả tổng thể tháp lẫn cận cảnh sảnh tầng trệt, báo toạ độ sảnh qua `node bridge/agent-radio.mjs say Plot_D2 "..."` rồi mở PR về `main`.
 ```
 
 ### 🔹 Tab Agent #5 — Hạ Tầng Đèn Giao Thông, Đèn Đường & Hàng Cọ California (`StreetProps`)
 ```text
-Hãy đọc kỹ file `MULTI_AGENT_SYSTEM.md`, `src/shared/WorldGrid.luau` và `src/shared/World/PartBuilder.luau` trước khi làm.
+(Nếu chưa thấy file `MULTI_AGENT_SYSTEM.md` trong repo, hãy chạy `git fetch origin && git merge --no-edit origin/arena/b37b6115-robloxstudio-connecting` trước).
+Hãy đọc kỹ `MULTI_AGENT_SYSTEM.md`, `src/shared/WorldGrid.luau`, `src/shared/World/PartBuilder.luau` và ĐẶC BIỆT chạy `node bridge/agent-radio.mjs read` để xem toạ độ lối xe vào & chỗ đậu xe của tất cả các Agent khác nhằm chừa trống vỉa hè, sau đó chạy `node bridge/agent-radio.mjs say StreetProps "Nhận hạng mục Đèn giao thông, Đèn đường & Hàng cọ California"` để báo danh.
+
 Nhiệm vụ của phiên này: Xây dựng hệ thống **Đèn Giao Thông Ngã Tư, Đèn Đường Cao Áp & Hàng Cây Cọ California Ven Biển** dọc mép vỉa hè.
 Yêu cầu bắt buộc:
-1. Chỉ tạo file mới `src/shared/World/Modules/Infra_StreetLightsAndPalms.luau` (không sửa file chung, không chạm `studio-sync.json` trong PR).
-2. Đặt trụ đèn tín hiệu Đỏ-Vàng-Xanh vươn cần ngang tại các ngã tư chính (mép vỉa hè Y = 1.15, tuyệt đối không lấn xuống lòng đường nhựa), hàng cây cọ thân đốt cong nhẹ dọc đại lộ biển Vespucci Blvd & lối dạo biển, ghế đá & thùng rác công cộng — TẤT CẢ cột đèn, thùng rác, thân cọ đều gắn máu ẩn `integrity` để siêu xe đâm mạnh hoặc bắn sẽ gãy vỡ!
+1. Chỉ tạo file module mới `src/shared/World/Modules/Infra_StreetLightsAndPalms.luau` (không sửa file chung, không chạm `studio-sync.json` trong PR).
+2. Đặt trụ đèn tín hiệu Đỏ-Vàng-Xanh vươn cần ngang tại các ngã tư chính (mép vỉa hè Y = 1.15, tuyệt đối không lấn xuống lòng đường nhựa hay chặn cổng garage các ô đất), hàng cây cọ thân đốt cong nhẹ dọc đại lộ biển Vespucci Blvd & lối dạo biển, ghế đá & thùng rác công cộng — TẤT CẢ cột đèn, thùng rác, thân cọ đều gắn máu ẩn `integrity` để siêu xe đâm mạnh hoặc bắn sẽ gãy vỡ!
 3. Kiểm thử Luau + render 3D kiểm tra không có bất kỳ cột nào nằm giữa đường chạy xe trước khi mở PR về `main`.
 ```
