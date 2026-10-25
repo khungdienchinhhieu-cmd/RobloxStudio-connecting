@@ -11,6 +11,7 @@ import {
 	compileSyncBundle,
 	buildGitHubCommandBarOneLiner,
 } from "./compiler.mjs";
+import { computeRadarSnapshot, triggerGitFetchAsync } from "./qa-radar.mjs";
 
 function getHeadSha() {
 	try {
@@ -184,16 +185,102 @@ const HTML = `<!DOCTYPE html>
   }
   .tag { font-size: 11px; padding: 2px 7px; border-radius: 4px; background: #252d42; color: #93c5fd; }
   .toast { font-size: 12px; color: #6ee7b7; font-weight: 600; }
+
+  /* TRẠM RADA GIÁM SÁT & BÁO CHUÔNG NGHIỆM THU ĐA-AGENT */
+  .radar-card {
+    background: linear-gradient(180deg, #161d2e 0%, #111623 100%);
+    border: 1px solid #2e3b59;
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .radar-card.has-pending {
+    border-color: #a855f7;
+    box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.28), 0 12px 30px rgba(168, 85, 247, 0.22);
+  }
+  .radar-top {
+    display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px;
+  }
+  .radar-title { font-size: 15px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+  .radar-pulse {
+    width: 9px; height: 9px; border-radius: 50%; background: #38bdf8;
+    box-shadow: 0 0 10px #38bdf8; animation: rpulse 1.6s infinite;
+  }
+  @keyframes rpulse { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.35); opacity: 0.55; } }
+  .qa-banner {
+    display: none;
+    background: linear-gradient(90deg, rgba(147,51,234,0.28), rgba(16,185,129,0.24));
+    border: 1px solid #c084fc;
+    border-radius: 10px;
+    padding: 11px 14px;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .qa-banner.active { display: flex; }
+  .qa-banner-txt b { color: #f3e8ff; font-size: 14px; display: block; }
+  .qa-banner-txt span { color: #d8b4fe; font-size: 12.5px; }
+  .qa-copy-btn {
+    background: #10b981; color: #052e16; border: none; border-radius: 8px;
+    padding: 8px 14px; font-size: 12.5px; font-weight: 800; cursor: pointer;
+  }
+  .qa-copy-btn:hover { background: #34d399; }
+  .radar-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+  }
+  @media (max-width: 920px) { .radar-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px) { .radar-grid { grid-template-columns: 1fr; } }
+  .plot-tile {
+    background: #0d121d; border: 1px solid #232d45; border-radius: 8px; padding: 9px 10px;
+    display: flex; flex-direction: column; gap: 4px; font-size: 11.5px;
+  }
+  .plot-tile.IN_PROGRESS { border-color: #f59e0b; background: rgba(245, 158, 11, 0.08); }
+  .plot-tile.NEEDS_QA_SUBMITTED, .plot-tile.NEEDS_QA_MODULE_PUSHED {
+    border-color: #c084fc; background: rgba(168, 85, 247, 0.16);
+  }
+  .plot-tile.INTEGRATED { border-color: rgba(16,185,129,0.45); background: rgba(16,185,129,0.07); }
+  .plot-head { display: flex; justify-content: space-between; font-weight: 800; color: #f1f5f9; }
+  .plot-sub { color: #94a3b8; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .plot-status { font-weight: 700; font-size: 11px; margin-top: 2px; }
 </style>
 </head>
 <body>
 <div class="container">
   <div class="header">
     <div>
-      <h1>🏎️ GTA V Roblox (Los Santos) — Bước 2: Siêu Xe + Máu Ẩn Từng Part (Đụng / Bắn Tự Vỡ)</h1>
+      <h1>🏎️ GTA V Roblox (Los Santos) — Trạm Điều Phối Đa-Agent &amp; Live Sync v3.1</h1>
       <p id="repoMeta">Đang tải thông tin đồng bộ...</p>
     </div>
-    <div class="badge"><span class="dot"></span><span id="verText">Live Sync v3 Sẵn Sàng</span></div>
+    <div class="badge"><span class="dot"></span><span id="verText">Live Sync v3.1 Sẵn Sàng</span></div>
+  </div>
+
+  <!-- TRẠM RADA TỰ ĐỘNG BÁO CHUÔNG KHI AGENT PHỤ LÀM XONG -->
+  <div class="radar-card" id="radarCard">
+    <div class="radar-top">
+      <div class="radar-title">
+        <span class="radar-pulse"></span>
+        <span>📡 Rada Giám Sát Agent Phụ &amp; Báo Nghiệm Thu Tự Động</span>
+        <span id="radarSummaryTag" class="tag">Đang quét GitHub mỗi 7 giây...</span>
+      </div>
+      <div class="btn-row">
+        <button id="soundToggleBtn" class="action secondary" style="padding:5px 11px;font-size:12px">🔔 Chuông báo: BẬT</button>
+        <button id="refreshRadarBtn" class="action secondary" style="padding:5px 11px;font-size:12px">🔄 Quét ngay</button>
+      </div>
+    </div>
+
+    <div class="qa-banner" id="qaBanner">
+      <div class="qa-banner-txt">
+        <b id="qaBannerTitle">🔔 PHÁT HIỆN CÔNG TRÌNH ĐÃ XONG — CẦN NGHIỆM THU!</b>
+        <span id="qaBannerDetail">Nhắn câu "Nghiệm thu đi" vào khung chat của Agent Chính để kiểm định 3D &amp; đẩy lên Studio!</span>
+      </div>
+      <button class="qa-copy-btn" id="copyQaCmdBtn">📋 Copy "Nghiệm thu đi"</button>
+    </div>
+
+    <div class="radar-grid" id="radarGrid"></div>
+    <div id="workerFeed" style="font-size:11.5px;color:#94a3b8"></div>
   </div>
 
   <!-- BẢN MÔ PHỎNG 3D + GTA V HUD TRỰC QUAN NGAY TRÊN BROWSER -->
@@ -841,15 +928,154 @@ async function load() {
 }
 load();
 setInterval(load, 3000);
+
+// === 4. RADA GIÁM SÁT ĐA-AGENT & CHUÔNG BÁO NGHIỆM THU ===
+let soundEnabled = true;
+const alertedKeys = new Set();
+
+function playQaChime() {
+  if (!soundEnabled) return;
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const notes = [587.33, 880.0, 1174.66];
+    notes.forEach((freq, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "triangle";
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.001, ctx.currentTime + idx * 0.14);
+      gain.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime + idx * 0.14 + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.14 + 0.32);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime + idx * 0.14);
+      osc.stop(ctx.currentTime + idx * 0.14 + 0.34);
+    });
+  } catch (_) {}
+}
+
+document.getElementById("soundToggleBtn").onclick = () => {
+  soundEnabled = !soundEnabled;
+  document.getElementById("soundToggleBtn").textContent = soundEnabled ? "🔔 Chuông báo: BẬT" : "🔕 Chuông báo: TẮT";
+  if (soundEnabled) playQaChime();
+};
+document.getElementById("copyQaCmdBtn").onclick = () => copySafe("Nghiệm thu đi", "lệnh báo Agent Chính");
+document.getElementById("refreshRadarBtn").onclick = async () => {
+  document.getElementById("radarSummaryTag").textContent = "Đang quét trực tiếp GitHub...";
+  await fetch("/api/radar/refresh", { method: "POST" });
+  await loadRadar();
+};
+
+function escHtml(s) {
+  return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+async function loadRadar() {
+  try {
+    const r = await fetch("/api/radar");
+    const d = await r.json();
+    const card = document.getElementById("radarCard");
+    const banner = document.getElementById("qaBanner");
+
+    document.getElementById("radarSummaryTag").textContent =
+      "Agent Phụ mở: " + d.workerBranchCount + " • Chờ nghiệm thu: " + d.pendingQaCount;
+
+    if (d.pendingQaCount > 0) {
+      card.classList.add("has-pending");
+      banner.classList.add("active");
+      const names = d.pendingQaItems.map(p => p.title + " (" + p.shortBranch + ")").join(", ");
+      document.getElementById("qaBannerTitle").textContent =
+        "🔔 CÓ " + d.pendingQaCount + " CÔNG TRÌNH ĐÃ XONG — CẦN NGHIỆM THU NGAY!";
+      document.getElementById("qaBannerDetail").textContent =
+        "Hoàn tất: " + names + " — Gõ 'Nghiệm thu đi' vào khung chat để Agent Chính kiểm định 3D & đẩy vào Studio!";
+      document.title = "🔔 (" + d.pendingQaCount + " XONG!) CẦN NGHIỆM THU — Los Santos";
+
+      let hasBrandNew = false;
+      for (const item of d.pendingQaItems) {
+        if (!alertedKeys.has(item.key)) {
+          alertedKeys.add(item.key);
+          hasBrandNew = true;
+        }
+      }
+      if (hasBrandNew) playQaChime();
+    } else {
+      card.classList.remove("has-pending");
+      banner.classList.remove("active");
+      document.title = "GTA V Los Santos — Rada Đa-Agent (" + d.workerBranchCount + " đang chạy)";
+    }
+
+    document.getElementById("radarGrid").innerHTML = d.tasks.map(t => {
+      let extra = "";
+      if (t.precheck) {
+        extra = '<div class="plot-sub" style="color:#c4b5fd">' +
+          t.precheck.lines + ' dòng • Máu ẩn: ' + t.precheck.integrityMatches +
+          (t.precheck.forbiddenTouched.length ? ' • ⚠️ Chạm file cấm!' : ' • 0 conflict') +
+          '</div>';
+      } else if (t.activeBranch) {
+        extra = '<div class="plot-sub">Nhánh: ' + escHtml(t.activeBranch.replace("arena/", "").slice(0, 12)) + ' (' + escHtml(t.relTime) + ')</div>';
+      }
+      return '<div class="plot-tile ' + t.stateCode + '">' +
+        '<div class="plot-head"><span>' + escHtml(t.plotId) + '</span><span>' + escHtml(t.district) + '</span></div>' +
+        '<div class="plot-sub" title="' + escHtml(t.title) + '">' + escHtml(t.title) + '</div>' +
+        '<div class="plot-status">' + escHtml(t.stateLabel) + '</div>' +
+        extra +
+      '</div>';
+    }).join("");
+
+    if (d.workerBranches && d.workerBranches.length > 0) {
+      document.getElementById("workerFeed").innerHTML =
+        "🌿 <b>Nhật ký trực tiếp các nhánh Agent Phụ:</b> " +
+        d.workerBranches.map(w =>
+          '<span style="margin-right:14px"><code>' + escHtml(w.shortId) + '</code> (' + escHtml(w.relTime) + '): ' + escHtml(w.subject) + '</span>'
+        ).join(" • ");
+    } else {
+      document.getElementById("workerFeed").textContent = "🌿 Đang trực tín hiệu từ các tab Arena.ai mới...";
+    }
+  } catch (_) {}
+}
+loadRadar();
+setInterval(loadRadar, 4000);
 </script>
 </body>
 </html>`;
 
-const server = http.createServer((req, res) => {
+// Bộ đệm Rada tự động quét GitHub nền mỗi 7 giây
+let cachedRadar = computeRadarSnapshot({ doSyncFetch: false });
+let fetchInFlight = false;
+async function refreshRadarInBackground() {
+	if (fetchInFlight) return cachedRadar;
+	fetchInFlight = true;
+	try {
+		await triggerGitFetchAsync();
+		cachedRadar = computeRadarSnapshot({ doSyncFetch: false });
+	} catch {
+		// giữ bản cũ nếu mạng chập chờn
+	} finally {
+		fetchInFlight = false;
+	}
+	return cachedRadar;
+}
+refreshRadarInBackground();
+setInterval(refreshRadarInBackground, 7000);
+
+const server = http.createServer(async (req, res) => {
 	const url = new URL(req.url || "/", "http://localhost");
 	if (url.pathname === "/") {
 		res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" });
 		res.end(HTML);
+		return;
+	}
+	if (url.pathname === "/api/radar") {
+		res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+		res.end(JSON.stringify(cachedRadar));
+		return;
+	}
+	if (url.pathname === "/api/radar/refresh") {
+		const fresh = await refreshRadarInBackground();
+		res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+		res.end(JSON.stringify(fresh));
 		return;
 	}
 	if (url.pathname === "/api/state") {
