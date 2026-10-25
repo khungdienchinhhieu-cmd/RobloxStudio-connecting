@@ -366,6 +366,7 @@ local function buildWeaponTool(toolName: string, spec: Spec): Tool
 	tool:SetAttribute("AutoFire", spec.auto)
 	tool:SetAttribute("FireCooldown", spec.cooldown)
 	tool:SetAttribute("Pellets", spec.pellets)
+	tool:SetAttribute("IsExplosive", spec.explosive == true)
 
 	local model = GUN_MODELS[toolName]
 	if not model then

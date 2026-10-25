@@ -201,6 +201,16 @@
       "plotId": "N/A",
       "modulePath": "src/client/UI/GtaWeaponWheel.luau",
       "spec": "8 ô vũ khí (Unarmed/Bat/Pistol/AP Pistol/Micro SMG/Carbine/Shotgun/Sniper), giữ TAB chọn theo hướng chuột, thả để trang bị, phím 1-8 đổi nhanh, đạn thật + [R] nạp, thẻ vũ khí góc dưới phải. HUD đại tu: radar bo góc, 3 thanh xếp chồng, panel tiền, feed, menu H. Demo /hud + 33 test PASS."
+    },
+    {
+      "taskId": "RPG_NPC_REACTIONS",
+      "order": 36,
+      "status": "completed",
+      "title": "Súng phóng lựu RPG-7 (ô 9) + NPC phản ứng 4 kiểu",
+      "district": "CLIENT UI + GAMEPLAY",
+      "plotId": "N/A",
+      "modulePath": "src/server/NPCManager.luau",
+      "spec": "RPG-7 ở ô 9 của vòng chọn súng (40°/ô, phím 9, rocket bay thật 145 stud/s, nổ bán kính 22 stud gọi DestructionManager.damageRadius). NPC 6 tính cách (CIVILIAN/BUSINESS/TOURIST/GANGSTER/BRAWLER/COP) phản ứng khi bị tấn công: bắn trả / chạy trốn / quay video + gọi 911 (tăng WantedLevel, điều cảnh sát tới) / đánh tay không. Ma trận trọng số kiểm thử 4000 lần/ô khớp 100%. Demo /npc."
     }
   ],
   "uiContract": {

@@ -154,6 +154,25 @@ function WeaponClient.mount(localPlayer: Player, fireRemote: RemoteEvent)
 		local isMelee = tool:GetAttribute("IsMelee") == true
 		local pellets = math.max(1, tonumber(tool:GetAttribute("Pellets")) or 1)
 
+		-- RPG: KHÔNG vẽ tia hitscan (rocket bay 145 stud/s, server tự dựng part bay + vệt lửa)
+		if tool:GetAttribute("IsExplosive") == true then
+			local flash = Instance.new("Part")
+			flash.Name = "RpgMuzzleFlash"
+			flash.Shape = Enum.PartType.Ball
+			flash.Size = Vector3.new(2.4, 2.4, 2.4)
+			flash.Color = Color3.fromRGB(255, 214, 140)
+			flash.Material = Enum.Material.Neon
+			flash.CanCollide = false
+			flash.CanTouch = false
+			flash.CanQuery = false
+			flash.Transparency = 0.35
+			flash.CFrame = CFrame.new(origin + dir.Unit * 2.2)
+			flash.Parent = Workspace
+			Debris:AddItem(flash, 0.1)
+			fireRemote:FireServer(origin, targetPos)
+			return
+		end
+
 		if isMelee then
 			-- Cận chiến: vệt chớp ngắn màu trắng thay cho tia đạn
 			local res = Workspace:Raycast(origin, dir.Unit * 7, params)
