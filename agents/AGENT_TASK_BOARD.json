@@ -91,7 +91,7 @@
     {
       "taskId": "AGENT_3_MISSION_ROW_LSPD",
       "order": 40,
-      "status": "ready_for_parallel_agent",
+      "status": "completed",
       "title": "Đồn Cảnh Sát Mission Row LSPD",
       "district": "MISSION ROW (EAST)",
       "plotId": "Plot_C3_East",
@@ -103,7 +103,16 @@
         "groundY": 1.15
       },
       "modulePath": "src/shared/World/Modules/Plot_C3_MissionRowLSPD.luau",
-      "spec": "Kiến trúc chuẩn LSPD: Bậc tam cấp sảnh chính, cột đá, bảng hiệu huy hiệu 'LOS SANTOS POLICE DEPT — OBEY & SURVIVE', sân đáp trực thăng chữ H trên sân thượng, tường gạch & kính chia khối có máu ẩn integrity, cùng nội thất tầng trệt chi tiết (quầy trực ban, dãy bàn làm việc thám tử, phòng giam song sắt thép phía sau)."
+      "spec": "Kiến trúc chuẩn LSPD: Bậc tam cấp sảnh chính, cột đá, bảng hiệu huy hiệu 'LOS SANTOS POLICE DEPT — OBEY & SURVIVE', sân đáp trực thăng chữ H trên sân thượng, tường gạch & kính chia khối có máu ẩn integrity, cùng nội thất tầng trệt chi tiết (quầy trực ban, dãy bàn làm việc thám tử, phòng giam song sắt thép phía sau).",
+      "agentBranch": "arena/e461e643-robloxstudio-connecting",
+      "submittedCommit": "fb6a68f",
+      "approvedBy": "arena/b37b6115-robloxstudio-connecting",
+      "score": 9.0,
+      "partCount": 4639,
+      "destructibleRatio": 0.9959,
+      "reviewReport": "agents/reviews/AGENT_3_MISSION_ROW_LSPD/MASTER_QA__b37b6115.md",
+      "masterPatches": 7,
+      "notes": "Duyệt 9.0/10. Master vá 7 chỗ: khe góc Nam (wallWithOpenings IN_Z1-WT -> IN_Z1), sàn sân trước, mái, 2 cụm bụi cây z-fight, vòng đáp 24->96 mảnh."
     },
     {
       "taskId": "AGENT_4_MAZE_BANK_TOWER",
