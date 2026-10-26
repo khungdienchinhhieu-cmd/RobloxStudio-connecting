@@ -1,0 +1,423 @@
+{
+ "schemaVersion": 2,
+ "project": "GTA V Roblox — Los Santos Modular City",
+ "repository": "khungdienchinhhieu-cmd/RobloxStudio-connecting",
+ "masterCoordinatorBranch": "arena/b37b6115-robloxstudio-connecting",
+ "baseGroundY": 1.15,
+ "asphaltRoadY": 0.5,
+ "r15ScaleRules": {
+  "avatarStandingHeightStuds": 5.45,
+  "minWalkDoorHeightStuds": 8.0,
+  "minCeilingHeightStuds": 14.0,
+  "minVehicleGarageBayWidthStuds": 15.0,
+  "minVehicleGarageBayHeightStuds": 11.0
+ },
+ "zeroConflictContract": {
+  "dropInDirectory": "src/shared/World/Modules",
+  "autoLoader": "src/shared/World/DistrictRegistry.luau",
+  "forbiddenSharedEdits": [
+   "studio-sync.json",
+   "src/shared/WorldGrid.luau",
+   "src/shared/World/PartBuilder.luau",
+   "src/shared/World/CityFoundation.luau",
+   "src/shared/World/DistrictRegistry.luau",
+   "src/shared/Vehicles/VehicleBuilder.luau",
+   "src/server/DestructionManager.luau",
+   "src/server/VehicleManager.luau",
+   "src/server/WeaponManager.luau",
+   "src/server/init.server.luau",
+   "src/client/init.client.luau",
+   "src/client/UI/GtaHud.luau",
+   "src/client/UI/VehiclePromptUI.luau"
+  ],
+  "doNotCommitSyncBundleInFeaturePRs": true
+ },
+ "tasks": [
+  {
+   "taskId": "PLOT_C2_LEGION_SQUARE",
+   "order": 10,
+   "status": "completed",
+   "title": "Quảng Trường Trung Tâm Legion Square",
+   "district": "LEGION SQUARE",
+   "plotId": "Plot_C2",
+   "buildableBounds": {
+    "minX": -83,
+    "maxX": 83,
+    "minZ": -9,
+    "maxZ": 123,
+    "groundY": 1.15
+   },
+   "modulePath": "src/shared/World/CityFoundation.luau",
+   "spec": "Đã hoàn thành bởi Agent Chính."
+  },
+  {
+   "taskId": "AGENT_1_LS_CUSTOMS",
+   "order": 20,
+   "status": "completed",
+   "title": "Garage Độ Xe Los Santos Customs",
+   "district": "DEL PERRO",
+   "plotId": "Plot_C1",
+   "buildableBounds": {
+    "minX": -299,
+    "maxX": -137,
+    "minZ": -9,
+    "maxZ": 123,
+    "groundY": 1.15
+   },
+   "modulePath": "src/shared/World/Modules/Plot_C1_LSCustoms.luau",
+   "spec": "Kiến trúc công nghiệp chuẩn GTA V: Sân đỗ bê tông phía Nam nhìn ra Vespucci Blvd (+Z), 2 khoang cửa cuốn ô tô mở cao rộng >= 15x11 studs (xe rộng 8.2 cao 7.0 chạy lọt vào trong), bảng hiệu chữ nổi Neon 'LOS SANTOS CUSTOMS', tường gạch ghép khối bằng PartBuilder.brickWall/box gắn máu ẩn integrity, FULL nội thất (cầu nâng thuỷ lực 2 trụ, tủ đồ nghề đỏ, giá lốp xe, bàn thu ngân, đèn tuýp trần)."
+  },
+  {
+   "taskId": "AGENT_2_SUPERMARKET_247",
+   "order": 30,
+   "status": "completed",
+   "title": "Siêu Thị Tiện Lợi 24/7 Supermarket",
+   "district": "MISSION ROW (WEST)",
+   "plotId": "Plot_C3_West",
+   "buildableBounds": {
+    "minX": 137,
+    "maxX": 212,
+    "minZ": 20,
+    "maxZ": 123,
+    "groundY": 1.15
+   },
+   "modulePath": "src/shared/World/Modules/Plot_C3_Supermarket247.luau",
+   "spec": "Mặt tiền chuẩn 24/7 GTA V (mái hiên sọc Xanh Lá - Trắng - Đỏ Cam phát sáng, vách kính lớn chia từng ô kính rời integrity = 45 bắn vỡ từng ô, cửa đôi cao >= 8.5 studs, bãi đậu xe có gờ chặn bánh phía trước). Full nội thất: Quầy thu ngân + máy tính tiền, máy ATM góc tường, 3 dãy kệ hàng đầy sản phẩm nhiều màu có máu ẩn, tủ lạnh nước ngọt cửa kính phát sáng cuối tiệm, máy pha cà phê/Slushie.",
+   "completedBy": "bc783dbc",
+   "approvedBranch": "arena/bc783dbc-robloxstudio-connecting@52d0eff",
+   "approvedCommit": "52d0eff",
+   "reviewNote": "agents/notes/APPROVED_AGENT_2_SUPERMARKET_247__b37b6115.md"
+  },
+  {
+   "taskId": "AGENT_3_MISSION_ROW_LSPD",
+   "order": 40,
+   "status": "completed",
+   "title": "Đồn Cảnh Sát Mission Row LSPD",
+   "district": "MISSION ROW (EAST)",
+   "plotId": "Plot_C3_East",
+   "buildableBounds": {
+    "minX": 222,
+    "maxX": 299,
+    "minZ": -9,
+    "maxZ": 123,
+    "groundY": 1.15
+   },
+   "modulePath": "src/shared/World/Modules/Plot_C3_MissionRowLSPD.luau",
+   "spec": "Kiến trúc chuẩn LSPD: Bậc tam cấp sảnh chính, cột đá, bảng hiệu huy hiệu 'LOS SANTOS POLICE DEPT — OBEY & SURVIVE', sân đáp trực thăng chữ H trên sân thượng, tường gạch & kính chia khối có máu ẩn integrity, cùng nội thất tầng trệt chi tiết (quầy trực ban, dãy bàn làm việc thám tử, phòng giam song sắt thép phía sau).",
+   "agentBranch": "arena/e461e643-robloxstudio-connecting",
+   "submittedCommit": "fb6a68f",
+   "approvedBy": "arena/b37b6115-robloxstudio-connecting",
+   "score": 9.0,
+   "partCount": 4639,
+   "destructibleRatio": 0.9959,
+   "reviewReport": "agents/reviews/AGENT_3_MISSION_ROW_LSPD/MASTER_QA__b37b6115.md",
+   "masterPatches": 7,
+   "notes": "Duyệt 9.0/10. Master vá 7 chỗ: khe góc Nam (wallWithOpenings IN_Z1-WT -> IN_Z1), sàn sân trước, mái, 2 cụm bụi cây z-fight, vòng đáp 24->96 mảnh."
+  },
+  {
+   "taskId": "AGENT_4_MAZE_BANK_TOWER",
+   "order": 50,
+   "status": "completed",
+   "title": "Tháp Tài Chính Maze Bank Plaza & Tower",
+   "district": "PILLBOX HILL",
+   "plotId": "Plot_D2",
+   "buildableBounds": {
+    "minX": -83,
+    "maxX": 83,
+    "minZ": -199,
+    "maxZ": -63,
+    "groundY": 1.15
+   },
+   "modulePath": "src/shared/World/Modules/Plot_D2_MazeBankTower.luau",
+   "spec": "Khối đế Plaza bậc thang + đài phun nước tiền sảnh + thân tháp biểu tượng vát góc thu dần lên đỉnh có bãi đáp trực thăng tròn 'MAZE BANK' đỏ trắng trên nóc; sảnh tầng trệt thông tầng cao 18 studs có quầy lễ tân đá cẩm thạch, cổng an ninh, thang máy & các ô kính mặt dựng tầng thấp có máu ẩn integrity bắn vỡ được.",
+   "agentBranch": "arena/bc783dbc-robloxstudio-connecting",
+   "submittedCommit": "2fc5ca1",
+   "approvedBy": "arena/b37b6115-robloxstudio-connecting",
+   "score": 9.2,
+   "scoreAsSubmitted": 8.2,
+   "partCount": 2312,
+   "destructibleRatio": 0.9818,
+   "reviewReport": "agents/reviews/AGENT_4_MAZE_BANK_TOWER/MASTER_QA__b37b6115.md",
+   "masterPatches": 4,
+   "notes": "Duyệt 9.2/10 (bài nộp 8.2). Lỗi chặn: cửa kính CanCollide=true -> sảnh niêm phong; đã vá. Kèm vá mái đen 2 cánh, sàn plaza caro, z-fight bậc thang."
+  },
+  {
+   "taskId": "AGENT_5_ROCKFORD_LUXURY_AUTOS",
+   "order": 60,
+   "status": "superseded",
+   "title": "Showroom Siêu Xe Luxury Autos (Simeon / Rockford Hills)",
+   "district": "ROCKFORD HILLS",
+   "plotId": "Plot_D1",
+   "buildableBounds": {
+    "minX": -299,
+    "maxX": -137,
+    "minZ": -199,
+    "maxZ": -63,
+    "groundY": 1.15
+   },
+   "modulePath": "src/shared/World/Modules/Plot_D1_RockfordShowroom.luau",
+   "spec": "Showroom kính cong cao cấp nhìn ra đại lộ Olympic Fwy (+Z): Mặt dựng kính tấm lớn chia ô có máu ẩn integrity = 40 (xe tông xuyên kính giống nhiệm vụ mở đầu GTA V!), sàn đá bóng + 2 bục xoay trưng bày siêu xe có đèn rọi trần, phòng làm việc kính của quản lý, bàn tiếp khách sofa da.",
+   "supersededBy": "A1_ROCKFORD_LUXURY_AUTOS"
+  },
+  {
+   "taskId": "AGENT_6_VINEWOOD_THEATER",
+   "order": 70,
+   "status": "superseded",
+   "title": "Rạp Chiếu Phim Oriental / Vinewood Cinema",
+   "district": "DOWNTOWN VINEWOOD",
+   "plotId": "Plot_D3",
+   "buildableBounds": {
+    "minX": 137,
+    "maxX": 299,
+    "minZ": -199,
+    "maxZ": -63,
+    "groundY": 1.15
+   },
+   "modulePath": "src/shared/World/Modules/Plot_D3_VinewoodCinema.luau",
+   "spec": "Rạp phim Art Deco biểu tượng Vinewood: Bảng đèn Marquee Neon rực rỡ phía trước ghi tên phim đang chiếu, quầy vé tròn ngoài sảnh, thảm đỏ, quầy bắp rang bơ + nước ngọt bên trong và khán phòng màn chiếu lớn kèm các hàng ghế nhung đỏ xếp bậc thang (có máu ẩn integrity).",
+   "supersededBy": "B1_VINEWOOD_CINEMA"
+  },
+  {
+   "taskId": "AGENT_7_STREET_INFRASTRUCTURE",
+   "order": 80,
+   "status": "superseded",
+   "title": "Đèn Giao Thông Ngã Tư, Đèn Đường & Hàng Cọ California",
+   "district": "CITYWIDE SIDEWALKS",
+   "plotId": "StreetProps",
+   "buildableBounds": {
+    "minX": -340,
+    "maxX": 340,
+    "minZ": -240,
+    "maxZ": 220,
+    "groundY": 1.15
+   },
+   "modulePath": "src/shared/World/Modules/Infra_StreetLightsAndPalms.luau",
+   "spec": "Đặt trụ đèn tín hiệu Đỏ-Vàng-Xanh vươn cần ngang tại các ngã tư chính (mép vỉa hè Y = 1.15, tuyệt đối không lấn xuống lòng đường nhựa hay chặn cổng garage/chỗ đậu xe của các ô khác — đọc kỹ agent-radio trước khi đặt!), hàng cây cọ thân đốt cong nhẹ dọc Vespucci Blvd & lối dạo biển, ghế đá & thùng rác công cộng — tất cả gắn máu ẩn integrity để siêu xe tông gãy vỡ.",
+   "supersededBy": null
+  },
+  {
+   "taskId": "UI_WEAPON_WHEEL",
+   "order": 35,
+   "status": "completed",
+   "title": "Đại tu HUD + Vòng chọn súng chuẩn GTA V",
+   "district": "CLIENT UI",
+   "plotId": "N/A",
+   "modulePath": "src/client/UI/GtaWeaponWheel.luau",
+   "spec": "8 ô vũ khí (Unarmed/Bat/Pistol/AP Pistol/Micro SMG/Carbine/Shotgun/Sniper), giữ TAB chọn theo hướng chuột, thả để trang bị, phím 1-8 đổi nhanh, đạn thật + [R] nạp, thẻ vũ khí góc dưới phải. HUD đại tu: radar bo góc, 3 thanh xếp chồng, panel tiền, feed, menu H. Demo /hud + 33 test PASS."
+  },
+  {
+   "taskId": "RPG_NPC_REACTIONS",
+   "order": 36,
+   "status": "completed",
+   "title": "Súng phóng lựu RPG-7 (ô 9) + NPC phản ứng 4 kiểu",
+   "district": "CLIENT UI + GAMEPLAY",
+   "plotId": "N/A",
+   "modulePath": "src/server/NPCManager.luau",
+   "spec": "RPG-7 ở ô 9 của vòng chọn súng (40°/ô, phím 9, rocket bay thật 145 stud/s, nổ bán kính 22 stud gọi DestructionManager.damageRadius). NPC 6 tính cách (CIVILIAN/BUSINESS/TOURIST/GANGSTER/BRAWLER/COP) phản ứng khi bị tấn công: bắn trả / chạy trốn / quay video + gọi 911 (tăng WantedLevel, điều cảnh sát tới) / đánh tay không. Ma trận trọng số kiểm thử 4000 lần/ô khớp 100%. Demo /npc."
+  },
+  {
+   "taskId": "UI_W1_GUN_MODEL_FACTORY",
+   "order": 40,
+   "status": "open",
+   "title": "Model súng 1:1 cho cả 9 khẩu (GunModelFactory)",
+   "district": "SHARED WEAPONS",
+   "plotId": "N/A",
+   "modulePath": "src/shared/Weapons/GunModelFactory.luau",
+   "spec": "Thay 9 mô hình súng khối hộp thô (Pistol 1,12 stud = 0,34 m, to gấp đôi ngoài đời) bằng model dựng từ dữ liệu theo tỉ lệ 1:1 (1 m = 3,33 stud). Giữ nguyên hợp đồng GUN_MODELS (handle + parts[name,size,off,color]) để WeaponManager chạy được. Mỗi khẩu 6-18 part, có part Muzzle/EjectPort/Handle, CanCollide=false, Massless. Ngoại lệ duy nhất được sửa: đúng khối GUN_MODELS trong WeaponManager."
+  },
+  {
+   "taskId": "UI_W2_HUD_RADAR",
+   "order": 41,
+   "status": "open",
+   "title": "HUD 2.0 — radar vẽ bản đồ thật + chỉ số mượt",
+   "district": "CLIENT UI",
+   "plotId": "N/A",
+   "modulePath": "src/client/UI/GtaHud.luau",
+   "spec": "Radar 258x168 vẽ đường/ô đất/biển/đồi từ toạ độ thật, xoay theo camera, có blip NPC/xe, kim Bắc. 3 thanh Máu/Giáp/Thể lực lerp + đổi màu <30%/<15%. Cụm tiền chạy số 0,6s. Feed 4 dòng tự mờ. Thanh truy nã 5 sao. Menu H thêm tab Cài đặt. Không che 4 vùng khoá."
+  },
+  {
+   "taskId": "UI_W3_WEAPON_WHEEL_V2",
+   "order": 42,
+   "status": "open",
+   "title": "Vòng chọn súng v2 + thẻ vũ khí",
+   "district": "CLIENT UI",
+   "plotId": "N/A",
+   "modulePath": "src/client/UI/GtaWeaponWheel.luau",
+   "spec": "9 ô có silhouette vẽ bằng Frame, tên tiếng Việt, mag/reserve, viền accent theo loại; ô đang chọn phóng 1,18x; ô hết đạn mờ 45% + gạch chéo. Giữ nguyên điều khiển đã nghiệm thu (TAB, dead-zone 54, bán kính 196, ô 108, phím 1-9, R). Thêm âm thanh UI có công tắc."
+  },
+  {
+   "taskId": "UI_W4_INVENTORY",
+   "order": 43,
+   "status": "open",
+   "title": "Màn hình kho đồ / chọn trang bị",
+   "district": "CLIENT UI",
+   "plotId": "N/A",
+   "modulePath": "src/client/UI/InventoryUI.luau",
+   "spec": "Lưới 4x3 + cột chi tiết (sát thương, tốc độ bắn, tầm, băng đạn, so sánh với khẩu đang cầm). Chuột phải ghim vào vòng chọn nhanh, chuột trái trang bị. Dữ liệu lấy từ RemoteEvent WeaponSync sẵn có. Mở/đóng animation 0,18s, không tạo remote mới."
+  },
+  {
+   "taskId": "UI_W5_COMBAT_FX",
+   "order": 44,
+   "status": "open",
+   "title": "Hiệu ứng bắn: reticle, flash, tracer, vỏ đạn, rung",
+   "district": "CLIENT FX",
+   "plotId": "N/A",
+   "modulePath": "src/client/WeaponClient.luau",
+   "spec": "Reticle động + hitmarker; muzzle flash tại part Muzzle; tracer 0,06s; hắt vỏ đạn tại EjectPort 0,8s; camera shake theo damage 0,15s (tắt được); recoil client 0,08 stud. Toàn bộ dùng pooling 24 part, 0 allocation trong RenderStepped."
+  },
+  {
+   "taskId": "UI_W6_PHONE",
+   "order": 45,
+   "status": "open",
+   "title": "Điện thoại iFruit (phím P)",
+   "district": "CLIENT UI",
+   "plotId": "N/A",
+   "modulePath": "src/client/UI/PhoneUI.luau",
+   "spec": "Khung máy 0,5 stud, 4 app có chức năng: Danh bạ, Tin nhắn (log sự kiện), Bản đồ (radar toàn màn hình tạm thời), Cài đặt (âm lượng, rung camera). Icon vẽ bằng Frame, không ảnh ngoài. Animation trượt 0,2s, P bật/tắt, ESC đóng."
+  },
+  {
+   "taskId": "A1_ROCKFORD_LUXURY_AUTOS",
+   "order": 50,
+   "status": "completed",
+   "title": "Showroom siêu xe Luxury Autos 2 tầng + tầng lửng, kính cong 2 lớp tông xuyên được, 2 bục xoay, sân 6 ô đỗ",
+   "district": "ROCKFORD HILLS",
+   "plotId": "PLOT_D1",
+   "modulePath": "src/shared/World/Modules/Plot_D1_RockfordShowroom.luau",
+   "spec": "Showroom siêu xe Luxury Autos 2 tầng + tầng lửng, kính cong 2 lớp tông xuyên được, 2 bục xoay, sân 6 ô đỗ. Bounds X -318..-134, Z -204..-60. 2 000-3 200 khối, >=95% máu ẩn. Vòng 1 của Agent A.",
+   "round": 1,
+   "dependsOn": null,
+   "approvedBy": "arena/b37b6115-robloxstudio-connecting",
+   "approvedAt": "2026-10-26",
+   "score": "9.1/10",
+   "notes": "Master QA độc lập bằng tools/building_sim/run.cjs — 3165 BasePart, 99.59% phá huỷ được, 0 vi phạm. Sync v26."
+  },
+  {
+   "taskId": "A2_LITTLE_SEOUL_DINER",
+   "order": 51,
+   "status": "open",
+   "title": "Quán nướng Hàn Seoul Garden 2 tầng + sân hiên mái",
+   "district": "LITTLE SEOUL",
+   "plotId": "PLOT_E3",
+   "modulePath": "src/shared/World/Modules/Plot_E3_LittleSeoulDiner.luau",
+   "spec": "Quán nướng Hàn Seoul Garden 2 tầng + sân hiên mái. 12 bàn nướng, 8 phòng riêng, biển Neon song ngữ. Bounds X -536..-358, Z -12..128. 1 800-2 800 khối. Vòng 2 của Agent A (sau khi A1 duyệt).",
+   "round": 2,
+   "dependsOn": "A1_ROCKFORD_LUXURY_AUTOS"
+  },
+  {
+   "taskId": "B1_VINEWOOD_CINEMA",
+   "order": 52,
+   "status": "open",
+   "title": "Rạp Vinewood Cinema Art Deco đối xứng, marquee Neon đổi chữ bằng attribute, khán phòng 6 hàng ghế bậc thang, màn >=26x12",
+   "district": "DOWNTOWN VINEWOOD",
+   "plotId": "PLOT_D3",
+   "modulePath": "src/shared/World/Modules/Plot_D3_VinewoodCinema.luau",
+   "spec": "Rạp Vinewood Cinema Art Deco đối xứng, marquee Neon đổi chữ bằng attribute, khán phòng 6 hàng ghế bậc thang, màn >=26x12. Bounds X 134..318, Z -204..-60. 2 400-3 600 khối. Vòng 1 của Agent B.",
+   "round": 1,
+   "dependsOn": null
+  },
+  {
+   "taskId": "B2_RICHMAN_GALLERIA",
+   "order": 53,
+   "status": "open",
+   "title": "TTTM Richman Galleria 3 tầng + giếng trời mái kính, 8 gian hàng, cầu thang cuốn 2 chiều, 10 ma-nơ-canh, food court",
+   "district": "RICHMAN GLEN",
+   "plotId": "PLOT_E4",
+   "modulePath": "src/shared/World/Modules/Plot_E4_RichmanGalleria.luau",
+   "spec": "TTTM Richman Galleria 3 tầng + giếng trời mái kính, 8 gian hàng, cầu thang cuốn 2 chiều, 10 ma-nơ-canh, food court. Bounds X 358..536, Z -12..128. 2 800-4 500 khối. Vòng 2 của Agent B.",
+   "round": 2,
+   "dependsOn": "B1_VINEWOOD_CINEMA"
+  },
+  {
+   "taskId": "C1_LA_MESA_GARAGE",
+   "order": 54,
+   "status": "open",
+   "title": "Garage độ xe công nghiệp La Mesa Customs: nhà xưởng khung thép, 3 khoang nâng xe, phòng sơn kín, 2 cửa cuốn >=15x11",
+   "district": "LA MESA",
+   "plotId": "PLOT_E2",
+   "modulePath": "src/shared/World/Modules/Plot_E2_LaMesaGarage.luau",
+   "spec": "Garage độ xe công nghiệp La Mesa Customs: nhà xưởng khung thép, 3 khoang nâng xe, phòng sơn kín, 2 cửa cuốn >=15x11. Bounds X 358..536, Z -204..-60. 2 000-3 200 khối. Vòng 1 của Agent C.",
+   "round": 1,
+   "dependsOn": null
+  },
+  {
+   "taskId": "C2_PACIFIC_BLUFFS_VILLA",
+   "order": 55,
+   "status": "open",
+   "title": "DỰNG LẠI biệt thự Pacific Bluffs CHI TIẾT (bản ít part đã bị gỡ ở v23): 2 tầng chữ L gạch ghép từng viên, hồ bơi vô cực 26x12, gara 2 xe, sân teak",
+   "district": "PACIFIC BLUFFS",
+   "plotId": "PLOT_E1",
+   "modulePath": "src/shared/World/Modules/Plot_E1_PacificBluffsVilla.luau",
+   "spec": "DỰNG LẠI biệt thự Pacific Bluffs CHI TIẾT (bản ít part đã bị gỡ ở v23): 2 tầng chữ L gạch ghép từng viên, hồ bơi vô cực 26x12, gara 2 xe, sân teak. Bounds X -536..-358, Z -204..-60. 2 200-3 400 khối. Vòng 2 của Agent C.",
+   "round": 2,
+   "dependsOn": "C1_LA_MESA_GARAGE"
+  }
+ ],
+ "uiContract": {
+  "guide": "docs/UI_GUIDE.md",
+  "hudPalette": {
+   "panel": "#0A0C10",
+   "panelLight": "#12171F",
+   "line": "#26303F",
+   "text": "#F1F5F9",
+   "dim": "#94A3B8",
+   "cash": "#72CC72"
+  },
+  "reservedScreenAreas": {
+   "radar": "left 22, bottom 20, 258x168 (+ 3 thanh chỉ số cao 22 dưới radar)",
+   "topRightCash": "right 26, top 16, 292x110",
+   "weaponCard": "right 26, bottom 86, 252x76",
+   "location": "right 26, bottom 22"
+  },
+  "forbiddenUiPatterns": [
+   "TextScaled trên biển hiệu",
+   "Frame mới mỗi RenderStepped",
+   "che 4 vùng reservedScreenAreas"
+  ]
+ },
+ "workerPrompt": "agents/WORKER_PROMPT_V3.md",
+ "uiWeaponAgentContract": {
+  "prompt": "agents/WORKER_PROMPT_V4_UI_WEAPONS.md",
+  "allowedPaths": [
+   "src/client/UI/*.luau",
+   "src/client/WeaponClient.luau",
+   "src/shared/Weapons/**",
+   "bridge/<name>-demo.html",
+   "agents/notes/SUBMIT_*.md",
+   "agents/reviews/*"
+  ],
+  "singleSurgicalEdit": "src/server/WeaponManager.luau — CHỈ khối `local GUN_MODELS = {...}` -> require GunModelFactory",
+  "scaleContract": {
+   "studsPerMeter": 3.33,
+   "helper": "WorldGrid.meters(m)",
+   "readabilityFloorStuds": 0.3,
+   "minGripStuds": 0.55
+  }
+ },
+ "citySweep": {
+  "promptFile": "agents/WORKER_PROMPT_V6_CITY_SWEEP_3AGENTS.md",
+  "agents": {
+   "A": [
+    "A1_ROCKFORD_LUXURY_AUTOS",
+    "A2_LITTLE_SEOUL_DINER"
+   ],
+   "B": [
+    "B1_VINEWOOD_CINEMA",
+    "B2_RICHMAN_GALLERIA"
+   ],
+   "C": [
+    "C1_LA_MESA_GARAGE",
+    "C2_PACIFIC_BLUFFS_VILLA"
+   ]
+  },
+  "rule": "Mỗi agent chỉ dựng MỘT công trình chi tiết mỗi lượt; xong PR -> Agent Chính nghiệm thu -> mới sang vòng 2.",
+  "targetPlotsRemaining": [
+   "Plot_D1",
+   "Plot_D3",
+   "Plot_E1",
+   "Plot_E2",
+   "Plot_E3",
+   "Plot_E4"
+  ]
+ },
+ "lastUpdated": "2026-10-26"
+}

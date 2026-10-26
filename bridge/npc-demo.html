@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Los Santos · NPC phản ứng & RPG</title>
+<style>
+  :root{
+    --bg:#080a0e; --panel:#12171f; --panel2:#1a212b; --line:#26303f;
+    --ink:#f1f5f9; --dim:#94a3b8; --gold:#c8a44e;
+    --shoot:#f87171; --flee:#fbbf24; --call:#38bdf8; --melee:#fb923c;
+    --rpg:#ef4444; --ok:#72cc72;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    background:radial-gradient(1200px 700px at 50% -10%, #16202c 0%, var(--bg) 60%);
+    color:var(--ink); font-family:"Segoe UI",system-ui,-apple-system,sans-serif;
+    overflow-x:hidden;
+  }
+  header{padding:18px 26px 6px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+  h1{margin:0;font-size:21px;letter-spacing:.5px;font-weight:800}
+  h1 span{color:var(--gold)}
+  .sub{color:var(--dim);font-size:12.5px}
+  .wrap{max-width:1240px;margin:0 auto;padding:8px 20px 90px}
+
+  /* ── sân khấu ── */
+  .stage{
+    position:relative;margin-top:14px;height:430px;border-radius:18px;overflow:hidden;
+    border:1px solid var(--line);
+    background:
+      linear-gradient(180deg,#0b1017 0%,#101823 46%,#151d28 46.5%,#0d1219 100%);
+    box-shadow:0 22px 60px rgba(0,0,0,.55) inset, 0 0 0 1px rgba(255,255,255,.02);
+  }
+  .road{
+    position:absolute;left:0;right:0;bottom:0;height:47%;
+    background:repeating-linear-gradient(90deg,transparent 0 58px,#2b3440 58px 118px);
+    opacity:.14;
+  }
+  .skyline{
+    position:absolute;left:0;right:0;top:0;height:54%;opacity:.5;
+    background:
+      linear-gradient(180deg,transparent 70%,#0a0f16 100%),
+      repeating-linear-gradient(90deg,#0f1720 0 46px,#131d28 46px 92px);
+  }
+  .npc{
+    position:absolute;bottom:64px;width:64px;transform:translateX(-50%);
+    transition:transform .28s ease; will-change:transform;
+  }
+  .npc .body{position:relative;height:96px}
+  .npc .head{
+    position:absolute;left:50%;top:0;width:26px;height:26px;margin-left:-13px;
+    border-radius:7px;background:var(--skin,#ce9a76);border:1.5px solid rgba(0,0,0,.4);
+  }
+  .npc .head::before,.npc .head::after{
+    content:"";position:absolute;top:9px;width:4px;height:4px;border-radius:50%;background:#10131a;
+  }
+  .npc .head::before{left:5px} .npc .head::after{right:5px}
+  .npc .head .hair{position:absolute;left:-2px;right:-2px;top:-3px;height:9px;border-radius:5px 5px 2px 2px;background:var(--hair,#3f2e22)}
+  .npc .torso{
+    position:absolute;left:50%;top:26px;width:34px;height:40px;margin-left:-17px;border-radius:6px;
+    background:var(--shirt,#486084);border:1.5px solid rgba(0,0,0,.35);
+  }
+  .npc .arm{position:absolute;top:28px;width:10px;height:36px;border-radius:5px;background:var(--shirt,#486084);border:1.5px solid rgba(0,0,0,.3);transform-origin:top center}
+  .npc .arm.l{left:50%;margin-left:-24px} .npc .arm.r{left:50%;margin-left:14px}
+  .npc .leg{position:absolute;top:64px;width:12px;height:32px;border-radius:5px;background:var(--pants,#3a3e48);border:1.5px solid rgba(0,0,0,.3)}
+  .npc .leg.l{left:50%;margin-left:-15px} .npc .leg.r{left:50%;margin-left:3px}
+  .npc .label{
+    position:absolute;left:50%;top:-24px;transform:translateX(-50%);
+    font-size:10px;letter-spacing:.4px;color:var(--dim);white-space:nowrap;
+    background:rgba(10,14,20,.72);border:1px solid var(--line);border-radius:6px;padding:2px 6px;
+  }
+  .npc .bubble{
+    position:absolute;left:50%;top:-58px;transform:translateX(-50%) scale(.6);
+    font-size:11.5px;font-weight:700;white-space:nowrap;padding:4px 9px;border-radius:9px;
+    background:#0b1017;border:1.5px solid var(--line);color:var(--ink);
+    opacity:0;transition:all .22s cubic-bezier(.2,1.6,.4,1);pointer-events:none;
+  }
+  .npc.reacting .bubble{opacity:1;transform:translateX(-50%) scale(1)}
+  .npc.reacting.flee{transform:translateX(-50%) translateX(var(--runx,0)) rotate(-6deg)}
+
+  /* hiệu ứng */
+  .flash{position:absolute;width:26px;height:26px;border-radius:50%;background:#ffe38f;filter:blur(3px);opacity:0;pointer-events:none}
+  .rocket{
+    position:absolute;width:34px;height:9px;border-radius:5px;background:linear-gradient(90deg,#707860,#a8b090);
+    box-shadow:0 0 18px 5px rgba(255,170,70,.75), -18px 0 26px 8px rgba(255,150,50,.45);
+    pointer-events:none;
+  }
+  .boom{
+    position:absolute;border-radius:50%;pointer-events:none;
+    background:radial-gradient(circle,#fff4cf 0%,#ffb648 38%,rgba(239,68,68,.65) 66%,transparent 72%);
+  }
+  .ring{
+    position:absolute;border-radius:50%;border:3px solid rgba(255,236,190,.9);
+    pointer-events:none;
+  }
+  .float{
+    position:absolute;font-weight:800;font-size:15px;color:#ffd479;pointer-events:none;
+    text-shadow:0 2px 10px rgba(0,0,0,.9);
+  }
+
+  /* ── bảng điều khiển ── */
+  .controls{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0 4px}
+  button{
+    font:inherit;font-size:13px;font-weight:700;letter-spacing:.3px;color:var(--ink);
+    background:linear-gradient(180deg,#1b2431,#141b25);border:1px solid var(--line);
+    border-radius:11px;padding:11px 16px;cursor:pointer;transition:.16s;
+  }
+  button:hover{border-color:#3b4a5f;transform:translateY(-1px)}
+  button:active{transform:translateY(0)}
+  button.primary{background:linear-gradient(180deg,#b8352f,#8f2420);border-color:#d4534a}
+  button.rpgbtn{background:linear-gradient(180deg,#8e2a2a,#5c1717);border-color:#c4453d}
+  .hint{color:var(--dim);font-size:12px;margin-left:auto;align-self:center}
+
+  /* ── thẻ NPC ── */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(196px,1fr));gap:12px;margin-top:20px}
+  .card{background:linear-gradient(180deg,var(--panel),#0d1219);border:1px solid var(--line);border-radius:14px;padding:13px 14px}
+  .card h3{margin:0 0 2px;font-size:13.5px;letter-spacing:.3px}
+  .card .id{font-size:10px;color:var(--dim);letter-spacing:.8px;margin-bottom:9px}
+  .bars{display:flex;flex-direction:column;gap:5px}
+  .bar{display:grid;grid-template-columns:74px 1fr 34px;gap:6px;align-items:center;font-size:10.5px;color:var(--dim)}
+  .track{height:6px;border-radius:4px;background:#0a0f16;overflow:hidden;border:1px solid #1d2733}
+  .fill{height:100%;border-radius:4px;transition:width .4s ease}
+  .v{text-align:right;font-variant-numeric:tabular-nums}
+
+  .log{margin-top:18px;background:#0a0e14;border:1px solid var(--line);border-radius:13px;padding:12px 14px;height:132px;overflow-y:auto;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;line-height:1.65}
+  .log div{color:var(--dim)} .log b{color:var(--ink)} .log .c{color:var(--call)} .log .s{color:var(--shoot)} .log .f{color:var(--flee)} .log .m{color:var(--melee)} .log .r{color:var(--rpg)}
+</style>
+</head>
+<body>
+<header>
+  <h1>LOS SANTOS · <span>NPC PHẢN ỨNG</span> + <span>RPG-7</span></h1>
+  <div class="sub">Bản mô phỏng logic server — bấm nút để xem NPC phản ứng</div>
+</header>
+
+<div class="wrap">
+  <div class="stage" id="stage">
+    <div class="skyline"></div>
+    <div class="road"></div>
+  </div>
+
+  <div class="controls">
+    <button class="primary" id="btnBullet">🔫 Bắn NPC</button>
+    <button id="btnMelee">👊 Đấm NPC</button>
+    <button class="rpgbtn" id="btnRpg">🚀 Bắn RPG-7</button>
+    <button id="btnReset">↻ Đặt lại</button>
+    <span class="hint">Mỗi NPC tự chọn 1 trong 4 phản ứng theo tính cách</span>
+  </div>
+
+  <div class="grid" id="grid"></div>
+  <div class="log" id="log"></div>
+</div>
+
+<script>
+/* ────────────────────────────────────────────────────────────────
+   Bảng tính cách — SAO CHÉP từ src/server/NPCManager.luau
+   ──────────────────────────────────────────────────────────────── */
+const ARCHETYPES = {
+  CIVILIAN: { label:"Dân thường",        skin:"#ce9a76", shirt:"#486084", pants:"#3a3e48", hair:"#342a1c",
+              bravery:0.20, armed:false, phone:true,  w:{SHOOT:0, FLEE:62, CALL_POLICE:30, MELEE:8} },
+  BUSINESS: { label:"Doanh nhân",        skin:"#e0b68c", shirt:"#222836", pants:"#1c202a", hair:"#262220",
+              bravery:0.35, armed:false, phone:true,  w:{SHOOT:0, FLEE:28, CALL_POLICE:62, MELEE:10} },
+  TOURIST:  { label:"Khách du lịch",     skin:"#e8c4a0", shirt:"#d6784c", pants:"#c6c4be", hair:"#ba9452",
+              bravery:0.10, armed:false, phone:true,  w:{SHOOT:0, FLEE:48, CALL_POLICE:46, MELEE:6} },
+  GANGSTER: { label:"Đầu gấu đường phố", skin:"#966c4a", shirt:"#92282c", pants:"#2c2e36", hair:"#1a1818",
+              bravery:0.85, armed:true,  phone:false, w:{SHOOT:58, FLEE:4, CALL_POLICE:0, MELEE:38} },
+  BRAWLER:  { label:"Dân anh chị",       skin:"#be926a", shirt:"#c4beb2", pants:"#262c3c", hair:"#1e1c1a",
+              bravery:0.90, armed:false, phone:false, w:{SHOOT:0, FLEE:5, CALL_POLICE:0, MELEE:95} },
+  COP:      { label:"Cảnh sát LSPD",     skin:"#d2a67c", shirt:"#1c2e58", pants:"#18223e", hair:"#22201e",
+              bravery:1.00, armed:true,  phone:true,  w:{SHOOT:92, FLEE:0, CALL_POLICE:3, MELEE:5} },
+};
+
+const REACTION = {
+  SHOOT:       { label:"🔫 BẮN TRẢ",        color:"#f87171", cls:"s" },
+  FLEE:        { label:"🏃 CHẠY TRỐN",      color:"#fbbf24", cls:"f" },
+  CALL_POLICE: { label:"📱 QUAY VIDEO · GỌI 911", color:"#38bdf8", cls:"c" },
+  MELEE:       { label:"👊 ĐÁNH TAY KHÔNG", color:"#fb923c", cls:"m" },
+};
+
+/* Sao chép đúng logic chooseReaction() của Lua */
+function chooseReaction(arch, kind, healthFrac){
+  const w = Object.assign({}, arch.w);
+  if(!arch.armed) w.SHOOT = 0;
+  if(!arch.phone) w.CALL_POLICE = 0;
+  if(kind === "BULLET"){
+    w.FLEE *= 1.35; w.CALL_POLICE *= 1.6; w.MELEE *= 0.35;
+  } else if(kind === "MELEE"){
+    w.MELEE = w.MELEE * 1.8 + 18; w.FLEE *= 0.85;
+  } else if(kind === "EXPLOSION"){
+    w.FLEE += 90; w.CALL_POLICE += 30; w.MELEE = 0; w.SHOOT *= 0.3;
+  }
+  if(healthFrac < 0.35){ w.FLEE += 70; w.MELEE *= 0.3; }
+  if(arch.id === "COP") w.FLEE = 0;
+  return pickWeighted(w);
+}
+function pickWeighted(w){
+  let total = 0;
+  for(const k in w) total += Math.max(0, w[k]);
+  if(total <= 0) return "FLEE";
+  let roll = Math.random() * total, acc = 0;
+  for(const k in w){ acc += Math.max(0, w[k]); if(roll <= acc) return k; }
+  return "FLEE";
+}
+
+/* ───────────── dựng cảnh ───────────── */
+const stage = document.getElementById("stage");
+const grid  = document.getElementById("grid");
+const logEl = document.getElementById("log");
+
+const CAST = [
+  { id:"CIVILIAN", x:"12%" }, { id:"BUSINESS", x:"26%" }, { id:"TOURIST", x:"40%" },
+  { id:"GANGSTER", x:"56%" }, { id:"BRAWLER", x:"72%" }, { id:"COP", x:"87%" },
+];
+
+let actors = [];
+
+function buildScene(){
+  stage.querySelectorAll(".npc").forEach(n => n.remove());
+  actors = CAST.map((c, i) => {
+    const a = ARCHETYPES[c.id];
+    const el = document.createElement("div");
+    el.className = "npc";
+    el.style.left = c.x;
+    el.style.setProperty("--skin", a.skin);
+    el.style.setProperty("--shirt", a.shirt);
+    el.style.setProperty("--pants", a.pants);
+    el.style.setProperty("--hair", a.hair);
+    el.innerHTML = `
+      <div class="bubble"></div>
+      <div class="label">${a.label}</div>
+      <div class="body">
+        <div class="head"><div class="hair"></div></div>
+        <div class="arm l"></div><div class="arm r"></div>
+        <div class="torso"></div>
+        <div class="leg l"></div><div class="leg r"></div>
+      </div>`;
+    stage.appendChild(el);
+    return { ...c, arch: { ...a, id: c.id }, el,
+             health: 100, maxHealth: c.id === "COP" ? 200 : (c.id === "GANGSTER" ? 140 : 100),
+             firing: false, timer: null };
+  });
+  buildCards();
+}
+
+function buildCards(){
+  grid.innerHTML = "";
+  actors.forEach(a => {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.dataset.id = a.id;
+    card.innerHTML = `<h3>${a.arch.label}</h3>
+      <div class="id">${a.id}</div>
+      <div class="bars">
+        ${["SHOOT","FLEE","CALL_POLICE","MELEE"].map(k => `
+          <div class="bar">
+            <span style="color:${REACTION[k].color}">${REACTION[k].label.replace(/^\S+\s/,"")}</span>
+            <div class="track"><div class="fill" data-k="${k}" style="width:0%;background:${REACTION[k].color}"></div></div>
+            <span class="v" data-k="${k}">—</span>
+          </div>`).join("")}
+      </div>`;
+    grid.appendChild(card);
+    a.card = card;
+  });
+  resetStats();
+}
+
+/* đếm phân bố phản ứng tích luỹ (4000 lần mô phỏng mỗi thẻ) */
+function resetStats(){
+  actors.forEach(a => {
+    const counts = { SHOOT:0, FLEE:0, CALL_POLICE:0, MELEE:0 };
+    const N = 4000;
+    for(let i = 0; i < N; i++) counts[chooseReaction(a.arch, "BULLET", 1)]++;
+    let max = 1;
+    for(const k in counts) max = Math.max(max, counts[k]);
+    ["SHOOT","FLEE","CALL_POLICE","MELEE"].forEach(k => {
+      const pct = counts[k] / N * 100;
+      const fill = a.card.querySelector(`.fill[data-k="${k}"]`);
+      const val  = a.card.querySelector(`.v[data-k="${k}"]`);
+      fill.style.width = (counts[k] / max * 100) + "%";
+      val.textContent = pct < 0.5 ? "—" : Math.round(pct) + "%";
+    });
+  });
+}
+
+/* ───────────── log ───────────── */
+function log(msg, cls){
+  const d = document.createElement("div");
+  d.innerHTML = cls ? `<span class="${cls}">${msg}</span>` : msg;
+  logEl.appendChild(d);
+  logEl.scrollTop = logEl.scrollHeight;
+  while(logEl.children.length > 120) logEl.removeChild(logEl.firstChild);
+}
+
+/* ───────────── phản ứng ───────────── */
+function react(a, kind){
+  if(a.dead) return;
+  const r = chooseReaction(a.arch, kind, a.health / a.maxHealth);
+  const meta = REACTION[r];
+
+  a.el.classList.remove("flee");
+  a.el.classList.add("reacting");
+  const bubble = a.el.querySelector(".bubble");
+  bubble.textContent = meta.label;
+  bubble.style.borderColor = meta.color;
+  bubble.style.color = meta.color;
+
+  if(r === "FLEE"){
+    a.el.classList.add("flee");
+    const dir = Math.random() > 0.5 ? 1 : -1;
+    a.el.style.setProperty("--runx", (dir * (40 + Math.random()*50)) + "px");
+  } else {
+    a.el.style.setProperty("--runx", "0px");
+  }
+  if(r === "SHOOT"){
+    a.firing = true;
+    shootLoop(a);
+  }
+  log(`<b>${a.arch.label}</b> sau khi bị ${kind === "MELEE" ? "đấm" : "bắn"} → <span class="${meta.cls}">${meta.label}</span>`, meta.cls);
+
+  if(r === "CALL_POLICE"){
+    setTimeout(() => {
+      if(a.dead) return;
+      bubble.textContent = "📞 ĐÃ GỌI 911";
+      log(`📞 <b>${a.arch.label}</b> đã gọi cảnh sát — WantedLevel +1, điều 2 cảnh sát tới`, "c");
+      wanted = Math.min(5, wanted + 1);
+    }, 1500);
+  }
+
+  clearTimeout(a.timer);
+  a.timer = setTimeout(() => calm(a), 3600);
+}
+
+function calm(a){
+  if(a.dead) return;
+  a.el.classList.remove("reacting", "flee");
+  a.el.style.setProperty("--runx", "0px");
+  a.firing = false;
+  clearTimeout(a.timer);
+}
+
+function shootLoop(a){
+  if(!a.firing) return;
+  muzzle(a);
+  setTimeout(() => shootLoop(a), 380 + Math.random() * 380);
+}
+
+function muzzle(a){
+  const rect = a.el.getBoundingClientRect();
+  const srect = stage.getBoundingClientRect();
+  const fx = document.createElement("div");
+  fx.className = "flash";
+  fx.style.left = (rect.left - srect.left + 46) + "px";
+  fx.style.top  = (rect.top - srect.top + 60) + "px";
+  stage.appendChild(fx);
+  fx.animate([{opacity:1, transform:"scale(1)"},{opacity:0, transform:"scale(.3)"}],
+             {duration:140, easing:"ease-out"});
+  setTimeout(() => fx.remove(), 160);
+}
+
+let wanted = 0;
+
+/* ───────────── RPG ───────────── */
+function fireRpg(targetX){
+  const y = 190;
+  const rocket = document.createElement("div");
+  rocket.className = "rocket";
+  rocket.style.left = "0px"; rocket.style.top = y + "px";
+  stage.appendChild(rocket);
+  log("🚀 <b>RPG-7</b> khai hoả — rocket đang bay…", "r");
+
+  const start = performance.now();
+  const dur = 620;
+  (function fly(t){
+    const k = Math.min(1, (t - start) / dur);
+    const x = k * targetX;
+    rocket.style.transform = `translateX(${x}px)`;
+    if(k < 1) requestAnimationFrame(fly);
+    else { rocket.remove(); explode(targetX, y); }
+  })(start);
+}
+
+function explode(x, y){
+  const boom = document.createElement("div");
+  boom.className = "boom";
+  boom.style.left = (x - 90) + "px"; boom.style.top = (y - 90) + "px";
+  boom.style.width = "180px"; boom.style.height = "180px";
+  stage.appendChild(boom);
+  boom.animate([{opacity:1, transform:"scale(.35)"},{opacity:0, transform:"scale(1.7)"}],
+               {duration:620, easing:"cubic-bezier(.2,.8,.3,1)"});
+  setTimeout(() => boom.remove(), 640);
+
+  const ring = document.createElement("div");
+  ring.className = "ring";
+  ring.style.left = (x - 20) + "px"; ring.style.top = (y - 6) + "px";
+  ring.style.width = "40px"; ring.style.height = "12px";
+  stage.appendChild(ring);
+  ring.animate([{opacity:.9, transform:"scale(1)"},{opacity:0, transform:"scale(9)"}],
+               {duration:700, easing:"ease-out"});
+  setTimeout(() => ring.remove(), 720);
+
+  log("💥 <b>NỔ</b> bán kính 22 studs — phá kết cấu, NPC hoảng loạn dây chuyền", "r");
+
+  /* NPC trong bán kính: sát thương + hoảng loạn */
+  const srect = stage.getBoundingClientRect();
+  actors.forEach(a => {
+    const rect = a.el.getBoundingClientRect();
+    const ax = rect.left - srect.left + rect.width / 2;
+    if(Math.abs(ax - x) < 260 && !a.dead){
+      a.health = Math.max(0, a.health - 60);
+      if(a.health <= 0) return die(a);
+      react(a, "EXPLOSION");
+    }
+  });
+  /* cảnh sát phản ứng muộn hơn */
+  setTimeout(() => rollCall(), 700);
+}
+
+function rollCall(){
+  const cop = actors.find(a => a.id === "COP" && !a.dead);
+  if(cop && wanted > 0){
+    log("🚨 <b>Cảnh sát LSPD</b> nhận tin — tiếp cận hiện trường, súng đã rút", "s");
+  }
+}
+
+function die(a){
+  a.dead = true;
+  a.firing = false;
+  clearTimeout(a.timer);
+  a.el.classList.add("reacting");
+  const bubble = a.el.querySelector(".bubble");
+  bubble.textContent = "☠ ĐÃ GỤC";
+  bubble.style.color = "#ef4444";
+  bubble.style.borderColor = "#ef4444";
+  a.el.style.opacity = ".4";
+  a.el.style.transform = "translateX(-50%) rotate(84deg) translateY(28px)";
+  log(`☠ <b>${a.arch.label}</b> đã gục`, "s");
+}
+
+/* ───────────── nút ───────────── */
+function pickTargets(n){
+  const alive = actors.filter(a => !a.dead);
+  const out = [];
+  while(out.length < n && out.length < alive.length){
+    const a = alive[Math.floor(Math.random() * alive.length)];
+    if(!out.includes(a)) out.push(a);
+  }
+  return out;
+}
+
+document.getElementById("btnBullet").onclick = () => {
+  log("🔫 <b>Bạn bắn</b> vào đám đông", "s");
+  pickTargets(3).forEach((a, i) => {
+    setTimeout(() => {
+      if(a.dead) return;
+      a.health = Math.max(0, a.health - 25);
+      if(a.health <= 0) return die(a);
+      react(a, "BULLET");
+    }, i * 130);
+  });
+};
+
+document.getElementById("btnMelee").onclick = () => {
+  const t = pickTargets(1)[0];
+  if(!t) return;
+  log("👊 <b>Bạn đấm</b> " + t.arch.label, "m");
+  t.health = Math.max(0, t.health - 18);
+  if(t.health <= 0) return die(t);
+  react(t, "MELEE");
+};
+
+document.getElementById("btnRpg").onclick = () => {
+  const alive = actors.filter(a => !a.dead);
+  if(!alive.length) return;
+  const target = alive[Math.floor(Math.random() * alive.length)];
+  const rect = target.el.getBoundingClientRect();
+  const srect = stage.getBoundingClientRect();
+  fireRpg(rect.left - srect.left + rect.width / 2);
+};
+
+document.getElementById("btnReset").onclick = () => {
+  wanted = 0;
+  logEl.innerHTML = "";
+  buildScene();
+  log("↻ Đã đặt lại cảnh");
+};
+
+/* ───────────── khởi động ───────────── */
+buildScene();
+log("Sẵn sàng. 6 NPC với 6 tính cách khác nhau — bấm <b>🔫 Bắn NPC</b> để xem phản ứng.");
+log("Logic chọn phản ứng ở đây <b>giống hệt</b> <span class='c'>src/server/NPCManager.luau</span>.");
+</script>
+</body>
+</html>
