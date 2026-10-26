@@ -24,6 +24,25 @@ try {
 }
 const REPO = path.resolve(__dirname, "..", "..");
 
+// Thay mọi require(...WaitForChild("X")) bằng biến toàn cục đã nạp trước đó.
+function patchRequires(src) {
+  const map = { WorldGrid: "WORLDGRID", PartBuilder: "PARTBUILDER", BuildKit: "BUILDKIT" };
+  let out = src;
+  for (const [modName, globalName] of Object.entries(map)) {
+    out = out.replace(
+      new RegExp(`local\\s+(\\w+)\\s*=\\s*require\\([^\\n]*WaitForChild\\("${modName}"\\)\\)`),
+      `local $1 = ${globalName}`
+    );
+  }
+  for (const modName of Object.keys(map)) {
+    if (new RegExp(`WaitForChild\\("${modName}"\\)`).test(out)) {
+      throw new Error(`chưa thay được require ${modName}`);
+    }
+  }
+  return out;
+}
+
+
 const target = process.argv[2];
 if (!target) {
   console.error("Dùng: node tools/building_sim/run.cjs <module.luau>");
@@ -52,16 +71,14 @@ function readSrc(p) {
   if (pbIdx < 0) throw new Error("PartBuilder.luau không kết thúc bằng `return PartBuilder`");
   const pb = pbSrc.slice(0, pbIdx) + "PARTBUILDER = PartBuilder" + pbSrc.slice(pbIdx + "return PartBuilder".length);
 
+  // BuildKit: bộ khung dựng dùng chung
+  const bkSrc = readSrc(path.join(REPO, "src/shared/World/BuildKit.luau"));
+  const bkIdx = bkSrc.lastIndexOf("return BuildKit");
+  if (bkIdx < 0) throw new Error("BuildKit.luau không kết thúc bằng `return BuildKit`");
+  const bk = patchRequires(bkSrc.slice(0, bkIdx)) + "BUILDKIT = BuildKit" + bkSrc.slice(bkIdx + "return BuildKit".length);
+
   // Module công trình: thay require(...) bằng biến toàn cục đã nạp
-  let mod = readSrc(targetAbs);
-  mod = mod.replace(
-    /local\s+(\w+)\s*=\s*require\(Shared:WaitForChild\("WorldGrid"\)\)/,
-    "local $1 = WORLDGRID"
-  );
-  mod = mod.replace(
-    /local\s+(\w+)\s*=\s*require\(.*WaitForChild\("PartBuilder"\)\)/,
-    "local $1 = PARTBUILDER"
-  );
+  let mod = patchRequires(readSrc(targetAbs));
   const modRet = mod.lastIndexOf("return Module");
   if (modRet < 0) throw new Error("Module không kết thúc bằng `return Module`");
   mod = mod.slice(0, modRet) + "MODULE = Module" + mod.slice(modRet + "return Module".length);
@@ -147,7 +164,7 @@ log("build ok=" .. tostring(ok) .. " err=" .. tostring(err))
 RAW = table.concat(results, string.char(10))
 `;
 
-  const chunk = [prelude, wg, pb, mod, driver].join("\n");
+  const chunk = [prelude, wg, pb, bk, mod, driver].join("\n");
   let out;
   try {
     out = await lua.execute(chunk + "\nreturn RAW\n");

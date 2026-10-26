@@ -30,6 +30,11 @@
 	      D2_DEPOSIT   ( −3,5 · −64,5)  nền 1,27   quảng trường Maze Bank
 	      D2_WITHDRAW  (  3,0 · −64,5)  nền 1,27
 	      D1_SHOWROOM  (−226,0 · −76,0) nền 1,37   sân đỗ Luxury Autos
+	      D3_CINEMA    ( 226,0 · −76,0) nền 1,29   sân sao dưới marquee rạp phim
+	      E1_SPA       (−447,0 · −76,0) nền 1,31   sàn đá cạnh hồ bơi biệt thự
+	      E2_GARAGE    ( 447,0 · −76,0) nền 1,29   sân rào lưới trước 3 cửa cuốn
+	      E3_FOOD      (−445,5 · 119,0) nền 1,41   sân trước quán ăn Seoul
+	      E4_MALL      ( 449,0 · 123,0) nền 1,29   quảng trường trước Galleria
 	  • Y KHÔNG hard-code: `ServiceManager.groundYAt()` raycast xuống lấy mặt sàn thật
 	    (1,27–1,37 tuỳ ô), chênh lệch với vỉa hè (1,15) tới 0,22 stud nên nếu để 1,15
 	    thì đế quầy bị chôn, còn 1,40 thì lơ lửng.
@@ -241,7 +246,7 @@ local LIST: { Service } = {
 		kind = "HEAL",
 		price = 20,
 		prompt = "Ăn một tô  [$20]",
-		offset = Vector3.new(0, 0, 56),
+		offset = Vector3.new(1.5, 0, 61),
 		detail = "Hồi 50 máu.",
 	},
 	{
@@ -253,7 +258,7 @@ local LIST: { Service } = {
 		kind = "ARMOR",
 		price = 350,
 		prompt = "Mua combo  [$350]",
-		offset = Vector3.new(0, 0, 56),
+		offset = Vector3.new(2.0, 0, 65),
 		detail = "Đầy giáp + đầy đạn dự phòng.",
 	},
 }

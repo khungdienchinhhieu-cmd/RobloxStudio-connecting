@@ -227,7 +227,7 @@ Dự án tái hiện thế giới mở **Grand Theft Auto V (Los Santos)** trên
   - File: `BuildingServices.luau` (311 dòng) · `Carryables.luau` (129) · `ServiceManager.luau` (575) ·
     `CarryManager.luau` (439) · `CarryClient.luau` (200) · `bridge/services-demo.html` (10,6 KB).
 
-- [x] **Bước 16 (đang chạy): QUÉT SẠCH THÀNH PHỐ — 3 Agent phụ × 2 vòng = 6 công trình chi tiết** ✅ 1/6
+- [x] **Bước 16: QUÉT SẠCH THÀNH PHỐ — 6 công trình chi tiết** ✅ **6/6 · 10/10 ô đất có công trình**
   - ✅ **`Plot_D1` — Luxury Autos** (agent `f3da0fbe`, nhánh `arena/f3da0fbe-…` @ `28349d7`) — **DUYỆT 9,1/10**.
     Đo lại độc lập bằng harness mới `tools/building_sim/`: **3 165 BasePart**, **99,59 % phá huỷ được**,
     0 khối nhỏ còn `CanCollide`, 0 `CanTouch`, 0 `CastShadow` sai, 0 `SurfaceGui` sai, 0 tên trùng,
@@ -235,7 +235,22 @@ Dự án tái hiện thế giới mở **Grand Theft Auto V (Los Santos)** trên
     `CanCollide = false` → xe tông xuyên), sảnh thông tầng 2 bục xoay + 3 xe, tầng lửng chữ U có
     văn phòng vách kính + quầy cà phê, sân trước 6 ô đỗ + barrier.
     Biên bản: [`agents/reviews/A1_ROCKFORD_LUXURY_AUTOS/MASTER_QA__b37b6115.md`](agents/reviews/A1_ROCKFORD_LUXURY_AUTOS/MASTER_QA__b37b6115.md).
-  - ⏳ Còn 5 ô: D3 · E1 · E2 · E3 · E4.
+  - ✅ **Agent Chính (phiên `arena/b37b6115`) tự dựng nốt 5 ô còn lại trong MỘT lượt** — vòng quét V6
+    của 3 agent phụ bị bỏ (B và C không nhận nhánh), nên theo lệnh *"A đi dựng hết một lượt"* cả 5 ô
+    được dựng liên tục, không dừng giữa chừng. Số đo **do harness đo lại**, không tự khai:
+
+    | Ô | Công trình | BasePart | AABB (min → max) | Đè nhau | Quầy |
+    |---|---|---|---|---|---|
+    | `Plot_E1` | **Pacific Bluffs Villa** — biệt thự ven vịnh 2 tầng + sân thượng, hồ bơi vô cực 40×26, bếp ngoài, gara 2 xe, 8 cọ | 2 297 | −525,0 · 1,15 · −192,8 → −364,0 · 42,7 · −63,5 | 0 | `E1_SPA` |
+    | `Plot_E2` | **La Mesa Customs** — xưởng độ xe 3 khoang cửa cuốn 18×12, 3 cầu nâng 2 trụ 11 stud, 6 kệ lốp 4 tầng, dyno, buồng sơn, phòng khách kính, sân rào lưới | 1 334 | 361,8 · 1,15 · −196,8 → 532,2 · 33,5 · −62,0 | 0 | `E2_GARAGE` |
+    | `Plot_E3` | **Little Seoul Diner** — quán ăn đêm Hàn Quốc 2 tầng, 12 bàn inox + bếp than, quầy bar gỗ 44 stud, bãi đỗ phía Tây | 2 502 | −530,9 · 1,15 · 14,8 → −367,7 · 39,4 · 128,0 | 0 | `E3_FOOD` |
+    | `Plot_E4` | **Richman Galleria** — TTTM 3 tầng + sân thượng, giếng trời vòm kính 3 vòng, đài phun nước đá hoa cương, 18 gian hàng, 2 thang cuốn ×2 tầng, cửa xoay 3 lá | 2 868 | 366,0 · 1,15 · 7,8 → 526,0 · 61,9 · 124,0 | 0 | `E4_MALL` |
+    | `Plot_D3` | **Vinewood Cinema** — rạp phim 2 phòng chiếu (9 hàng × 12 ghế, màn 40×18), marquee 64 stud, sân sao, bãi đỗ phía Đông | 1 388 | 146,0 · 1,15 · −197,0 → 313,0 · 46,2 · −64,0 | 0 | `D3_CINEMA` |
+
+    → **10/10 ô đất có công trình**, tổng **24 893 BasePart** ở 10 module. Mọi module: 100 % khối có
+    máu ẩn, 0 khối nhỏ còn va chạm, 0 `CanTouch`, 0 `CastShadow` sai, 0 `SurfaceGui` sai, 0 tên trùng,
+    AABB nằm trọn trong ô (kiểm **bằng tay** vì harness không tự chặn biên).
+    Ảnh QA mặt bằng + phối cảnh: [`agents/reviews/city-buildings-v27.png`](agents/reviews/city-buildings-v27.png).
 - [x] **Bước 16.1: CÔNG CỤ ĐO CÔNG TRÌNH + GIẢI CHỖ ĐẶT QUẦY (`tools/building_sim/`)** ✅
   - `run.cjs <module.luau>` — dựng **module thật** trong Luau VM (mock Roblox API có **ma trận xoay
     3×3 thật**, `IsA` đúng cây kế thừa, `GetDescendants` đệ quy) rồi in: số BasePart · % khối phá huỷ ·
@@ -248,8 +263,17 @@ Dự án tái hiện thế giới mở **Grand Theft Auto V (Los Santos)** trên
     Sau khi giải và áp số: **9/9 quầy trống**, mặt đỡ đo được C1 1,28 · 24/7 1,30 · LSPD 1,34 ·
     Maze 1,27 · D1 1,37 (đều khác vỉa hè 1,15 → `ServiceManager.groundYAt()` raycast xuống lấy
     đúng mặt sàn thay vì cứng 1,15, nếu không đế quầy bị chôn hoặc lơ lửng).
-- [ ] **Bước 17: PHÂN CÔNG VÒNG QUÉT V6** (prompt: [`agents/WORKER_PROMPT_V6_CITY_SWEEP_3AGENTS.md`](agents/WORKER_PROMPT_V6_CITY_SWEEP_3AGENTS.md))
-  - Agent A: ~~`Plot_D1` Showroom Luxury Autos~~ ✅ → `Plot_E3` Quán nướng Seoul Garden
-  - Agent B: `Plot_D3` Rạp Vinewood Cinema → `Plot_E4` TTTM Richman Galleria
-  - Agent C: `Plot_E2` Garage La Mesa Customs → `Plot_E1` Biệt thự Pacific Bluffs (bản chi tiết)
-  - Xong 6 công trình này là **10/10 ô đất có công trình** → thành phố hoàn chỉnh.
+- [x] **Bước 16.2: THÊM 3 CÔNG CỤ QA (`tools/building_sim/`)** ✅
+  - `overlap_check.cjs [module…] [--min=6]` — bắt **khối đè nhau** (lỗi "bàn ăn đè lên cầu thang").
+    Dựng công trình thật → AABB có xoay → lọc nhiễu: bỏ cặp part trang trí (`CanCollide=false`),
+    bỏ cặp cùng nhóm, bỏ **kết cấu × kết cấu** (tường × sàn × mái là bình thường) và bỏ tấm mỏng
+    cắm xuyên (sàn/mái/bệ). In 8 cặp tệ nhất kèm thể tích chồng.
+    → Bắt được 3 lỗi thật ở lượt này: **bếp ngoài + gara E1 nằm TRONG thân nhà**, **cột đá E4 chặn
+    đúng tim cửa xoay**, **máy chiếu D3 cắm vào mái**. Cả 5 công trình mới hiện **0 cặp đè**.
+  - `dump_parts.cjs [module…]` — xuất JSON (tên/toạ độ/kích thước/ma trận xoay/màu) để vẽ QA.
+  - `counter_check.cjs --solve` chạy lại: **14/14 quầy trống**, áp offset mới cho `E3_FOOD`
+    `(1,5 · 61,0)`→(−445,5 · 119,0) nền 1,41 và `E4_MALL` `(2,0 · 65,0)`→(449,0 · 123,0) nền 1,29.
+- [ ] **Bước 17: VÒNG 7 — chưa giao** (thành phố đã đủ 10/10 ô; việc còn lại là chiều sâu gameplay,
+  không phải thêm nhà). Prompt vòng 6 vẫn giữ ở
+  [`agents/WORKER_PROMPT_V6_CITY_SWEEP_3AGENTS.md`](agents/WORKER_PROMPT_V6_CITY_SWEEP_3AGENTS.md)
+  làm mẫu cho lần mở rộng sau.

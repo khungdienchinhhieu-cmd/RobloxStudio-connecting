@@ -22,6 +22,25 @@ try {
 }
 const REPO = path.resolve(__dirname, "..", "..");
 const read = (p) => fs.readFileSync(p, "utf8");
+
+// Thay mọi require(...WaitForChild("X")) bằng biến toàn cục đã nạp trước đó.
+function patchRequires(src) {
+  const map = { WorldGrid: "WORLDGRID", PartBuilder: "PARTBUILDER", BuildKit: "BUILDKIT" };
+  let out = src;
+  for (const [modName, globalName] of Object.entries(map)) {
+    out = out.replace(
+      new RegExp(`local\\s+(\\w+)\\s*=\\s*require\\([^\\n]*WaitForChild\\("${modName}"\\)\\)`),
+      `local $1 = ${globalName}`
+    );
+  }
+  for (const modName of Object.keys(map)) {
+    if (new RegExp(`WaitForChild\\("${modName}"\\)`).test(out)) {
+      throw new Error(`chưa thay được require ${modName}`);
+    }
+  }
+  return out;
+}
+
 const SOLVE = process.argv.includes("--solve");
 
 // Plot centers — phải khớp WorldGrid.PLOTS (nguồn duy nhất bên Luau)
@@ -58,6 +77,9 @@ function parseServices(src) {
   const prelude = read(path.join(__dirname, "prelude.luau"));
   const wg = patchRet(read(path.join(REPO, "src/shared/WorldGrid.luau")), "WorldGrid", "WORLDGRID");
   const pb = patchRet(read(path.join(REPO, "src/shared/World/PartBuilder.luau")), "PartBuilder", "PARTBUILDER");
+  const bkRaw = read(path.join(REPO, "src/shared/World/BuildKit.luau"));
+  const bkCut = bkRaw.slice(0, bkRaw.lastIndexOf("return BuildKit"));
+  const bk = patchRequires(bkCut) + "BUILDKIT = BuildKit";
   const services = parseServices(read(path.join(REPO, "src/shared/World/BuildingServices.luau")));
 
   const builtPlots = new Set();
@@ -66,8 +88,7 @@ function parseServices(src) {
   for (const f of modFiles) {
     const lua = await Lua.create();
     let mod = read(path.join(modulesDir, f));
-    mod = mod.replace(/local\s+(\w+)\s*=\s*require\(Shared:WaitForChild\("WorldGrid"\)\)/, "local $1 = WORLDGRID");
-    mod = mod.replace(/local\s+(\w+)\s*=\s*require\(.*WaitForChild\("PartBuilder"\)\)/, "local $1 = PARTBUILDER");
+    mod = patchRequires(mod);
     mod = patchRet(mod, "Module", "MODULE");
     const driver = `
 local ok, err = pcall(function()
@@ -90,7 +111,7 @@ RAW = RUN[1] .. "|" .. tostring(ok) .. "|" .. tostring(err) .. "|" .. table.conc
 `;
     let out;
     try {
-      out = await lua.execute(prelude + "\nOUT = {}\nRUN = {}\n" + wg + "\n" + pb + "\n" + mod + "\n" + driver + "\nreturn RAW\n");
+      out = await lua.execute(prelude + "\nOUT = {}\nRUN = {}\n" + wg + "\n" + pb + "\n" + bk + "\n" + mod + "\n" + driver + "\nreturn RAW\n");
     } catch (e) {
       console.log(`❌ ${f} lỗi nạp: ${String(e.message).slice(0, 200)}`);
       continue;
