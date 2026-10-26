@@ -18,3 +18,6 @@ sourcemap.json
 
 # Trạng thái bộ poll Agent phụ
 /.agent-watch-state.json
+
+# Trạng thái + cảnh báo của tools/watch/file_watch.mjs
+/tools/watch/.state/
