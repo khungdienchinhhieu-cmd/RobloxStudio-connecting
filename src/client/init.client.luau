@@ -18,6 +18,7 @@ local GtaWeaponWheel = require(script:WaitForChild("UI"):WaitForChild("GtaWeapon
 local NPCAnimator = require(script:WaitForChild("NPCAnimator"))
 local CityCuller = require(script:WaitForChild("CityCuller"))
 local CarryClient = require(script:WaitForChild("CarryClient"))
+local MugClient = require(script:WaitForChild("MugClient"))
 
 GtaHud.mount(localPlayer, hudRemote)
 VehiclePromptUI.mount(localPlayer)
@@ -34,6 +35,9 @@ CityCuller.mount()
 
 -- CƠ CHẾ TAY (nhặt · tha · ném) + HUD "ĐANG VÁC"
 CarryClient.mount()
+
+-- CƯỚP VÍ (phím T) gần dân thường
+MugClient.mount(localPlayer)
 
 -- ⚠ VŨ KHÍ KHÔNG CÒN LÀ "ITEM" TRONG TÚI ĐỒ ROBLOX.
 -- Tắt hẳn giao diện Backpack (thanh item + phím 1..9 mặc định) — người chơi chỉ

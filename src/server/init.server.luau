@@ -39,6 +39,18 @@ if not activeRemotes:FindFirstChild("WeaponFire") then
 	wf.Parent = activeRemotes
 end
 
+-- Cướp ví: client gửi NPC muốn móc ví, server tự kiểm tra (khoảng cách, cooldown, loại NPC)
+local mugRemote = activeRemotes:FindFirstChild("MugRequest")
+if not mugRemote then
+	local mr = Instance.new("RemoteEvent")
+	mr.Name = "MugRequest"
+	mr.Parent = activeRemotes
+	mugRemote = mr
+end
+(mugRemote :: RemoteEvent).OnServerEvent:Connect(function(player: Player, model: any)
+	NPCManager.mug(player, model)
+end)
+
 -- 1. Dựng Nền Thành Phố ghép khối có máu ẩn + Tự động nạp mọi Công Trình Đa-Agent trong World/Modules
 local losSantosRoot = CityFoundation.build(false)
 DistrictRegistry.buildAll(losSantosRoot)

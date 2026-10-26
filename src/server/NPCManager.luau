@@ -1437,6 +1437,76 @@ function NPCManager.notifyExplosion(center: Vector3, radius: number, attacker: P
 	end
 end
 
+-- ── CƯỚP VÍ ─────────────────────────────────────────────────────────────────
+-- Người chơi đứng gần dân thường, bấm T: móc ví. Server kiểm tra mọi thứ,
+-- không tin client. Dân bị cướp bỏ chạy; có ~35% khả năng gọi 911.
+local MUG_RANGE = 7
+local MUG_NPC_COOLDOWN = 45
+local MUG_PLAYER_COOLDOWN = 3
+local MUG_MIN, MUG_MAX = 40, 260
+local MUG_POLICE_CHANCE = 0.35
+local MUG_ARCHETYPES = { CIVILIAN = true, TOURIST = true, BUSINESS = true }
+local mugNpcReadyAt: { [Model]: number } = {}
+local mugPlayerReadyAt: { [Player]: number } = {}
+
+function NPCManager.mug(player: Player, model: any): (boolean, string)
+	if typeof(model) ~= "Instance" or not model:IsA("Model") then
+		return false, "Mục tiêu không hợp lệ"
+	end
+	local st = states[model]
+	if not st or st.state == "DEAD" or st.hum.Health <= 0 then
+		return false, "Người này không thể cướp"
+	end
+	if not MUG_ARCHETYPES[st.arch.id] then
+		return false, "Không thể cướp người này"
+	end
+	local char = player.Character
+	local root = char and char:FindFirstChild("HumanoidRootPart")
+	if not root or not root:IsA("BasePart") then
+		return false, "Nhân vật chưa sẵn sàng"
+	end
+	local t = now()
+	if t < (mugPlayerReadyAt[player] or 0) then
+		return false, "Chờ một chút"
+	end
+	if t < (mugNpcReadyAt[model] or 0) then
+		return false, "Người này đã hoảng, không cướp được nữa"
+	end
+	if (root.Position - st.hrp.Position).Magnitude > MUG_RANGE then
+		return false, "Đứng gần hơn để móc ví"
+	end
+
+	mugPlayerReadyAt[player] = t + MUG_PLAYER_COOLDOWN
+	mugNpcReadyAt[model] = t + MUG_NPC_COOLDOWN
+	local amount = math.random(MUG_MIN, MUG_MAX)
+	local current = tonumber(player:GetAttribute("Cash")) or 0
+	local newCash = current + amount
+	player:SetAttribute("Cash", newCash)
+	local ls = player:FindFirstChild("leaderstats")
+	local cs = ls and ls:FindFirstChild("Cash")
+	if cs and cs:IsA("IntValue") then
+		cs.Value = newCash
+	end
+
+	startReaction(st, "FLEE", player)
+	if math.random() < MUG_POLICE_CHANCE then
+		task.delay(2.5, function()
+			if st.state == "REACT" and st.attacker == player then
+				setBubble(st, "📞 ĐÃ GỌI 911", Color3.fromRGB(96, 165, 250))
+				policeDispatch(player)
+			end
+		end)
+	end
+
+	if hudRemote then
+		hudRemote:FireClient(player, {
+			message = string.format("💰 Cướp ví: +$%d", amount),
+			color = Color3.fromRGB(74, 222, 128),
+		})
+	end
+	return true, string.format("+$%d", amount)
+end
+
 --- Cảnh sát tới hiện trường ngay (dùng cho RPG hoặc wanted level cao).
 function NPCManager.dispatchTo(attacker: Player)
 	policeDispatch(attacker)
