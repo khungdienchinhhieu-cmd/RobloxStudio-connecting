@@ -48,3 +48,30 @@ người đi bộ không thật, giao thông kém an toàn. Đây cũng là đi�
 - Kiểm nội thất: đếm toà vào được và ghi vào bảng ở mục 2.
 - Điều tra `CityCuller` với lỗi nhà biến mất. Báo cáo theo đúng 5 mục trong prompt.
 - Bổ sung nguồn cho mục 1, đặc biệt số liệu sự kiện ngẫu nhiên.
+
+---
+
+## 5. Bổ sung (13:55 26/10): hệ thống truy nã và sự kiện ngẫu nhiên
+
+### 5.1 Cấp truy nã (Wanted Level) — 5 sao, không phải 6
+Nguồn: [GTA Wiki: Wanted Level](https://gta.fandom.com/wiki/Wanted_Level_in_GTA_V), [GTA Wiki (gta.wiki)](https://gta.wiki/w/Wanted_Level_in_GTA_V), [Kotaku](https://kotaku.com/the-mystery-of-gta-vs-six-star-wanted-level-1702882721)
+
+- **1 sao:** tội nhẹ. Cảnh sát đuổi, dừng xe ép người chơi xuống (có thể bắt ngay). Bảo vệ tư nhân bắn ngay.
+- **2 sao:** cảnh sát bắn không cần người chơi cầm súng. Ít nhất 3 xe cảnh sát đuổi. Chặn xe bằng xe tuần tra.
+- **3 sao:** trực thăng tham gia. Bắn hạ cảnh sát nhảy thẳng lên 3 sao.
+- **4–5 sao:** nhiều trực thăng, xe bọc thép, đặt chốt chặn đường (5 sao: gần như không có lối thoát).
+- **Mất sao:** đi khỏi tầm nhìn của cảnh sát. Một vùng tìm kiếm đỏ hiện trên radar, nằm trong vùng đó thì bị tìm lại nhanh. Thời gian mất sao tăng theo số sao.
+
+Điểm dùng được cho dự án: mô hình "tầm nhìn + vùng tìm kiếm + tăng dần theo mức" đơn giản hơn nhiều so với AI đầy đủ. Đây là tiêu chí nghiệm thu rõ ràng để thêm sau.
+
+### 5.2 Sự kiện ngẫu nhiên (Random Events)
+Nguồn: [GTA Wiki: Random Events](https://gta.fandom.com/wiki/Random_Events_in_GTA_V), [GTABase](https://www.gtabase.com/grand-theft-auto-v/side-missions/random-events)
+
+- Bản gốc có **57** sự kiện (bản Enhanced có 60). Số liệu của các nguồn không khớp hoàn toàn, nên dùng con số "57 gốc".
+- Hiện dưới dạng **chấm xanh trên radar** khi người chơi đi gần. Mỗi sự kiện chỉ xảy ra một lần, hoặc lặp lại tuỳ loại.
+- Các loại tiêu biểu: **cướp ví** (đuổi kẻ cướp, trả ví hoặc giữ tiền), **cướp cửa hàng** (bắn đuổi kẻ cướp trước khi chúng lên xe), **cứu người bị hành hung trong hẻm**.
+- Có **lựa chọn đạo đức**: giúp người bị hại hay giữ tiền. Đây là phần làm sự kiện có cảm giác "sống".
+
+### 5.3 Đề xuất cho dự án (để Agent 2 và mình chốt)
+- Sự kiện đầu tiên nên là **cướp ví**: một NPC bị giật ví, người chơi đuổi theo, trả hoặc giữ tiền. Chi phí thấp, dùng lại được NPC và xe hiện có.
+- Truy nã đầu tiên: **chỉ 1 sao và 2 sao**, bắt đầu khi người chơi bắn hoặc đâm xe vào NPC trước mặt cảnh sát. Chưa làm trực thăng.
