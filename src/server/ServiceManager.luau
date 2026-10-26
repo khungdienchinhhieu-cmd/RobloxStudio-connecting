@@ -408,8 +408,10 @@ local function buildCounter(service: any, position: Vector3, parent: Instance): 
 	gui.Name = "Sign"
 	gui.Size = UDim2.fromOffset(340, 120)
 	gui.StudsOffsetWorldSpace = Vector3.new(0, 11.6, 0)
-	gui.AlwaysOnTop = true
-	gui.MaxDistance = 220
+	-- KHÔNG AlwaysOnTop: biển bị tường/mái che như vật thật, không đè lên màn hình khi đứng gần.
+	-- MaxDistance 160 (trước 220 + AlwaysOnTop = thẻ che màn hình khi đi qua quầy).
+	gui.AlwaysOnTop = false
+	gui.MaxDistance = 160
 	gui.LightInfluence = 0
 	gui.Adornee = board
 	gui.Parent = board
