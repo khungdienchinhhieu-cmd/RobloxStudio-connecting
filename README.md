@@ -33,7 +33,7 @@ Dự án tái hiện thế giới mở **Grand Theft Auto V (Los Santos)** trên
 | :--- | :--- | :---: | :---: | :---: | :--- |
 | **North Ridge** | **Vinewood Hills** (Đồi vát nghiêng tự nhiên, vách đá & tường chắn ghép khối) | `[-580, +580]` | `[-380, -244]` | 348 × 41 m | ✅ Hoàn thành ở Nền v2 |
 | **Plot E1** | **Pacific Bluffs** — biệt thự ven vịnh (bản "ít part" đã **gỡ** ở v23, chờ dựng lại **chi tiết** như LS Customs) | `[-536, -358]` | `[-204, -60]` | 53 × 43 m | ☐ **Trống — Agent 3 vòng 2** |
-| **Plot D1** | **Rockford Hills** (Ô móng kỹ thuật sạch chờ công trình) | `[-318, -134]` | `[-204, -60]` | 55 × 43 m | ⏳ Chờ dựng từng công trình |
+| **Plot D1** | **Rockford Hills — Luxury Autos** (`3 165` part, `99,6%` máu ẩn, kính cong xe tông xuyên) | `[-318, -134]` | `[-204, -60]` | 55 × 43 m | ✅ Nghiệm thu 9,1/10 — **Sync v26** |
 | **Plot D2** | **Pillbox Hill** — **Tháp Maze Bank** (`2 312` part, `99.1%` máu ẩn) | `[-86, +86]` | `[-204, -60]` | 52 × 43 m | ✅ Nghiệm thu 9.2/10 — **Sync v22** |
 | **Plot D3** | **Downtown Vinewood** (Ô móng kỹ thuật sạch chờ công trình) | `[+134, +318]` | `[-204, -60]` | 55 × 43 m | ⏳ Chờ dựng từng công trình |
 | **Plot E2** | **La Mesa** (trống — chờ Agent, Giai đoạn 4) | `[+358, +536]` | `[-204, -60]` | 53 × 43 m | ☐ |
@@ -227,9 +227,29 @@ Dự án tái hiện thế giới mở **Grand Theft Auto V (Los Santos)** trên
   - File: `BuildingServices.luau` (311 dòng) · `Carryables.luau` (129) · `ServiceManager.luau` (575) ·
     `CarryManager.luau` (439) · `CarryClient.luau` (200) · `bridge/services-demo.html` (10,6 KB).
 
-- [ ] **Bước 16: QUÉT SẠCH THÀNH PHỐ — 3 Agent phụ × 2 vòng = 6 công trình chi tiết**
-  (prompt: [`agents/WORKER_PROMPT_V6_CITY_SWEEP_3AGENTS.md`](agents/WORKER_PROMPT_V6_CITY_SWEEP_3AGENTS.md))
-  - Agent A: `Plot_D1` Showroom Luxury Autos → `Plot_E3` Quán nướng Seoul Garden
+- [x] **Bước 16 (đang chạy): QUÉT SẠCH THÀNH PHỐ — 3 Agent phụ × 2 vòng = 6 công trình chi tiết** ✅ 1/6
+  - ✅ **`Plot_D1` — Luxury Autos** (agent `f3da0fbe`, nhánh `arena/f3da0fbe-…` @ `28349d7`) — **DUYỆT 9,1/10**.
+    Đo lại độc lập bằng harness mới `tools/building_sim/`: **3 165 BasePart**, **99,59 % phá huỷ được**,
+    0 khối nhỏ còn `CanCollide`, 0 `CanTouch`, 0 `CastShadow` sai, 0 `SurfaceGui` sai, 0 tên trùng,
+    AABB nằm trọn trong ô đất. Mặt tiền **kính cong parabol 2 lớp** (446 ô kính `integrity 40`,
+    `CanCollide = false` → xe tông xuyên), sảnh thông tầng 2 bục xoay + 3 xe, tầng lửng chữ U có
+    văn phòng vách kính + quầy cà phê, sân trước 6 ô đỗ + barrier.
+    Biên bản: [`agents/reviews/A1_ROCKFORD_LUXURY_AUTOS/MASTER_QA__b37b6115.md`](agents/reviews/A1_ROCKFORD_LUXURY_AUTOS/MASTER_QA__b37b6115.md).
+  - ⏳ Còn 5 ô: D3 · E1 · E2 · E3 · E4.
+- [x] **Bước 16.1: CÔNG CỤ ĐO CÔNG TRÌNH + GIẢI CHỖ ĐẶT QUẦY (`tools/building_sim/`)** ✅
+  - `run.cjs <module.luau>` — dựng **module thật** trong Luau VM (mock Roblox API có **ma trận xoay
+    3×3 thật**, `IsA` đúng cây kế thừa, `GetDescendants` đệ quy) rồi in: số BasePart · % khối phá huỷ ·
+    AABB có xoay · khối nhỏ còn va chạm · `CanTouch` · `CastShadow` · `SurfaceGui` · tên trùng.
+    → Từ nay **mọi bài agent phụ nộp đều bị đo lại**, không tin báo cáo tự khai.
+  - `counter_check.cjs` — với từng quầy dịch vụ của ô đã dựng, kiểm tra **một cột trụ bán kính 4 stud**
+    (đúng bán kính đế quầy 3,95) có bị tường/kính/cửa cuốn/cọc chắn/bậc chiếm không, và có **mặt đỡ
+    thật** dưới chân không. `--solve` tự **giải** ra offset mới (lưới 0,5 stud) gần cửa nhất mà trống.
+  - **Kết quả lần đầu chạy: 8/9 quầy nằm lọt trong tường** — đúng loại lỗi "đặt quầy bằng mắt".
+    Sau khi giải và áp số: **9/9 quầy trống**, mặt đỡ đo được C1 1,28 · 24/7 1,30 · LSPD 1,34 ·
+    Maze 1,27 · D1 1,37 (đều khác vỉa hè 1,15 → `ServiceManager.groundYAt()` raycast xuống lấy
+    đúng mặt sàn thay vì cứng 1,15, nếu không đế quầy bị chôn hoặc lơ lửng).
+- [ ] **Bước 17: PHÂN CÔNG VÒNG QUÉT V6** (prompt: [`agents/WORKER_PROMPT_V6_CITY_SWEEP_3AGENTS.md`](agents/WORKER_PROMPT_V6_CITY_SWEEP_3AGENTS.md))
+  - Agent A: ~~`Plot_D1` Showroom Luxury Autos~~ ✅ → `Plot_E3` Quán nướng Seoul Garden
   - Agent B: `Plot_D3` Rạp Vinewood Cinema → `Plot_E4` TTTM Richman Galleria
   - Agent C: `Plot_E2` Garage La Mesa Customs → `Plot_E1` Biệt thự Pacific Bluffs (bản chi tiết)
   - Xong 6 công trình này là **10/10 ô đất có công trình** → thành phố hoàn chỉnh.

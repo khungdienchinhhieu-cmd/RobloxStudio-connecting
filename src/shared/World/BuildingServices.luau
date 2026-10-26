@@ -11,19 +11,30 @@
 	Nếu ô đất chưa có công trình (agent chưa dựng xong) thì quầy **tự động bật lên**
 	ngay khi module của ô đó được nạp — không phải sửa file này.
 
-	QUY ƯỚC TOẠ ĐỘ (v25.1 — đặt quầy THEO CỬA THẬT, không dùng heuristic):
-	  • `offset` tính từ TÂM ô đất (X ngang, Z sâu), đơn vị stud.
-	  • Mỗi offset dưới đây suy trực tiếp từ toạ độ cửa mà module công trình
-	    công bố (attribute) hoặc từ hằng số mặt tiền trong module:
-	      – C1  LS Customs : PedestrianDoorPosition = (−206.5, FLOOR_TOP, 51)   → quầy (−206.5, 53.5)
-	      – C3W 24/7 Mart  : MainEntrance "X=175, Z=92" (mặt Nam)              → 3 quầy (169 / 175 / 181, 94.5)
-	      – C3E LSPD       : MainGateX 255, MainGateZ 69.4                     → 2 quầy (251 / 259, 72)
-	      – D2  Maze Bank  : MainEntrance "X=0, Z=−65", cổng rộng 16.4         → 2 quầy (−11 / 11, −61.5)
-	  • Quầy luôn đặt CÁCH MẶT TIỀN 2–3 stud (ra phía đường) để người chơi đứng
-	    lại bấm được mà không bị tường chắn.
-	  • Ô chưa dựng (D1/D3/E1/E2/E3/E4) dùng offset (0, 0, 56): hướng ra đại lộ.
-	  • Y lấy theo cao độ vỉa hè (SIDEWALK_TOP_Y = 1.15); quầy có thêm đế (plinth)
-	    cắm xuống đất nên không bị lơ lửng khi nền ô đất thấp hơn.
+	QUY ƯỚC TOẠ ĐỘ (v25.2 — số đo THẬT, có công cụ kiểm chứng):
+	  • `offset` tính từ TÂM ô đất (X ngang, Z sâu), đơn vị stud, bám lưới 0,5 stud.
+	  • Mỗi offset được GIẢI BẰNG MÁY, không đoán: `tools/building_sim/counter_check.cjs --solve`
+	    dựng lại công trình thật trong Luau VM, đo AABB có xoay, rồi tìm điểm gần cửa nhất mà
+	    - nằm trong ô đất (cách biên ≥ 4 stud),
+	    - không khối nào (tường/kính/cửa cuốn/cọc chắn/bậc) nằm trong bán kính 4 stud
+	      (bán kính đế quầy 3,95 stud) ở độ cao 1,15…4,15,
+	    - có mặt đỡ thật dưới chân.
+	    Chạy lại lúc nào cũng ra đúng các số dưới đây → không ai sửa tay làm lệch được.
+	  • Toạ độ thật (tâm ô + offset) và mặt đỡ đo được:
+	      C1_REPAIR    (−204,0 · 62,5)  nền 1,28   sân trước LS Customs
+	      C3W_SNACK    (171,5 · 101,0)  nền 1,30   trước cửa kính 24/7
+	      C3W_ARMOR    (176,5 · 101,0)  nền 1,30
+	      C3W_AMMO     (182,0 · 101,0)  nền 1,30
+	      C3E_BAIL     (252,0 ·  83,5)  nền 1,34   sân LSPD, dưới cổng chính
+	      C3E_ARSENAL  (260,0 ·  83,5)  nền 1,34
+	      D2_DEPOSIT   ( −3,5 · −64,5)  nền 1,27   quảng trường Maze Bank
+	      D2_WITHDRAW  (  3,0 · −64,5)  nền 1,27
+	      D1_SHOWROOM  (−226,0 · −76,0) nền 1,37   sân đỗ Luxury Autos
+	  • Y KHÔNG hard-code: `ServiceManager.groundYAt()` raycast xuống lấy mặt sàn thật
+	    (1,27–1,37 tuỳ ô), chênh lệch với vỉa hè (1,15) tới 0,22 stud nên nếu để 1,15
+	    thì đế quầy bị chôn, còn 1,40 thì lơ lửng.
+	  • Ô chưa dựng dùng (0, 0, 56) — hướng ra đại lộ; khi agent nạp module thì chạy
+	    `counter_check --solve` để chốt lại theo cửa thật.
 ]]
 
 local WorldGrid = require(script.Parent.Parent:WaitForChild("WorldGrid"))
@@ -72,7 +83,7 @@ local LIST: { Service } = {
 		kind = "REPAIR_CAR",
 		price = 250,
 		prompt = "Sửa xe  [$250]",
-		offset = Vector3.new(19.5, 0, -4.5),
+		offset = Vector3.new(22.0, 0, 4.5),
 		detail = "Sửa toàn bộ hư hỏng cho chiếc xe bạn đang ngồi / đứng cạnh.",
 	},
 	{
@@ -84,7 +95,7 @@ local LIST: { Service } = {
 		kind = "HEAL",
 		price = 25,
 		prompt = "Mua snack  [$25]",
-		offset = Vector3.new(-57, 0, 36.5),
+		offset = Vector3.new(-54.5, 0, 43.0),
 		detail = "Hồi 35 máu ngay lập tức.",
 	},
 	{
@@ -96,7 +107,7 @@ local LIST: { Service } = {
 		kind = "ARMOR",
 		price = 250,
 		prompt = "Mua giáp  [$250]",
-		offset = Vector3.new(-51, 0, 36.5),
+		offset = Vector3.new(-49.5, 0, 43.0),
 		detail = "Nạp đầy 100% giáp.",
 	},
 	{
@@ -108,7 +119,7 @@ local LIST: { Service } = {
 		kind = "AMMO",
 		price = 150,
 		prompt = "Mua đạn  [$150]",
-		offset = Vector3.new(-45, 0, 36.5),
+		offset = Vector3.new(-44.0, 0, 43.0),
 		detail = "Nạp đầy băng đạn dự phòng cho mọi súng đang có.",
 	},
 	{
@@ -120,7 +131,7 @@ local LIST: { Service } = {
 		kind = "CLEAR_WANTED",
 		price = 500,
 		prompt = "Nộp phạt  [$500 / sao]",
-		offset = Vector3.new(25, 0, 14),
+		offset = Vector3.new(26.0, 0, 25.5),
 		detail = "Xoá toàn bộ số sao truy nã. Giá = 500 × số sao.",
 	},
 	{
@@ -132,7 +143,7 @@ local LIST: { Service } = {
 		kind = "UNLOCK_WEAPON",
 		price = 0,
 		prompt = "Nhận Carbine Rifle",
-		offset = Vector3.new(33, 0, 14),
+		offset = Vector3.new(34.0, 0, 25.5),
 		detail = "Cấp Carbine Rifle + đầy đạn. Yêu cầu 0 sao truy nã.",
 	},
 	{
@@ -144,7 +155,7 @@ local LIST: { Service } = {
 		kind = "BANK_DEPOSIT",
 		price = 500,
 		prompt = "Gửi $500",
-		offset = Vector3.new(-11, 0, 70.5),
+		offset = Vector3.new(-3.5, 0, 67.5),
 		detail = "Chuyển $500 tiền mặt vào tài khoản ngân hàng (an toàn khi bị bắt).",
 	},
 	{
@@ -156,7 +167,7 @@ local LIST: { Service } = {
 		kind = "BANK_WITHDRAW",
 		price = 500,
 		prompt = "Rút $500",
-		offset = Vector3.new(11, 0, 70.5),
+		offset = Vector3.new(3.0, 0, 67.5),
 		detail = "Rút $500 từ tài khoản ra tiền mặt.",
 	},
 	{
@@ -182,7 +193,7 @@ local LIST: { Service } = {
 		kind = "SPAWN_CAR",
 		price = 2000,
 		prompt = "Mua siêu xe  [$2000]",
-		offset = Vector3.new(0, 0, 56),
+		offset = Vector3.new(0.0, 0, 56.0),
 		detail = "Giao siêu xe ngay trước showroom.",
 	},
 	{

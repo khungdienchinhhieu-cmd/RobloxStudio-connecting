@@ -340,6 +340,32 @@ local function makePart(name: string, size: Vector3, color: Color3, material: En
 	return p
 end
 
+--- Cao độ mặt đỡ thật dưới một điểm (sàn công trình, sân trước, vỉa hè…).
+--- v25 đo được: C1 = 1.28 · 24/7 = 1.30 · LSPD = 1.34 · Maze = 1.27 · D1 = 1.37 — KHÔNG phải 1.15.
+--- Nếu đặt quầy ở 1.15 thì đế bị chôn dưới sàn công trình; nếu đặt ở 1.40 thì lơ lửng.
+local function groundYAt(position: Vector3): number
+	local fallback = (WorldGrid :: any).SIDEWALK_TOP_Y or 1.15
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.IgnoreWater = true
+	local exclude = {}
+	if containerFolder then
+		table.insert(exclude, containerFolder)
+	end
+	params.FilterDescendantsInstances = exclude
+	local ok, result = pcall(function()
+		return Workspace:Raycast(position + Vector3.new(0, 45, 0), Vector3.new(0, -90, 0), params)
+	end)
+	if ok and result then
+		-- chỉ tin mặt đỡ gần: chênh quá 3 stud so với vỉa hè thì bỏ (tránh ray trúng mái nhà)
+		local y = result.Position.Y
+		if y > fallback - 1.5 and y < fallback + 3 then
+			return y
+		end
+	end
+	return fallback
+end
+
 local function buildCounter(service: any, position: Vector3, parent: Instance): Model?
 	local root = Instance.new("Model")
 	root.Name = "Service_" .. service.id
@@ -518,6 +544,8 @@ function ServiceManager.refresh(root: Instance?)
 		if not pos then
 			continue
 		end
+		-- bám đúng mặt sàn thật (sân/nền công trình cao hơn vỉa hè)
+		pos = Vector3.new(pos.X, groundYAt(pos), pos.Z)
 		local counter = buildCounter(service, pos, folder)
 		if counter then
 			counters[service.id] = counter
