@@ -277,7 +277,9 @@ Dự án tái hiện thế giới mở **Grand Theft Auto V (Los Santos)** trên
     cắm xuyên (sàn/mái/bệ). In 8 cặp tệ nhất kèm thể tích chồng.
     → Bắt được 3 lỗi thật ở lượt này: **bếp ngoài + gara E1 nằm TRONG thân nhà**, **cột đá E4 chặn
     đúng tim cửa xoay**, **máy chiếu D3 cắm vào mái**. Cả 5 công trình mới hiện **0 cặp đè**.
-  - `dump_parts.cjs [module…]` — xuất JSON (tên/toạ độ/kích thước/ma trận xoay/màu) để vẽ QA.
+  - `dump_parts.cjs [module…]` — xuất JSON (tên/toạ độ/**nửa** kích thước/ma trận xoay/màu) để vẽ QA.
+  - `render_map.py` / `render_buildings.py` — vẽ ảnh QA (cần Pillow): bản đồ thành phố có hình khối
+    thật của từng part, và mặt bằng + phối cảnh song song cho từng công trình.
   - `counter_check.cjs --solve` chạy lại: **14/14 quầy trống**, áp offset mới cho `E3_FOOD`
     `(1,5 · 61,0)`→(−445,5 · 119,0) nền 1,41 và `E4_MALL` `(2,0 · 65,0)`→(449,0 · 123,0) nền 1,29.
 - [ ] **Bước 17: VÒNG 7 — chưa giao** (thành phố đã đủ 10/10 ô; việc còn lại là chiều sâu gameplay,
