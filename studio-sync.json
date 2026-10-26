@@ -1,10 +1,10 @@
 {
-  "version": 32,
-  "hash": "2951fc7a9d6fff65",
+  "version": 33,
+  "hash": "cc08b2356fdc7d7a",
   "projectName": "RobloxStudio-connecting",
   "repo": "khungdienchinhhieu-cmd/RobloxStudio-connecting",
   "branch": "arena/b37b6115-robloxstudio-connecting",
-  "updatedAt": "2026-10-26T13:18:45.543Z",
+  "updatedAt": "2026-10-26T13:31:41.537Z",
   "files": [
     {
       "repoPath": "src/shared/Carryables.luau",
@@ -184,7 +184,7 @@
     {
       "repoPath": "src/client/init.client.luau",
       "className": "LocalScript",
-      "bytes": 2241
+      "bytes": 2542
     },
     {
       "repoPath": "src/client/MugClient.luau",
@@ -577,7 +577,7 @@
                   "children": {}
                 }
               },
-              "source": "--!strict\n\nlocal Players = game:GetService(\"Players\")\nlocal ReplicatedStorage = game:GetService(\"ReplicatedStorage\")\n\nlocal localPlayer = Players.LocalPlayer\nlocal remotes = ReplicatedStorage:WaitForChild(\"GtaRemotes\")\nlocal hudRemote = remotes:WaitForChild(\"HudAction\") :: RemoteEvent\nlocal weaponRemote = remotes:WaitForChild(\"WeaponFire\") :: RemoteEvent\nlocal weaponSync = remotes:WaitForChild(\"WeaponSync\") :: RemoteEvent\nlocal weaponReload = remotes:WaitForChild(\"WeaponReload\") :: RemoteEvent\n\nlocal GtaHud = require(script:WaitForChild(\"UI\"):WaitForChild(\"GtaHud\"))\nlocal VehiclePromptUI = require(script:WaitForChild(\"UI\"):WaitForChild(\"VehiclePromptUI\"))\nlocal LSCustomsUI = require(script:WaitForChild(\"UI\"):WaitForChild(\"LSCustomsUI\"))\nlocal WeaponClient = require(script:WaitForChild(\"WeaponClient\"))\nlocal GtaWeaponWheel = require(script:WaitForChild(\"UI\"):WaitForChild(\"GtaWeaponWheel\"))\nlocal NPCAnimator = require(script:WaitForChild(\"NPCAnimator\"))\nlocal CityCuller = require(script:WaitForChild(\"CityCuller\"))\nlocal CarryClient = require(script:WaitForChild(\"CarryClient\"))\nlocal MugClient = require(script:WaitForChild(\"MugClient\"))\n\nGtaHud.mount(localPlayer, hudRemote)\nVehiclePromptUI.mount(localPlayer)\nLSCustomsUI.mount(localPlayer)\nWeaponClient.mount(localPlayer, weaponRemote)\nGtaWeaponWheel.mount(localPlayer, weaponSync, weaponReload)\n\n-- Dáng đi / đứng / ngồi lái / bắn của NPC: xoay Motor6D ngay trên máy người chơi\nNPCAnimator.mount()\n\n-- CHỈ RENDER THỨ CÓ TRONG MÀN HÌNH: cất công trình ở xa / sau lưng camera khỏi Workspace\n-- (engine thôi render + thôi xử lý vật lý) -> hết khựng khi đi qua ranh giới ô đất.\nCityCuller.mount()\n\n-- CƠ CHẾ TAY (nhặt · tha · ném) + HUD \"ĐANG VÁC\"\nCarryClient.mount()\n\n-- CƯỚP VÍ (phím T) gần dân thường\nMugClient.mount(localPlayer)\n\n-- ⚠ VŨ KHÍ KHÔNG CÒN LÀ \"ITEM\" TRONG TÚI ĐỒ ROBLOX.\n-- Tắt hẳn giao diện Backpack (thanh item + phím 1..9 mặc định) — người chơi chỉ\n-- chọn súng bằng VÒNG CHỌN (giữ TAB) đúng chuẩn GTA V.\nlocal StarterGui = game:GetService(\"StarterGui\")\npcall(function()\n\tStarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, false)\nend)\n",
+              "source": "--!strict\n\nlocal Players = game:GetService(\"Players\")\nlocal ReplicatedStorage = game:GetService(\"ReplicatedStorage\")\n\nlocal localPlayer = Players.LocalPlayer\nlocal remotes = ReplicatedStorage:WaitForChild(\"GtaRemotes\")\nlocal hudRemote = remotes:WaitForChild(\"HudAction\") :: RemoteEvent\nlocal weaponRemote = remotes:WaitForChild(\"WeaponFire\") :: RemoteEvent\nlocal weaponSync = remotes:WaitForChild(\"WeaponSync\") :: RemoteEvent\nlocal weaponReload = remotes:WaitForChild(\"WeaponReload\") :: RemoteEvent\n\nlocal GtaHud = require(script:WaitForChild(\"UI\"):WaitForChild(\"GtaHud\"))\nlocal VehiclePromptUI = require(script:WaitForChild(\"UI\"):WaitForChild(\"VehiclePromptUI\"))\nlocal LSCustomsUI = require(script:WaitForChild(\"UI\"):WaitForChild(\"LSCustomsUI\"))\nlocal WeaponClient = require(script:WaitForChild(\"WeaponClient\"))\nlocal GtaWeaponWheel = require(script:WaitForChild(\"UI\"):WaitForChild(\"GtaWeaponWheel\"))\nlocal NPCAnimator = require(script:WaitForChild(\"NPCAnimator\"))\nlocal CityCuller = require(script:WaitForChild(\"CityCuller\"))\nlocal CarryClient = require(script:WaitForChild(\"CarryClient\"))\nlocal MugClient = require(script:WaitForChild(\"MugClient\"))\n\nGtaHud.mount(localPlayer, hudRemote)\nVehiclePromptUI.mount(localPlayer)\nLSCustomsUI.mount(localPlayer)\nWeaponClient.mount(localPlayer, weaponRemote)\nGtaWeaponWheel.mount(localPlayer, weaponSync, weaponReload)\n\n-- Dáng đi / đứng / ngồi lái / bắn của NPC: xoay Motor6D ngay trên máy người chơi\nNPCAnimator.mount()\n\n-- CHỈ RENDER THỨ CÓ TRONG MÀN HÌNH: cất công trình ở xa / sau lưng camera khỏi Workspace\n-- (engine thôi render + thôi xử lý vật lý) -> hết khựng khi đi qua ranh giới ô đất.\nCityCuller.mount()\n\n-- CƠ CHẾ TAY (nhặt · tha · ném) + HUD \"ĐANG VÁC\"\nCarryClient.mount()\n\n-- CƯỚP VÍ (phím T) gần dân thường\nMugClient.mount(localPlayer)\n\n-- ⚠ VŨ KHÍ KHÔNG CÒN LÀ \"ITEM\" TRONG TÚI ĐỒ ROBLOX.\n-- Tắt hẳn giao diện Backpack (thanh item + phím 1..9 mặc định) — người chơi chỉ\n-- chọn súng bằng VÒNG CHỌN (giữ TAB) đúng chuẩn GTA V.\nlocal StarterGui = game:GetService(\"StarterGui\")\npcall(function()\n\tStarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, false)\nend)\n\n-- BỎ BẢNG XẾP HẠNG: tắt PlayerList (phím TAB mặc định của Roblox mở bảng này).\n-- TAB giờ chỉ mở vòng chọn súng. leaderstats vẫn giữ dữ liệu tiền, chỉ không hiện.\npcall(function()\n\tStarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.PlayerList, false)\nend)\n",
               "repoPath": "src/client/init.client.luau"
             }
           }
