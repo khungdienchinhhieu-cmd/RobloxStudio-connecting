@@ -63,7 +63,7 @@ local ok, err = pcall(function()
 		OUT[#OUT + 1] = string.format("%s|%.2f,%.2f,%.2f|%.2f,%.2f,%.2f|%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f|%d,%d,%d",
 			p.Name or "?",
 			cf.P.X, cf.P.Y, cf.P.Z,
-			s.X, s.Y, s.Z,
+			s.X * 0.5, s.Y * 0.5, s.Z * 0.5,
 			R[1], R[2], R[3], R[4], R[5], R[6], R[7], R[8], R[9],
 			math.floor((col.R or 0.64) * 255), math.floor((col.G or 0.64) * 255), math.floor((col.B or 0.64) * 255))
 	end

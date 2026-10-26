@@ -227,7 +227,7 @@ Dự án tái hiện thế giới mở **Grand Theft Auto V (Los Santos)** trên
   - File: `BuildingServices.luau` (311 dòng) · `Carryables.luau` (129) · `ServiceManager.luau` (575) ·
     `CarryManager.luau` (439) · `CarryClient.luau` (200) · `bridge/services-demo.html` (10,6 KB).
 
-- [x] **Bước 16: QUÉT SẠCH THÀNH PHỐ — 6 công trình chi tiết** ✅ **6/6 · 10/10 ô đất có công trình**
+- [x] **Bước 16: QUÉT SẠCH THÀNH PHỐ — 6 công trình chi tiết** ✅ **6/6 · 10/10 ô đất có công trình (11 module)**
   - ✅ **`Plot_D1` — Luxury Autos** (agent `f3da0fbe`, nhánh `arena/f3da0fbe-…` @ `28349d7`) — **DUYỆT 9,1/10**.
     Đo lại độc lập bằng harness mới `tools/building_sim/`: **3 165 BasePart**, **99,59 % phá huỷ được**,
     0 khối nhỏ còn `CanCollide`, 0 `CanTouch`, 0 `CastShadow` sai, 0 `SurfaceGui` sai, 0 tên trùng,
@@ -246,11 +246,18 @@ Dự án tái hiện thế giới mở **Grand Theft Auto V (Los Santos)** trên
     | `Plot_E3` | **Little Seoul Diner** — quán ăn đêm Hàn Quốc 2 tầng, 12 bàn inox + bếp than, quầy bar gỗ 44 stud, bãi đỗ phía Tây | 2 502 | −530,9 · 1,15 · 14,8 → −367,7 · 39,4 · 128,0 | 0 | `E3_FOOD` |
     | `Plot_E4` | **Richman Galleria** — TTTM 3 tầng + sân thượng, giếng trời vòm kính 3 vòng, đài phun nước đá hoa cương, 18 gian hàng, 2 thang cuốn ×2 tầng, cửa xoay 3 lá | 2 868 | 366,0 · 1,15 · 7,8 → 526,0 · 61,9 · 124,0 | 0 | `E4_MALL` |
     | `Plot_D3` | **Vinewood Cinema** — rạp phim 2 phòng chiếu (9 hàng × 12 ghế, màn 40×18), marquee 64 stud, sân sao, bãi đỗ phía Đông | 1 388 | 146,0 · 1,15 · −197,0 → 313,0 · 46,2 · −64,0 | 0 | `D3_CINEMA` |
+    | `Plot_C2` | **Legion Square** — quảng trường công cộng: bãi thử xe nửa Bắc (vạch kẻ, đảo cây, kiosk điều hành, 3 xe thử), quảng trường đá có sân khấu + 4 cột cờ, công viên có đài phun nước 3 tầng, 4 bãi cỏ cắt tỉa, tượng đài 38 stud, 2 trụ cổng | 1 121 | −88,0 · 1,15 · −8,0 → 88,0 · 40,7 · 129,8 | 0 | `C2_TESTDRIVE` |
 
-    → **10/10 ô đất có công trình**, tổng **24 893 BasePart** ở 10 module. Mọi module: 100 % khối có
-    máu ẩn, 0 khối nhỏ còn va chạm, 0 `CanTouch`, 0 `CastShadow` sai, 0 `SurfaceGui` sai, 0 tên trùng,
-    AABB nằm trọn trong ô (kiểm **bằng tay** vì harness không tự chặn biên).
-    Ảnh QA mặt bằng + phối cảnh: [`agents/reviews/city-buildings-v27.png`](agents/reviews/city-buildings-v27.png).
+    → **10/10 ô đất có công trình (11 module — ô C3 chia Đông/Tây)**, tổng **26 014 BasePart**.
+    ⚠️ Ô `C2` **trước đó TRỐNG (0 part)** mà không ai thấy: `/api/services` vẫn báo `Plot_C2` "đã dựng"
+    vì nó khớp chuỗi `Plot_C2` ở bảng dịch vụ. **Chính ảnh QA bản đồ mới lộ ra lỗ hổng** — từ nay
+    đếm part theo module trong ảnh, không tin cờ `built` của API.
+    Mọi module: 100 % khối có máu ẩn, 0 khối nhỏ còn va chạm, 0 `CanTouch`, 0 `CastShadow` sai,
+    0 `SurfaceGui` sai, 0 tên trùng, **0 cặp đè nhau**, AABB nằm trọn trong ô (kiểm **bằng tay** vì
+    harness không tự chặn biên).
+    Ảnh QA: [`agents/reviews/city-map-v27.png`](agents/reviews/city-map-v27.png) (bản đồ 10 ô có hình
+    khối thật) · [`agents/reviews/city-buildings-v27.png`](agents/reviews/city-buildings-v27.png)
+    (mặt bằng + phối cảnh 5 công trình dựng trong lượt).
 - [x] **Bước 16.1: CÔNG CỤ ĐO CÔNG TRÌNH + GIẢI CHỖ ĐẶT QUẦY (`tools/building_sim/`)** ✅
   - `run.cjs <module.luau>` — dựng **module thật** trong Luau VM (mock Roblox API có **ma trận xoay
     3×3 thật**, `IsA` đúng cây kế thừa, `GetDescendants` đệ quy) rồi in: số BasePart · % khối phá huỷ ·
