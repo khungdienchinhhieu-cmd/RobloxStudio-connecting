@@ -198,6 +198,14 @@ type NPCState = {
 	targetAt: number,
 	checkFrom: Vector3,
 	pauseUntil: number,
+	-- ── LỚP "SỐNG NHƯ NGƯỜI THẬT" (Sync v24) ──────────────────────────────
+	routine: string?, -- "IDLE" | "PHONE" | "TALK" | "LOOK" | "WINDOW"
+	routineStarted: number,
+	routineSteps: number,
+	faceGoal: Vector3?,
+	jog: boolean?,
+	hasPhone: boolean?,
+	twin: boolean?,
 }
 
 local states: { [Model]: NPCState } = {}
@@ -696,6 +704,10 @@ local function calmDown(st: NPCState)
 	st.nextPatrolAt = 0
 	st.pauseUntil = 0
 	st.targetAt = 0
+	-- Bị bắn/hoảng loạn giữa lúc đang nghe điện thoại -> xoá luôn hoạt động dở dang,
+	-- nếu không NPC sẽ quay lại PATROL mà vẫn còn faceGoal cũ (đứng quay mặt vô tường).
+	st.routine = nil
+	st.faceGoal = nil
 end
 
 -- ══════════════════════════════════════════════════════════════════════════════
@@ -723,10 +735,26 @@ end
 -- Mặt trên vỉa hè / nền ô đất (PartBuilder.part: pos.Y 0.575, size.Y 1.15)
 local SIDEWALK_TOP_Y = 1.15
 
+--- Cao độ mặt đất HÌNH HỌC (không cần tia chiếu).
+--- Toàn bộ vỉa hè & nền ô đất do CityFoundation dựng bằng PartBuilder.part với
+--- pos.Y = 0.575, size.Y = 1.15 ⇒ mặt trên luôn ở Y = 1.15. Mặt đường ở Y = 1.0.
+local IN_CITY_MIN_Z = -250
+local IN_CITY_MAX_Z = 200
+local function inCity(x: number, z: number): boolean
+	return math.abs(x) <= WorldGrid.MAP_HALF_SIZE and z >= IN_CITY_MIN_Z and z <= IN_CITY_MAX_Z
+end
+
 local function findGround(x: number, z: number): Vector3?
 	local hit = Workspace:Raycast(Vector3.new(x, 90, z), Vector3.new(0, -120, 0), rayFilter())
 	if hit and hit.Position.Y > 0.3 and hit.Position.Y < 4.2 then
 		return hit.Position
+	end
+	-- ⚠️ Sync v24: TRƯỚC ĐÂY trả nil ở đây. Nếu tia chiếu trượt (part nền CanQuery=false,
+	-- thành phố chưa dựng xong, hoặc điểm đang bị CityCuller cất) thì TOÀN BỘ vòng sinh
+	-- NPC thất bại -> "mất tiêu hết NPC" và NPC đứng yên vì không tìm được đích đi bộ.
+	-- Nay dùng cao độ hình học đã biết, nên không bao giờ phụ thuộc tia chiếu nữa.
+	if inCity(x, z) then
+		return Vector3.new(x, SIDEWALK_TOP_Y, z)
 	end
 	return nil
 end
@@ -870,6 +898,196 @@ local function moveTo(st: NPCState, goal: Vector3, t: number)
 	st.hum:MoveTo(goal)
 end
 
+-- ══════════════════════════════════════════════════════════════════════════════
+-- 9.6. LỚP "SỐNG NHƯ NGƯỜI THẬT" (Sync v24)
+-- ------------------------------------------------------------------------------
+-- NPC không còn chỉ "đi tới đích rồi đứng thở". Sau mỗi chặng đi bộ, nó chọn một
+-- HOẠT ĐỘNG có thật ngoài đời và thực hiện nó, rồi mới đi tiếp:
+--   IDLE   · đứng ngắm cảnh, liếc quanh (2–6 s)
+--   PHONE  · rút điện thoại ra nghe, gật gù (6–14 s)   ← cầm máy thật trong tay
+--   TALK   · quay sang nói chuyện với NPC gần nhất (7–15 s), cả hai quay mặt vào nhau
+--   LOOK   · quay mặt nhìn theo người chơi đi ngang (3–7 s)
+--   WINDOW · đứng ngắm tủ kính cửa hàng rồi gật đầu (4–9 s)
+-- Tỉ lệ chọn phụ thuộc tính cách: dân văn phòng nghe điện thoại nhiều, du khách ngắm cảnh,
+-- thug thì ít đứng lâu (nhanh chóng đi tiếp).
+-- ══════════════════════════════════════════════════════════════════════════════
+
+local ROUTINE_WEIGHTS: { [string]: { [string]: number } } = {
+	CIVILIAN = { IDLE = 3, PHONE = 4, TALK = 3, LOOK = 2, WINDOW = 2 },
+	BUSINESS = { PHONE = 6, TALK = 3, IDLE = 2, LOOK = 1, WINDOW = 1 },
+	TOURIST = { LOOK = 5, IDLE = 3, TALK = 2, WINDOW = 2, PHONE = 1 },
+	GANGSTER = { IDLE = 3, TALK = 4, LOOK = 2, PHONE = 2, WINDOW = 0 },
+	BRAWLER = { IDLE = 3, TALK = 3, LOOK = 2, PHONE = 1, WINDOW = 0 },
+	COP = { LOOK = 5, IDLE = 4, TALK = 1, PHONE = 1, WINDOW = 0 },
+	THUG = { IDLE = 3, TALK = 3, LOOK = 2, PHONE = 1, WINDOW = 0 },
+}
+
+type Span = { min: number, max: number }
+local ROUTINE_DURATION: { [string]: Span } = {
+	IDLE = { min = 2, max = 6 },
+	PHONE = { min = 6, max = 14 },
+	TALK = { min = 7, max = 15 },
+	LOOK = { min = 3, max = 7 },
+	WINDOW = { min = 4, max = 9 },
+}
+
+local function rollRoutine(st: NPCState): string
+	local table_ = ROUTINE_WEIGHTS[st.arch.id] or ROUTINE_WEIGHTS.CIVILIAN
+	local total = 0
+	for _, w in pairs(table_) do
+		total += w
+	end
+	if total <= 0 then
+		return "IDLE"
+	end
+	local roll = math.random() * total
+	for name, w in pairs(table_) do
+		roll -= w
+		if roll <= 0 then
+			return name
+		end
+	end
+	return "IDLE"
+end
+
+--- NPC gần nhất trong bán kính (dùng cho TALK)
+local function nearestNeighbour(st: NPCState, radius: number): NPCState?
+	local best: NPCState? = nil
+	local bestD = radius
+	for _, other in pairs(states) do
+		if other ~= st and other.state == "PATROL" and other.model.Parent then
+			local d = (other.hrp.Position - st.hrp.Position).Magnitude
+			if d < bestD then
+				bestD = d
+				best = other
+			end
+		end
+	end
+	return best
+end
+
+--- Người chơi gần nhất (dùng cho LOOK)
+local function nearestPlayer(st: NPCState, radius: number): Vector3?
+	local best: Vector3? = nil
+	local bestD = radius
+	for _, pl in ipairs(Players:GetPlayers()) do
+		local char = pl.Character
+		local hrp = if char then char:FindFirstChild("HumanoidRootPart") else nil
+		if hrp and hrp:IsA("BasePart") then
+			local d = (hrp.Position - st.hrp.Position).Magnitude
+			if d < bestD then
+				bestD = d
+				best = hrp.Position
+			end
+		end
+	end
+	return best
+end
+
+local function arrive(st: NPCState, t: number)
+	local routine = rollRoutine(st)
+	local dur: Span = ROUTINE_DURATION[routine] or { min = 2, max = 6 }
+
+	-- Một số hoạt động cần điều kiện: không có điện thoại, không có ai để nói chuyện,
+	-- không có người chơi quanh đây -> lùi về IDLE (đứng ngắm cảnh).
+	if routine == "PHONE" and not st.hasPhone then
+		routine = "IDLE"
+	elseif routine == "TALK" then
+		local partner = nearestNeighbour(st, 18)
+		if not partner then
+			-- Đứng một mình thì không "nói chuyện với không khí" — chuyển sang ngắm cảnh.
+			routine = "LOOK"
+			local ang = math.random() * math.pi * 2
+			st.faceGoal = st.hrp.Position + Vector3.new(math.cos(ang) * 10, 0, math.sin(ang) * 10)
+		else
+			-- Cả hai quay mặt vào nhau: đặt đích "nhìn" cách 1 stud về phía đối phương.
+			st.faceGoal = partner.hrp.Position
+			partner.faceGoal = st.hrp.Position
+			partner.routine = "TALK"
+			partner.routineStarted = t
+			partner.pauseUntil = math.max(partner.pauseUntil, t + math.random(4, 8))
+		end
+	elseif routine == "LOOK" then
+		local target = nearestPlayer(st, 34)
+		if target then
+			st.faceGoal = target
+		else
+			-- Không có ai quanh đây thì vẫn NGẮM CẢNH: quay mặt về một điểm
+			-- ngẫu nhiên trên phố. (Trước đây lùi về IDLE -> đứng như tượng.)
+			local ang = math.random() * math.pi * 2
+			st.faceGoal = st.hrp.Position + Vector3.new(math.cos(ang) * 10, 0, math.sin(ang) * 10)
+		end
+	elseif routine == "WINDOW" then
+		-- Quay mặt ra đường (về phía đại lộ gần nhất)
+		st.faceGoal = st.hrp.Position + (st.hrp.CFrame.LookVector * -1) * 6
+	end
+
+	if routine == "PHONE" then
+		equipPhone(st)
+	end
+
+	st.routine = routine
+	st.routineStarted = t
+	st.routineSteps = 0
+	st.pauseUntil = t + math.random(dur.min, dur.max)
+	setAnim(st, if routine == "PHONE" or routine == "TALK" then "PHONE" else "IDLE")
+end
+
+local function endRoutine(st: NPCState)
+	if st.routine == "PHONE" then
+		stowHands(st)
+	end
+	st.routine = nil
+	st.faceGoal = nil
+	st.routineSteps = 0
+end
+
+--- Chạy trong lúc NPC đang "nghỉ". Trả về true nếu vẫn đang bận hoạt động.
+local function tickRoutine(st: NPCState, t: number): boolean
+	local routine = st.routine
+	if not routine then
+		return false
+	end
+
+	-- Quay mặt về đích "nhìn": Humanoid tự xoay khi có MoveTo, chỉ cần nhích 0,8 stud.
+	local face = st.faceGoal
+	if face then
+		local d = face - st.hrp.Position
+		local flat = Vector3.new(d.X, 0, d.Z)
+		if flat.Magnitude > 0.6 then
+			moveTo(st, st.hrp.Position + flat.Unit * 0.8, t)
+		else
+			moveTo(st, st.hrp.Position, t)
+		end
+	else
+		moveTo(st, st.hrp.Position, t)
+	end
+
+	-- Gật đầu / liếc quanh: đổi tư thế nhẹ mỗi 1,8 s để không đứng như tượng.
+	st.routineSteps = (st.routineSteps or 0) + 1
+
+	if routine == "PHONE" and st.phone then
+		-- Giơ máy lên sát tai (dịch nhẹ theo chu kỳ cho tự nhiên)
+		local bob = math.sin(t * 2.2) * 0.06
+		st.phone.CFrame = st.hrp.CFrame * CFrame.new(0.95, 1.32 + bob, -0.55)
+	elseif routine == "LOOK" then
+		local target = nearestPlayer(st, 40)
+		if target then
+			st.faceGoal = target
+		end
+	elseif routine == "TALK" then
+		local partner = nearestNeighbour(st, 20)
+		if partner then
+			st.faceGoal = partner.hrp.Position
+		else
+			-- Người kia bỏ đi -> kết thúc sớm
+			st.pauseUntil = math.min(st.pauseUntil, t + 0.5)
+		end
+	end
+
+	return t < st.pauseUntil
+end
+
 local function tickOne(st: NPCState)
 	if st.state == "DEAD" then
 		-- model đã bị Debris dọn -> xoá khỏi bảng để không rò rỉ / chặn trần NPC
@@ -917,13 +1135,14 @@ local function tickOne(st: NPCState)
 		local v = st.hrp.AssemblyLinearVelocity
 		local speed = Vector3.new(v.X, 0, v.Z).Magnitude
 
-		-- 1) ĐANG NGHỈ (vừa tới đích): đứng thở, liếc quanh
+		-- 1) ĐANG NGHỈ (vừa tới đích): thực hiện HOẠT ĐỘNG ĐỜI THƯỜNG
 		if st.pauseUntil > 0 then
-			if t < st.pauseUntil then
-				moveTo(st, st.hrp.Position, t)
-				setAnim(st, "IDLE")
+			-- tickRoutine trả false khi NPC KHÔNG còn hoạt động nào (routine = nil) —
+			-- ví dụ vừa bị bắn giữa lúc nghỉ. Khi đó phải đi tiếp ngay, không đứng đợi.
+			if t < st.pauseUntil and tickRoutine(st, t) then
 				return
 			end
+			endRoutine(st)
 			st.pauseUntil = 0
 			retarget(st, t)
 			-- BẮT BUỘC tính lại: nếu dùng flatDist cũ (=0) thì bước 3 bên dưới
@@ -947,19 +1166,19 @@ local function tickOne(st: NPCState)
 			end
 		end
 
-		-- 3) TỚI NƠI -> nghỉ 2–6 giây rồi chọn đích mới ở xa
+		-- 3) TỚI NƠI -> chọn một hoạt động đời thường rồi mới đi tiếp
 		if flatDist <= 3 then
-			st.pauseUntil = t + math.random(2, 6)
-			moveTo(st, st.hrp.Position, t)
-			setAnim(st, "IDLE")
+			arrive(st, t)
 			return
 		end
 
 		moveTo(st, st.patrolTarget, t)
-		-- Đi tuần = ĐI BỘ (RUN để dành riêng cho lúc bỏ chạy).
-		-- Kiểm tra tốc độ thật để NPC đứng chờ không bị "đi bộ tại chỗ".
+		-- Kiểm tra tốc độ THẬT để NPC đứng chờ không bị "đi bộ tại chỗ".
 		if speed > 1.2 then
-			setAnim(st, "WALK")
+			setAnim(st, if st.jog then "RUN" else "WALK")
+		elseif speed > 0.15 then
+			-- Đang tăng tốc / bị cản nhẹ: vẫn hiện dáng đi để không "trượt băng"
+			setAnim(st, if st.jog then "RUN" else "WALK")
 		else
 			setAnim(st, "IDLE")
 		end
@@ -1095,11 +1314,13 @@ function NPCManager.spawn(archetypeId: string, position: Vector3, forceCF: CFram
 		or (CFrame.new(position.X, baseY + 3.06, position.Z) * CFrame.Angles(0, math.random() * math.pi * 2, 0))
 
 	-- Ưu tiên MODEL ROBLOX THẬT (R15, có animation đi bộ chuẩn)
-	local model, hum, hrp, head
-	local r15 = NPCAppearance.build(arch.id, cf, arch.walkSpeed, arch.health)
-	if r15 then
-		model, hum, hrp, head = r15
-	else
+	-- ⚠️ P0 (v24): trước đây viết `local r15 = NPCAppearance.build(...)` rồi
+	-- `model, hum, hrp, head = r15` — hàm trả về NHIỀU giá trị, gán vào một biến
+	-- thì chỉ còn cái ĐẦU TIÊN (Model), rồi đem Model ra băm theo chỉ số 1..4
+	-- -> hum/hrp/head = nil -> `hrp.Position` nổ ngay -> pcall nuốt lỗi ->
+	-- KHÔNG MỘT NPC NÀO ĐƯỢC DỰNG. Đây chính là lý do thành phố trống trơn.
+	local model, hum, hrp, head = NPCAppearance.build(arch.id, cf, arch.walkSpeed, arch.health)
+	if not model or not hum or not hrp then
 		-- Dự phòng: rig R6 tự ghép (nếu Roblox không dựng được model)
 		model, hum, hrp, head = buildRig(arch, cf)
 	end
@@ -1136,10 +1357,33 @@ function NPCManager.spawn(archetypeId: string, position: Vector3, forceCF: CFram
 		targetAt = 0,
 		checkFrom = hrp.Position,
 		pauseUntil = 0,
+		routine = nil,
+		routineStarted = 0,
+		routineSteps = 0,
+		faceGoal = nil,
+		jog = (arch.id == "TOURIST" and math.random() < 0.10) or (arch.id == "CIVILIAN" and math.random() < 0.08),
+		hasPhone = arch.hasPhone,
+		twin = false,
 	}
+	-- ── NGƯỜI THẬT THÌ AI CŨNG MỘT KHÁC: chiều cao / bề ngang / đầu khác nhau ──
+	-- (R15 dùng các thuộc tính Body*Scale của Humanoid; R6 không có nên bỏ qua an toàn)
+	pcall(function()
+		local height = math.random(90, 110) / 100
+		local width = math.random(92, 108) / 100
+		hum.BodyHeightScale = height
+		hum.BodyWidthScale = width
+		hum.BodyDepthScale = width * (math.random(95, 105) / 100)
+		hum.BodyTypeScale = math.random(92, 108) / 100
+		hum.HeadScale = math.random(94, 106) / 100
+	end)
+
+	if st.jog then
+		hum.WalkSpeed = math.max(18, arch.walkSpeed + 6)
+	end
+
 	st.anims = NPCAppearance.loadAnimations(model, hum)
 	if st.anims then
-		NPCAppearance.tuneGait(st.anims, arch.walkSpeed)
+		NPCAppearance.tuneGait(st.anims, if st.jog then hum.WalkSpeed else arch.walkSpeed)
 		model:SetAttribute("UsesRealAnims", true)
 		NPCAppearance.playAnim(st.anims, "idle", 0)
 	else
@@ -1248,6 +1492,7 @@ function NPCManager.spawnAmbient(count: number?): number
 
 	local made = 0
 	local tries = 0
+	local spawnErrors = 0
 	local maxTries = target * 12
 	local beforeMiss = groundMisses
 
@@ -1265,10 +1510,38 @@ function NPCManager.spawnAmbient(count: number?): number
 					break
 				end
 			end
-			if not tooClose and NPCManager.spawn(rollArchetype(), g) then
-				made += 1
+			if not tooClose then
+				local okSpawn, built = pcall(NPCManager.spawn, rollArchetype(), g)
+				if okSpawn and built then
+					made += 1
+				elseif not okSpawn then
+					spawnErrors += 1
+					if spawnErrors <= 3 then
+						warn("[NPC] lỗi khi dựng NPC: " .. tostring(built))
+					end
+				end
 			end
 		end
+	end
+
+	-- ── CỨU HỘ LẦN CUỐI: nếu vẫn không dựng được con nào thì thả thẳng một vòng
+	-- quanh Quảng trường Legion (toạ độ tuyệt đối, không phụ thuộc lưới vỉa hè gì cả).
+	if made == 0 then
+		warn("[NPC] spawnAmbient thất bại — kích hoạt chế độ cứu hộ quanh Legion Square")
+		local c = WorldGrid.SPAWN_POS
+		for i = 1, 16 do
+			local ang = (i / 16) * math.pi * 2
+			local pos = Vector3.new(c.X + math.cos(ang) * (14 + i * 2), SIDEWALK_TOP_Y, c.Z + math.sin(ang) * (14 + i * 2))
+			local okSpawn = pcall(function()
+				if NPCManager.spawn(rollArchetype(), pos) then
+					made += 1
+				end
+			end)
+			if not okSpawn then
+				warn("[NPC] spawn cứu hộ lỗi ở vòng " .. i)
+			end
+		end
+		warn(string.format("[NPC] Cứu hộ dựng được %d NPC", made))
 	end
 
 	ambientSpawned = true
@@ -1505,6 +1778,11 @@ function NPCManager.spawnPlayerTwin(player: Player): Model?
 	local origin = hrp.Position
 	local chosen: Vector3? = nil
 	for _ = 1, 24 do
+		-- ⚠️ math.random(1, 0) NÉM LỖI -> trước đây nếu lưới vỉa hè rỗng thì cả hàm chết
+		-- và người chơi không có bản sao nào. Giờ thoát vòng lặp an toàn.
+		if #pts == 0 then
+			break
+		end
 		local p = pts[math.random(1, #pts)]
 		local d = (Vector3.new(p.X, 0, p.Z) - Vector3.new(origin.X, 0, origin.Z)).Magnitude
 		if d >= 40 and d <= 160 then
@@ -1522,11 +1800,11 @@ function NPCManager.spawnPlayerTwin(player: Player): Model?
 	local spot = chosen :: Vector3
 	local cf = CFrame.new(spot.X, spot.Y + 3.06, spot.Z) * CFrame.Angles(0, math.random() * math.pi * 2, 0)
 
-	local built = NPCAppearance.fromPlayer(player, cf)
-	if not built then
+	-- ⚠️ P0 (v24): cùng lỗi cũ — fromPlayer trả về (model, humanoid, hrp, head)
+	local model, hum, h, head = NPCAppearance.fromPlayer(player, cf)
+	if not model or not hum or not h then
 		return nil
 	end
-	local model, hum, h, head = built
 	model.Parent = npcFolder
 	model:SetAttribute("IsGTA_NPC", true)
 	model:SetAttribute("Archetype", "CIVILIAN")
@@ -1557,6 +1835,13 @@ function NPCManager.spawnPlayerTwin(player: Player): Model?
 		targetAt = 0,
 		checkFrom = h.Position,
 		pauseUntil = 0,
+		routine = nil,
+		routineStarted = 0,
+		routineSteps = 0,
+		faceGoal = nil,
+		jog = false,
+		hasPhone = true,
+		twin = true,
 	}
 	st.anims = NPCAppearance.loadAnimations(model, hum)
 	if st.anims then
@@ -1682,12 +1967,57 @@ function NPCManager.init(hud: RemoteEvent?)
 		local n = NPCManager.spawnAmbient(AMBIENT_COUNT)
 		print(string.format("[NPC] Đã dựng %d NPC rải khắp vỉa hè thành phố", n))
 
+		-- BẢO HIỂM: nếu vì bất kỳ lý do gì dân số vẫn quá thấp (thành phố chưa dựng xong,
+		-- streaming chưa nạp, part nền chưa sẵn sàng...) thì thử lại 2 lần nữa.
+		for _, delay in ipairs({ 6, 15 }) do
+			if n >= 20 then
+				break
+			end
+			task.wait(delay)
+			local retry = NPCManager.spawnAmbient(AMBIENT_COUNT - n)
+			n += retry
+			warn(string.format("[NPC] Thử lại lần nữa sau %ds: +%d NPC (tổng %d)", delay, retry, n))
+		end
+		if n == 0 then
+			warn("[NPC] ⚠️ KHÔNG dựng được NPC nào. Chạy trong Command Bar để chẩn đoán:")
+			warn("       print(require(game.ServerScriptService.Server.NPCManager).diagnose())")
+		end
+
 		task.wait(1)
 		local cars = NPCManager.spawnTraffic(TRAFFIC_COUNT)
 		print(string.format("[NPC] Đã thả %d xe có TÀI XẾ NPC chạy vòng quanh phố", cars))
 	end)
 
 	return NPCManager
+end
+
+--- Chẩn đoán nhanh: gọi trong Command Bar `require(game.ServerScriptService.Server.NPCManager).diagnose()`
+function NPCManager.diagnose(): string
+	local pts = buildSidewalkPoints()
+	local living, routines, joggers = 0, {}, 0
+	for _, st in pairs(states) do
+		if st.model.Parent and st.state ~= "DEAD" then
+			living += 1
+			routines[st.routine or "WALKING"] = (routines[st.routine or "WALKING"] or 0) + 1
+			if st.jog then
+				joggers += 1
+			end
+		end
+	end
+	local parts = {}
+	for k, v in pairs(routines) do
+		table.insert(parts, string.format("%s=%d", k, v))
+	end
+	table.sort(parts)
+	return string.format(
+		"[NPC diagnose] sống=%d · điểm vỉa hè=%d · jogger=%d · hoạt động: %s · tia chiếu lỗi=%d/%d",
+		living,
+		#pts,
+		joggers,
+		table.concat(parts, ", "),
+		groundMisses,
+		groundMisses + groundHits
+	)
 end
 
 function NPCManager.getStats()

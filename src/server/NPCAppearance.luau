@@ -359,14 +359,14 @@ function NPCAppearance.fromPlayer(player: Player, cf: CFrame)
 	model:PivotTo(cf)
 
 	-- skipPaint = true: giữ nguyên 100% ngoại hình của người chơi
-	local result = finish(model, "CIVILIAN", 14, 100, true)
-	if not result then
+	local outModel, outHum, outHrp, outHead = finish(model, "CIVILIAN", 14, 100, true)
+	if not outModel then
 		model:Destroy()
 		return nil
 	end
-	model:SetAttribute("IsPlayerTwin", true)
-	model:SetAttribute("TwinOf", player.Name)
-	return result
+	outModel:SetAttribute("IsPlayerTwin", true)
+	outModel:SetAttribute("TwinOf", player.Name)
+	return outModel, outHum, outHrp, outHead
 end
 
 -- ══════════════════════════════════════════════════════════════════════════════

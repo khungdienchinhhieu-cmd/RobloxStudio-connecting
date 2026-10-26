@@ -156,7 +156,41 @@ Dự án tái hiện thế giới mở **Grand Theft Auto V (Los Santos)** trên
   - **Bộ poll nghiệm thu tự động** — `bridge/agent-watch.mjs`: poll bản tin `agents/notes/`,
     nhánh `origin/arena/*`, rồi tự biên dịch module, đo quy mô (KB / vòng lặp / máu ẩn),
     chặn sửa file lõi và chặn commit `studio-sync.json`.
-- [ ] **Bước 14: QUÉT SẠCH THÀNH PHỐ — 3 Agent phụ × 2 vòng = 6 công trình chi tiết**
+- [x] **Bước 14: NPC NHƯ NGƯỜI THẬT (`Sync v24`)** ✅
+  - **★ TÌM RA ĐÚNG NGUYÊN NHÂN "THÀNH PHỐ TRỐNG, CHỈ CÓ 1 NPC MANG SKIN CỦA CHÍNH MÌNH".**
+    Trong `NPCManager.spawn` có dòng:
+    `local r15 = NPCAppearance.build(...)` rồi `model, hum, hrp, head = r15`.
+    Hàm `build()` trả về **4 giá trị** nhưng gán vào **1 biến** thì chỉ giữ giá trị đầu (Model);
+    đem Model đi băm theo chỉ số `1..4` → `hum/hrp/head = nil` → `hrp.Position` nổ ngay dòng kế tiếp
+    → `pcall` trong `spawnAmbient` nuốt lỗi → **0/84 NPC được dựng**, im lặng hoàn toàn.
+    Đúng một "NPC" người chơi nhìn thấy là **bản sao của chính họ** (`spawnPlayerTwin`), và đường
+    này cũng dính y hệt lỗi (`local built = NPCAppearance.fromPlayer(...)`).
+    → Sửa gọn: **nhận đủ 4 giá trị trả về** ở cả `NPCManager.spawn`, `NPCManager.spawnPlayerTwin`
+    và `NPCAppearance.fromPlayer`. Từ đây mới kiểm chứng được mọi thứ khác.
+  - **Harness chạy thật `NPCManager.luau` ngoài Studio** (`tools/npc_sim/`): mock `Instance/CFrame/
+    Vector3/Humanoid/Raycast` + scheduler coroutine + **đồng hồ mô phỏng**. Kết quả **60 giây**:
+    **93 NPC sống** (84 đi bộ + 1 bản sao + 8 tài xế) · **85/93 NPC đi > 8 stud** · **0 lỗi, 0 cảnh báo**.
+  - **Hoạt động đời thường (section 9.6 trong `NPCManager.luau`):** tới đích thì **không đứng ngơ** mà
+    bốc một hoạt động theo trọng số riêng của từng loại người —
+    📞 **PHONE** (rút điện thoại thật khỏi túi, hàn vào `RightHand`, gật gù) · 💬 **TALK** (tìm NPC
+    khác trong 18 stud, **cả hai quay mặt vào nhau**) · 👀 **LOOK** (dõi theo người chơi trong 34–40
+    stud; không có ai thì ngó quanh phố) · 🛍️ **WINDOW** (đứng ngắm hàng, quay ra mặt đường) ·
+    🧍 **IDLE**. Thời lượng 2–6 / 6–14 / 7–15 / 3–7 / 4–9 giây. Doanh nhân nghe điện thoại nhiều
+    nhất, du khách ngắm cảnh nhiều nhất, đầu gấu/tay bo **không bao giờ** ngắm hàng.
+  - **Người thật thì ai cũng một khác:** `BodyHeightScale 0,90–1,10` · `BodyWidthScale 0,92–1,08`
+    · `BodyDepthScale` · `BodyTypeScale` · `HeadScale` ngẫu nhiên từng NPC. Thêm **jogger**
+    (du khách 10 %, dân thường 8 %) chạy bộ `WalkSpeed ≥ 18` bằng animation `RUN`.
+  - **Không bao giờ trống thành phố nữa:** `findGround` có **phương án hình học** (không phụ thuộc
+    raycast: trong thành phố luôn trả `Y = 1.15`), mỗi NPC dựng trong `pcall` có đếm lỗi, **vòng cứu
+    hộ 16 NPC** quanh Legion Square nếu vẫn ra 0, `init` **thử lại sau 6 s và 15 s** khi dân số < 20,
+    và `NPCManager.diagnose()` in ra: số NPC sống · điểm vỉa hè · số jogger · **biểu đồ hoạt động**
+    · tỉ lệ raycast trượt.
+  - **Demo browser `/city`** mô phỏng đúng luật mới: mỗi NPC có chiều cao riêng, jogger chạy nhanh,
+    vòng màu + emoji cho hoạt động đang làm, bảng đếm riêng 📞/💬/👀/🛍️/🧍.
+  - **Tài liệu:** [`docs/NPC_BEHAVIOUR.md`](docs/NPC_BEHAVIOUR.md) (thiết kế + toàn bộ thông số) ·
+    harness chạy lại bất cứ lúc nào: `node tools/npc_sim/run.cjs` → in `✅ PASS` khi thành phố có
+    NPC sống, đi lại, làm việc và **0 cảnh báo**.
+- [ ] **Bước 15: QUÉT SẠCH THÀNH PHỐ — 3 Agent phụ × 2 vòng = 6 công trình chi tiết**
   (prompt: [`agents/WORKER_PROMPT_V6_CITY_SWEEP_3AGENTS.md`](agents/WORKER_PROMPT_V6_CITY_SWEEP_3AGENTS.md))
   - Agent A: `Plot_D1` Showroom Luxury Autos → `Plot_E3` Quán nướng Seoul Garden
   - Agent B: `Plot_D3` Rạp Vinewood Cinema → `Plot_E4` TTTM Richman Galleria

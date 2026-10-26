@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Los Santos — Bản đồ mở rộng + NPC Roblox thật (Sync v21)</title>
+<title>Los Santos — NPC như người thật (Sync v24)</title>
 <style>
   :root {
     --bg: #06080b;
@@ -83,8 +83,8 @@
 <body>
 <header>
   <h1>Los Santos — mô phỏng thành phố sống động</h1>
-  <span class="pill">SYNC v21</span>
-  <span class="sub">1 160 stud (348 m) · 1:1 ngoài đời (1 m = 3,33 stud) · 267 điểm vỉa hè · 84 NPC R15 · 8 xe · 9 đại lộ</span>
+  <span class="pill">SYNC v24</span>
+  <span class="sub">1 160 stud (348 m) · 1:1 · 267 điểm vỉa hè · 84 NPC R15 + 8 tài xế · 5 hoạt động đời thường (điện thoại · nói chuyện · ngắm cảnh · ngắm hàng · nghỉ)</span>
 </header>
 
 <main>
@@ -92,9 +92,14 @@
   <aside>
     <div class="card">
       <h2>Đang chạy</h2>
-      <div class="row"><span>NPC đi bộ</span><b id="sNpc">0</b></div>
+      <div class="row"><span>NPC trong thành phố</span><b id="sNpc">0</b></div>
       <div class="row"><span>Xe có tài xế</span><b id="sCar">0</b></div>
-      <div class="row"><span>Đang nghỉ chân</span><b id="sIdle">0</b></div>
+      <div class="row"><span>Đang đi / chạy bộ</span><b id="sWalk">0</b></div>
+      <div class="row"><span>📞 Nghe điện thoại</span><b id="sPhone">0</b></div>
+      <div class="row"><span>💬 Nói chuyện</span><b id="sTalk">0</b></div>
+      <div class="row"><span>👀 Ngắm cảnh</span><b id="sLook">0</b></div>
+      <div class="row"><span>🛍️ Ngắm hàng</span><b id="sWindow">0</b></div>
+      <div class="row"><span>🧍 Chỉ đứng nghỉ</span><b id="sIdle">0</b></div>
       <div class="row"><span>Đổi đích / phút</span><b id="sRt">0</b></div>
       <div class="row"><span>Quãng đường TB</span><b id="sDist">0</b></div>
     </div>
@@ -127,6 +132,7 @@
         Bấm <b style="color:var(--text)">Play</b> rồi xem <b style="color:var(--text)">Output</b>:
         <div style="margin-top:6px"><code>[NPC] Đã dựng … NPC rải khắp vỉa hè thành phố</code></div>
         <div style="margin-top:4px"><code>[NPC] Đã thả … xe có TÀI XẾ NPC chạy vòng quanh phố</code></div>
+        <div style="margin-top:4px"><code>[NPC diagnose] sống=… · hoạt động: WALKING=…, PHONE=…</code></div>
       </div>
     </div>
   </aside>
@@ -227,6 +233,44 @@
     { id: "BRAWLER", upTo: 1.00, color: "#c58af9" }
   ];
 
+  // ── Bảng hoạt động đời thường — y hệt ROUTINE_WEIGHTS trong NPCManager.luau ──
+  var ROUTINE_WEIGHTS = {
+    CIVILIAN: { IDLE: 3, PHONE: 4, TALK: 3, LOOK: 2, WINDOW: 2 },
+    BUSINESS: { PHONE: 6, TALK: 3, IDLE: 2, LOOK: 1, WINDOW: 1 },
+    TOURIST: { LOOK: 5, IDLE: 3, TALK: 2, WINDOW: 2, PHONE: 1 },
+    GANGSTER: { IDLE: 3, TALK: 4, LOOK: 2, PHONE: 2, WINDOW: 0 },
+    BRAWLER: { IDLE: 3, TALK: 3, LOOK: 2, PHONE: 1, WINDOW: 0 },
+    COP: { LOOK: 5, IDLE: 4, TALK: 1, PHONE: 1, WINDOW: 0 }
+  };
+  var ROUTINE_DURATION = {
+    IDLE: [2, 6], PHONE: [6, 14], TALK: [7, 15], LOOK: [3, 7], WINDOW: [4, 9]
+  };
+  var ROUTINE_STYLE = {
+    IDLE:   { ring: "rgba(160,170,185,.55)", label: "" },
+    PHONE:  { ring: "rgba(86,196,255,.95)",  label: "📞" },
+    TALK:   { ring: "rgba(255,196,90,.95)",  label: "💬" },
+    LOOK:   { ring: "rgba(190,140,255,.95)", label: "👀" },
+    WINDOW: { ring: "rgba(120,220,150,.95)", label: "🛍️" }
+  };
+
+  function rollRoutine(archId) {
+    var w = ROUTINE_WEIGHTS[archId] || ROUTINE_WEIGHTS.CIVILIAN;
+    var total = 0, k;
+    for (k in w) total += w[k];
+    if (total <= 0) return "IDLE";
+    var roll = Math.random() * total;
+    for (k in w) {
+      roll -= w[k];
+      if (roll <= 0) return k === "WINDOW" && w[k] === 0 ? "IDLE" : k;
+    }
+    return "IDLE";
+  }
+
+  function routineDuration(name) {
+    var d = ROUTINE_DURATION[name] || ROUTINE_DURATION.IDLE;
+    return d[0] + Math.random() * (d[1] - d[0]);
+  }
+
   function rollArchetype() {
     var r = Math.random();
     for (var i = 0; i < ARCH.length; i++) if (r <= ARCH[i].upTo) return ARCH[i];
@@ -276,13 +320,21 @@
   function makeNpc(idx) {
     var p = walkPoints[(Math.random() * walkPoints.length) | 0];
     var arch = rollArchetype();
-    var speed = 12 + Math.random() * 5; // walkSpeed 12..17
+    // Người thật thì ai cũng một khác: cao/thấp 0,90–1,10 + người đi bộ nhanh (jogger)
+    var height = 0.90 + Math.random() * 0.20;
+    var jog = (arch.id === "TOURIST" && Math.random() < 0.10) ||
+              (arch.id === "CIVILIAN" && Math.random() < 0.08);
+    var speed = (12 + Math.random() * 5) * (jog ? 1.45 : 1);
     return {
       x: p.x, z: p.z,
       from: { x: p.x, z: p.z },
       target: { x: p.x, z: p.z },
       arch: arch,
       speed: speed,
+      height: height,
+      jog: jog,
+      hasPhone: arch.id !== "GANGSTER" && arch.id !== "BRAWLER", // y hệt ARCHETYPES.hasPhone
+      routine: null,
       pause: 1 + Math.random() * 4,   // nghỉ chân ban đầu
       progressAt: 0,
       anim: "IDLE",
@@ -291,6 +343,31 @@
       dist: 0,
       retargets: 0
     };
+  }
+
+  // Tới nơi -> chọn một hoạt động đời thường (giống arrive() trong NPCManager)
+  function arrive(n) {
+    var r = rollRoutine(n.arch.id);
+    if (r === "PHONE" && !n.hasPhone) r = "IDLE";
+    if (r === "TALK") {
+      var partner = null, bestD = 18;
+      for (var i = 0; i < npcs.length; i++) {
+        var o = npcs[i];
+        if (o === n || o.anim !== "IDLE" || o.routine === "TALK") continue;
+        var d = Math.hypot(o.x - n.x, o.z - n.z);
+        if (d < bestD) { bestD = d; partner = o; }
+      }
+      if (partner) {
+        partner.routine = "TALK";
+        partner.pause = Math.max(partner.pause, routineDuration("TALK") * 0.6);
+        partner.anim = "IDLE";
+      } else {
+        r = "LOOK";   // đứng một mình -> ngắm cảnh
+      }
+    }
+    n.routine = r;
+    n.pause = routineDuration(r);
+    n.anim = "IDLE";
   }
   function resetNpcs() {
     npcs = [];
@@ -331,6 +408,7 @@
       n.pause -= dt;
       n.anim = "IDLE";
       if (n.pause <= 0) {
+        n.routine = null;
         n.target = pickFarTarget({ x: n.x, z: n.z });
         n.from = { x: n.x, z: n.z };
         n.progressAt = 0;
@@ -357,8 +435,7 @@
     }
 
     if (flatDist <= 3) {
-      n.pause = 2 + Math.random() * 4;
-      n.anim = "IDLE";
+      arrive(n);
       return;
     }
 
@@ -367,7 +444,7 @@
     n.z += (toT.z / flatDist) * stepLen;
     n.dist += stepLen;
     n.phase += dt * 7.5;
-    n.anim = n.speed >= 14 ? "RUN" : "WALK";
+    n.anim = n.jog ? "RUN" : "WALK";
     if (cbTrail.checked) {
       n.trail.push({ x: n.x, z: n.z });
       if (n.trail.length > 34) n.trail.shift();
@@ -488,6 +565,7 @@
       var bob = n.anim === "IDLE" ? Math.sin(simTime * 2 + n.phase) * 0.8 : Math.sin(n.phase) * 1.2;
       var px = sx(n.x);
       var py = sz(n.z) + bob;
+      var rr = dotR * (0.86 + (n.height - 0.9) * 1.4);
 
       // bóng
       ctx.beginPath();
@@ -498,19 +576,33 @@
       // thân
       ctx.beginPath();
       ctx.fillStyle = n.arch.color;
-      ctx.arc(px, py, dotR, 0, Math.PI * 2);
+      ctx.arc(px, py, rr, 0, Math.PI * 2);
       ctx.fill();
+
+      // vòng màu = hoạt động đang làm (thấy rõ "NPC như người thật")
+      if (n.anim === "IDLE" && n.routine && ROUTINE_STYLE[n.routine]) {
+        ctx.beginPath();
+        ctx.strokeStyle = ROUTINE_STYLE[n.routine].ring;
+        ctx.lineWidth = Math.max(1, view.scale * 1.2);
+        ctx.arc(px, py, rr + Math.max(1.5, view.scale * 1.6), 0, Math.PI * 2);
+        ctx.stroke();
+        if (view.scale > 1.6 && ROUTINE_STYLE[n.routine].label) {
+          ctx.font = (rr * 2.2).toFixed(0) + "px system-ui";
+          ctx.textAlign = "center";
+          ctx.fillText(ROUTINE_STYLE[n.routine].label, px, py - rr - 2);
+        }
+      }
 
       // chân/anim: 2 vạch nhỏ hai bên khi đang đi -> nhìn ra được "có animation"
       if (n.anim !== "IDLE") {
-        var sw = Math.sin(n.phase) * dotR * 0.9;
+        var sw = Math.sin(n.phase) * rr * 0.9;
         ctx.strokeStyle = "rgba(255,255,255,.55)";
         ctx.lineWidth = Math.max(1, view.scale * 1.1);
         ctx.beginPath();
-        ctx.moveTo(px - dotR * 0.5, py + dotR + sw);
-        ctx.lineTo(px - dotR * 0.5, py + dotR * 1.9 + sw);
-        ctx.moveTo(px + dotR * 0.5, py + dotR - sw);
-        ctx.lineTo(px + dotR * 0.5, py + dotR * 1.9 - sw);
+        ctx.moveTo(px - rr * 0.5, py + rr + sw);
+        ctx.lineTo(px - rr * 0.5, py + rr * 1.9 + sw);
+        ctx.moveTo(px + rr * 0.5, py + rr - sw);
+        ctx.lineTo(px + rr * 0.5, py + rr * 1.9 - sw);
         ctx.stroke();
       }
 
@@ -581,6 +673,11 @@
     npc: document.getElementById("sNpc"),
     car: document.getElementById("sCar"),
     idle: document.getElementById("sIdle"),
+    walk: document.getElementById("sWalk"),
+    phone: document.getElementById("sPhone"),
+    talk: document.getElementById("sTalk"),
+    look: document.getElementById("sLook"),
+    window: document.getElementById("sWindow"),
     rt: document.getElementById("sRt"),
     dist: document.getElementById("sDist")
   };
@@ -599,14 +696,22 @@
     if (statTimer < 0.35) return;
     statTimer = 0;
 
-    var idle = 0, total = 0;
+    var idle = 0, total = 0, byRoutine = { IDLE: 0, PHONE: 0, TALK: 0, LOOK: 0, WINDOW: 0 };
     npcs.forEach(function (n) {
-      if (n.anim === "IDLE") idle++;
+      if (n.anim === "IDLE") {
+        idle++;
+        byRoutine[n.routine || "IDLE"] = (byRoutine[n.routine || "IDLE"] || 0) + 1;
+      }
       total += n.dist;
     });
     statEls.npc.textContent = String(npcs.length);
     statEls.car.textContent = String(cbCars.checked ? cars.length : 0);
     statEls.idle.textContent = String(idle);
+    statEls.walk.textContent = String(npcs.length - idle);
+    statEls.phone.textContent = String(byRoutine.PHONE);
+    statEls.talk.textContent = String(byRoutine.TALK);
+    statEls.look.textContent = String(byRoutine.LOOK);
+    statEls.window.textContent = String(byRoutine.WINDOW);
     var perMin = retargetWindowTime > 0 ? (retargetWindow / retargetWindowTime) * 60 : 0;
     statEls.rt.textContent = perMin.toFixed(0);
     statEls.dist.textContent = (total / Math.max(1, npcs.length)).toFixed(0) + " stud";
