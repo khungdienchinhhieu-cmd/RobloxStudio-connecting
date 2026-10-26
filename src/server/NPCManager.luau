@@ -28,6 +28,7 @@ local Debris = game:GetService("Debris")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local WorldGrid = require(Shared:WaitForChild("WorldGrid"))
 local VehicleBuilder = require(Shared:WaitForChild("Vehicles"):WaitForChild("VehicleBuilder"))
+local NPCAppearance = require(script.Parent:WaitForChild("NPCAppearance"))
 
 local NPCManager = {}
 
@@ -59,7 +60,7 @@ local ARCHETYPES: { [string]: Archetype } = {
 		pants = Color3.fromRGB(58, 62, 72),
 		hair = Color3.fromRGB(52, 38, 28),
 		health = 100,
-		walkSpeed = 9,
+		walkSpeed = 13,
 		bravery = 0.2,
 		armed = false,
 		hasPhone = true,
@@ -73,7 +74,7 @@ local ARCHETYPES: { [string]: Archetype } = {
 		pants = Color3.fromRGB(28, 32, 42),
 		hair = Color3.fromRGB(38, 34, 30),
 		health = 100,
-		walkSpeed = 10,
+		walkSpeed = 17,
 		bravery = 0.35,
 		armed = false,
 		hasPhone = true,
@@ -88,7 +89,7 @@ local ARCHETYPES: { [string]: Archetype } = {
 		pants = Color3.fromRGB(198, 196, 190),
 		hair = Color3.fromRGB(186, 148, 82),
 		health = 90,
-		walkSpeed = 8,
+		walkSpeed = 13,
 		bravery = 0.1,
 		armed = false,
 		hasPhone = true,
@@ -102,7 +103,7 @@ local ARCHETYPES: { [string]: Archetype } = {
 		pants = Color3.fromRGB(44, 46, 54),
 		hair = Color3.fromRGB(26, 24, 24),
 		health = 140,
-		walkSpeed = 12,
+		walkSpeed = 15,
 		bravery = 0.85,
 		armed = true,
 		hasPhone = false,
@@ -160,9 +161,9 @@ local REACTION_COLOR = {
 	MELEE = Color3.fromRGB(251, 146, 60),
 }
 
-local MAX_NPCS = 74          -- trần NPC đi bộ (trước là 26)
-local AMBIENT_COUNT = 46     -- số NPC toả khắp thành phố khi khởi động
-local TRAFFIC_COUNT = 4      -- số xe có TÀI XẾ NPC chạy vòng quanh phố
+local MAX_NPCS = 150         -- trần NPC cùng lúc (bản đồ rộng gấp 1,6 lần)
+local AMBIENT_COUNT = 84     -- số NPC toả khắp thành phố khi khởi động
+local TRAFFIC_COUNT = 8      -- số xe có TÀI XẾ NPC chạy vòng quanh phố
 local NPC_FOLDER_NAME = "LosSantos_NPCs"
 local TRAFFIC_FOLDER_NAME = "LosSantos_Traffic"
 local HEARTBEAT = 0.12
@@ -193,6 +194,7 @@ type NPCState = {
 	lastGoal: Vector3?,
 	lastMoveAt: number,
 	animState: string,
+	anims: any,
 	targetAt: number,
 	checkFrom: Vector3,
 	pauseUntil: number,
@@ -216,6 +218,24 @@ local function setAnim(st: NPCState, name: string)
 	end
 	st.animState = name
 	st.model:SetAttribute("AnimState", name)
+
+	-- Có animation THẬT của Roblox -> phát bài tương ứng.
+	-- Không có -> client tự vẽ bằng Motor6D (xem NPCAnimator.luau).
+	if not st.anims then
+		return
+	end
+	if name == "WALK" then
+		NPCAppearance.playAnim(st.anims, "walk")
+	elseif name == "RUN" then
+		NPCAppearance.playAnim(st.anims, "run")
+	elseif name == "DEAD" then
+		NPCAppearance.stopAnim(st.anims)
+	elseif name == "IDLE" or name == "SHOOT" or name == "PUNCH" or name == "PHONE" then
+		NPCAppearance.playAnim(st.anims, "idle")
+	elseif name == "DRIVE" then
+		-- Ngồi trong xe: phải DỪNG animation thật thì client mới vẽ được tư thế ngồi
+		NPCAppearance.stopAnim(st.anims)
+	end
 end
 
 -- ══════════════════════════════════════════════════════════════════════════════
@@ -379,6 +399,19 @@ end
 -- 6. SÚNG / ĐIỆN THOẠI CẦM TAY
 -- ══════════════════════════════════════════════════════════════════════════════
 
+-- Tay phải: R15 = RightHand, R6 = "Right Arm"
+local function handPart(model: Model): BasePart?
+	local r15 = model:FindFirstChild("RightHand")
+	if r15 and r15:IsA("BasePart") then
+		return r15
+	end
+	local r6 = model:FindFirstChild("Right Arm")
+	if r6 and r6:IsA("BasePart") then
+		return r6
+	end
+	return nil
+end
+
 local function equipGun(st: NPCState)
 	if st.gunModel then
 		return
@@ -400,7 +433,7 @@ local function equipGun(st: NPCState)
 
 	local w1 = Instance.new("WeldConstraint")
 	w1.Part0 = body
-	w1.Part1 = st.model:FindFirstChild("Right Arm") :: BasePart
+	w1.Part1 = handPart(st.model)
 	w1.Parent = body
 	local w2 = Instance.new("WeldConstraint")
 	w2.Part0 = body
@@ -430,7 +463,7 @@ local function equipPhone(st: NPCState)
 
 	local w1 = Instance.new("WeldConstraint")
 	w1.Part0 = p
-	w1.Part1 = st.model:FindFirstChild("Right Arm") :: BasePart
+	w1.Part1 = handPart(st.model)
 	w1.Parent = p
 	local w2 = Instance.new("WeldConstraint")
 	w2.Part0 = p
@@ -713,7 +746,7 @@ local function buildSidewalkPoints(): { Vector3 }
 		end
 	end
 
-	-- 4 đại lộ Bắc–Nam (Del Perro / San Andreas / Alta / Elgin)
+	-- 6 đại lộ Bắc–Nam (Pacific Coast / Del Perro / San Andreas / Alta / Elgin / La Mesa)
 	for _, r in ipairs(WorldGrid.NS_ROADS) do
 		local off = (r.width / 2) + 5
 		for z = r.min + 14, r.max - 14, 24 do
@@ -722,7 +755,20 @@ local function buildSidewalkPoints(): { Vector3 }
 		end
 	end
 
-	return pts
+	-- Lọc: bỏ điểm rơi ra ngoài mép bản đồ hoặc ra ngoài dải phố đi bộ.
+	-- (2 đại lộ mới ở X = ±540 có vỉa hè lấn ra ±561 -> phải cắt lại)
+	local maxX = WorldGrid.MAP_HALF_SIZE - 8
+	local minZ = WorldGrid.ZONES.VINEWOOD_Z_MAX + 8
+	local maxZ = WorldGrid.ZONES.BEACH_BOARDWALK_Z_MIN - 4
+
+	local filtered: { Vector3 } = {}
+	for _, p in ipairs(pts) do
+		if math.abs(p.X) <= maxX and p.Z >= minZ and p.Z <= maxZ then
+			table.insert(filtered, p)
+		end
+	end
+
+	return filtered
 end
 
 -- Cache toạ độ vỉa hè toàn thành phố (dựng 1 lần)
@@ -875,11 +921,12 @@ local function tickOne(st: NPCState)
 		end
 
 		moveTo(st, st.patrolTarget, t)
-		-- chọn animation theo tốc độ thật của nhân vật
-		if speed > 1.5 then
-			setAnim(st, if st.arch.walkSpeed >= 14 then "RUN" else "WALK")
+		-- Đi tuần = ĐI BỘ (RUN để dành riêng cho lúc bỏ chạy).
+		-- Kiểm tra tốc độ thật để NPC đứng chờ không bị "đi bộ tại chỗ".
+		if speed > 1.2 then
+			setAnim(st, "WALK")
 		else
-			setAnim(st, "WALK") -- đang cố bước: vẫn hiện dáng đi để không "trượt băng"
+			setAnim(st, "IDLE")
 		end
 		return
 	end
@@ -987,8 +1034,21 @@ function NPCManager.spawn(archetypeId: string, position: Vector3, forceCF: CFram
 	local cf = forceCF
 		or (CFrame.new(position.X, baseY + 3.06, position.Z) * CFrame.Angles(0, math.random() * math.pi * 2, 0))
 
-	local model, hum, hrp, head = buildRig(arch, cf)
+	-- Ưu tiên MODEL ROBLOX THẬT (R15, có animation đi bộ chuẩn)
+	local model, hum, hrp, head
+	local r15 = NPCAppearance.build(arch.id, cf, arch.walkSpeed, arch.health)
+	if r15 then
+		model, hum, hrp, head = r15
+	else
+		-- Dự phòng: rig R6 tự ghép (nếu Roblox không dựng được model)
+		model, hum, hrp, head = buildRig(arch, cf)
+	end
+	if not model then
+		return nil
+	end
 	model.Parent = npcFolder
+	model:SetAttribute("IsGTA_NPC", true)
+	model:SetAttribute("Archetype", arch.id)
 
 	local st: NPCState = {
 		model = model,
@@ -1012,10 +1072,20 @@ function NPCManager.spawn(archetypeId: string, position: Vector3, forceCF: CFram
 		lastGoal = nil,
 		lastMoveAt = 0,
 		animState = "IDLE",
+		anims = nil,
 		targetAt = 0,
 		checkFrom = hrp.Position,
 		pauseUntil = 0,
 	}
+	st.anims = NPCAppearance.loadAnimations(model, hum)
+	if st.anims then
+		NPCAppearance.tuneGait(st.anims, arch.walkSpeed)
+		model:SetAttribute("UsesRealAnims", true)
+		NPCAppearance.playAnim(st.anims, "idle", 0)
+	else
+		model:SetAttribute("UsesRealAnims", false)
+	end
+
 	states[model] = st
 
 	setBubble(st, nil)
@@ -1142,11 +1212,18 @@ local TRAFFIC_ROUTES = {
 		Vector3.new(-98, 0, 138),
 	},
 	{
-		-- vòng vành đai ngoài
+		-- vòng vành đai giữa
 		Vector3.new(330, 0, 154),
 		Vector3.new(330, 0, -230),
 		Vector3.new(-330, 0, -230),
 		Vector3.new(-330, 0, 154),
+	},
+	{
+		-- vòng vành đai ngoài cùng (2 đại lộ mới X = ±540)
+		Vector3.new(-548, 0, 154),
+		Vector3.new(-548, 0, -230),
+		Vector3.new(548, 0, -230),
+		Vector3.new(548, 0, 154),
 	},
 }
 
@@ -1236,6 +1313,9 @@ local function spawnTrafficCar(routeIdx: number, startIdx: number?)
 		if st then
 			st.animState = "DRIVE"
 			st.folder = trafficFolder :: Folder
+			if st.anims then
+				NPCAppearance.stopAnim(st.anims)
+			end
 		end
 		local hum = driver:FindFirstChildOfClass("Humanoid")
 		local hrp = driver:FindFirstChild("HumanoidRootPart")
@@ -1317,6 +1397,122 @@ local function stepTraffic(dt: number)
 	end
 end
 
+-- ══════════════════════════════════════════════════════════════════════════════
+-- 12.5. NPC MANG SKIN CỦA NGƯỜI CHƠI ("bản sao" đi lại trong thành phố)
+-- ══════════════════════════════════════════════════════════════════════════════
+
+--- Dựng một NPC giống hệt avatar của `player`, đứng cách họ 40–160 stud.
+function NPCManager.spawnPlayerTwin(player: Player): Model?
+	if not npcFolder then
+		return nil
+	end
+	local char = player.Character
+	local hrp = if char then char:FindFirstChild("HumanoidRootPart") else nil
+	if not hrp or not hrp:IsA("BasePart") then
+		return nil
+	end
+
+	-- Tìm điểm vỉa hè cách người chơi 40–160 stud (không hiện ra ngay trước mặt)
+	local pts = getSidewalkPoints()
+	local origin = hrp.Position
+	local chosen: Vector3? = nil
+	for _ = 1, 24 do
+		local p = pts[math.random(1, #pts)]
+		local d = (Vector3.new(p.X, 0, p.Z) - Vector3.new(origin.X, 0, origin.Z)).Magnitude
+		if d >= 40 and d <= 160 then
+			local g = findGround(p.X, p.Z)
+			if g then
+				chosen = g
+				break
+			end
+		end
+	end
+	if not chosen then
+		chosen = origin + Vector3.new(math.random(-60, 60), 0, math.random(-60, 60))
+	end
+
+	local spot = chosen :: Vector3
+	local cf = CFrame.new(spot.X, spot.Y + 3.06, spot.Z) * CFrame.Angles(0, math.random() * math.pi * 2, 0)
+
+	local built = NPCAppearance.fromPlayer(player, cf)
+	if not built then
+		return nil
+	end
+	local model, hum, h, head = built
+	model.Parent = npcFolder
+	model:SetAttribute("IsGTA_NPC", true)
+	model:SetAttribute("Archetype", "CIVILIAN")
+
+	local st: NPCState = {
+		model = model,
+		hum = hum,
+		hrp = h,
+		head = head :: any,
+		arch = ARCHETYPES.CIVILIAN,
+		folder = npcFolder :: Folder,
+		state = "PATROL",
+		reaction = nil,
+		attacker = nil,
+		reactUntil = 0,
+		nextShot = 0,
+		nextMelee = 0,
+		patrolTarget = h.Position,
+		nextPatrolAt = 0,
+		gunModel = nil,
+		phone = nil,
+		bubble = nil,
+		gunFlashAt = 0,
+		lastGoal = nil,
+		lastMoveAt = 0,
+		animState = "IDLE",
+		anims = nil,
+		targetAt = 0,
+		checkFrom = h.Position,
+		pauseUntil = 0,
+	}
+	st.anims = NPCAppearance.loadAnimations(model, hum)
+	if st.anims then
+		NPCAppearance.tuneGait(st.anims, 14)
+	end
+	model:SetAttribute("UsesRealAnims", st.anims ~= nil)
+	states[model] = st
+	setBubble(st, nil)
+	startLoop()
+	print(string.format("[NPC] Đã thả bản sao của %s vào thành phố", player.Name))
+	return model
+end
+
+local twinsHooked = false
+local function hookPlayerTwins()
+	if twinsHooked then
+		return
+	end
+	twinsHooked = true
+
+	local function tryTwin(player: Player)
+		task.spawn(function()
+			-- Chờ nhân vật + mẫu R15 sẵn sàng
+			for _ = 1, 60 do
+				if player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+					and NPCAppearance.templateCount() > 0 then
+					break
+				end
+				task.wait(0.5)
+			end
+			task.wait(1)
+			local ok, err = pcall(NPCManager.spawnPlayerTwin, player)
+			if not ok then
+				warn("[NPC] Không tạo được bản sao người chơi:", err)
+			end
+		end)
+	end
+
+	for _, pl in ipairs(Players:GetPlayers()) do
+		tryTwin(pl)
+	end
+	Players.PlayerAdded:Connect(tryTwin)
+end
+
 function NPCManager.spawnTraffic(count: number?): number
 	local target = count or TRAFFIC_COUNT
 	if not trafficFolder then
@@ -1381,8 +1577,20 @@ function NPCManager.init(hud: RemoteEvent?)
 	startLoop()
 	startTrafficLoop()
 
+	hookPlayerTwins()
+
 	task.spawn(function()
 		task.wait(2)
+
+		-- Dựng mẫu nhân vật R15 của Roblox (chỉ 4 lần; các NPC sau chỉ clone)
+		local t0 = os.clock()
+		local templates = NPCAppearance.warmTemplates(4)
+		if templates > 0 then
+			print(string.format("[NPC] Đã dựng %d mẫu nhân vật R15 của Roblox (%.2fs)", templates, os.clock() - t0))
+		else
+			warn("[NPC] Không dựng được model R15 — tạm dùng rig R6 tự ghép")
+		end
+
 		local n = NPCManager.spawnAmbient(AMBIENT_COUNT)
 		print(string.format("[NPC] Đã dựng %d NPC rải khắp vỉa hè thành phố", n))
 
@@ -1407,7 +1615,13 @@ function NPCManager.getStats()
 			end
 		end
 	end
-	return { alive = alive, reacting = reacting, byReaction = byReaction, max = MAX_NPCS, traffic = #traffic }
+	local r15 = 0
+	for _, st in pairs(states) do
+		if st.anims then
+			r15 += 1
+		end
+	end
+	return { alive = alive, reacting = reacting, byReaction = byReaction, max = MAX_NPCS, traffic = #traffic, r15 = r15 }
 end
 
 -- Xuất hàm chọn phản ứng để QA/kiểm thử tự động

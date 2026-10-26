@@ -1,24 +1,27 @@
 --!nonstrict
 --[[
-	NPCAnimator.luau  —  ANIMATION CHO NPC (chạy ở CLIENT)
+	NPCAnimator.luau  —  LỚP ANIMATION DỰ PHÒNG CHẠY Ở CLIENT
 	================================================================================
-	Vì sao làm ở client?
-	  • Server chỉ đổi 1 attribute `AnimState` (IDLE/WALK/RUN/SHOOT/PUNCH/PHONE/DRIVE/DEAD).
-	  • Client tự xoay Motor6D của rig -> 60 FPS mượt, KHÔNG tốn băng thông
-	    (nếu server xoay Motor6D.C0 thì mỗi khung hình đều phải replicate cho mọi người chơi).
+	Kiến trúc 2 lớp (từ Sync v21):
 
-	Rig NPC do NPCManager dựng là R6 thật (Motor6D: RootJoint / Neck /
-	Right Shoulder / Left Shoulder / Right Hip / Left Hip) nên xoay C0 là ra dáng đi.
+	  LỚP 1 — ANIMATION THẬT CỦA ROBLOX  (ưu tiên)
+	    Server gọi `Animator:LoadAnimation` với animation gốc của Roblox
+	    (idle / walk / run) và tự Play/Stop theo tốc độ đi. Không cần file này.
+	    Khi đó NPC có thuộc tính `UsesRealAnims = true`.
 
-	Các tư thế
-	  IDLE   — thở nhẹ, tay đung đưa, đầu liếc nhìn
-	  WALK   — sải chân vừa, tay vung ngược chiều
-	  RUN    — sải chân lớn, người chúi tới (dùng cho CHẠY TRỐN)
-	  SHOOT  — hai tay nâng súng, giật lùi theo nhịp bắn
-	  PUNCH  — đấm liên hoàn (dùng cho ĐÁNH TAY KHÔNG)
-	  PHONE  — một tay giơ điện thoại lên ngang đầu (QUAY VIDEO)
-	  DRIVE  — ngồi trong xe: đùi gập, tay đặt vô lăng
-	  DEAD   — ngã gục, tay chân duỗi
+	  LỚP 2 — VẼ BẰNG MOTOR6D  (dự phòng, chính là file này)
+	    Nếu Roblox không nạp được animation (mất mạng / asset bị chặn / rig tự ghép),
+	    `UsesRealAnims = false` và client tự xoay khớp ở 24 Hz.
+	    → NPC **luôn** có dáng đi, không bao giờ "trượt băng" như tượng.
+
+	Hỗ trợ CẢ HAI loại rig:
+	  • R15 (model Roblox thật): Waist / Neck / *Shoulder / *Elbow / *Hip / *Knee
+	  • R6  (rig tự ghép dự phòng): RootJoint / Neck / "Right Shoulder" / "Right Hip"
+
+	Ghi vào `Motor6D.Transform` (thuộc tính CỤC BỘ, không replicate) nên không tốn
+	băng thông và không giành `C0` với server.
+
+	Tư thế: IDLE · WALK · RUN · SHOOT · PUNCH · PHONE · DRIVE · DEAD
 ]]
 
 local Players = game:GetService("Players")
@@ -27,30 +30,84 @@ local Workspace = game:GetService("Workspace")
 
 local NPCAnimator = {}
 
-local localPlayer = Players.LocalPlayer
+local UPDATE_HZ = 24
+local CULL_DISTANCE = 300
 
-local UPDATE_HZ = 24 -- 24 lần/giây là đủ mượt cho NPC nền
-local CULL_DISTANCE = 260 -- bỏ qua NPC ở xa để không tốn CPU
+type Joints = {
+	rigType: string,
+	root: Motor6D?,
+	waist: Motor6D?,
+	neck: Motor6D?,
+	shoulderR: Motor6D?,
+	shoulderL: Motor6D?,
+	elbowR: Motor6D?,
+	elbowL: Motor6D?,
+	hipR: Motor6D?,
+	hipL: Motor6D?,
+	kneeR: Motor6D?,
+	kneeL: Motor6D?,
+}
 
 type Rig = {
 	model: Model,
-	root: Motor6D?,
-	neck: Motor6D?,
-	rShoulder: Motor6D?,
-	lShoulder: Motor6D?,
-	rHip: Motor6D?,
-	lHip: Motor6D?,
+	j: Joints,
 	phase: number,
 	lastState: string,
 }
 
 local rigs: { [Model]: Rig } = {}
 
-local function findMotor(model: Model, name: string): Motor6D?
-	local inst = model:FindFirstChild(name, true)
-	if inst and inst:IsA("Motor6D") then
-		return inst
+local function motor(model: Model, ...: string): Motor6D?
+	for i = 1, select("#", ...) do
+		local name = select(i, ...)
+		local inst = model:FindFirstChild(name, true)
+		if inst and inst:IsA("Motor6D") then
+			return inst
+		end
 	end
+	return nil
+end
+
+local function collectJoints(model: Model): Joints?
+	local r15ShoulderR = motor(model, "RightShoulder")
+	local r15HipR = motor(model, "RightHip")
+
+	if r15ShoulderR and r15HipR then
+		return {
+			rigType = "R15",
+			root = motor(model, "Root"),
+			waist = motor(model, "Waist"),
+			neck = motor(model, "Neck"),
+			shoulderR = r15ShoulderR,
+			shoulderL = motor(model, "LeftShoulder"),
+			elbowR = motor(model, "RightElbow"),
+			elbowL = motor(model, "LeftElbow"),
+			hipR = r15HipR,
+			hipL = motor(model, "LeftHip"),
+			kneeR = motor(model, "RightKnee"),
+			kneeL = motor(model, "LeftKnee"),
+		}
+	end
+
+	local r6ShoulderR = motor(model, "Right Shoulder")
+	local r6HipR = motor(model, "Right Hip")
+	if r6ShoulderR and r6HipR then
+		return {
+			rigType = "R6",
+			root = motor(model, "RootJoint"),
+			waist = nil,
+			neck = motor(model, "Neck"),
+			shoulderR = r6ShoulderR,
+			shoulderL = motor(model, "Left Shoulder"),
+			elbowR = nil,
+			elbowL = nil,
+			hipR = r6HipR,
+			hipL = motor(model, "Left Hip"),
+			kneeR = nil,
+			kneeL = nil,
+		}
+	end
+
 	return nil
 end
 
@@ -65,25 +122,14 @@ local function register(model: Instance)
 		return
 	end
 
-	local root = findMotor(model, "RootJoint")
-	local neck = findMotor(model, "Neck")
-	local rs = findMotor(model, "Right Shoulder")
-	local ls = findMotor(model, "Left Shoulder")
-	local rh = findMotor(model, "Right Hip")
-	local lh = findMotor(model, "Left Hip")
-
-	if not (rs and ls and rh and lh) then
+	local joints = collectJoints(model)
+	if not joints then
 		return
 	end
 
 	rigs[model] = {
 		model = model,
-		root = root,
-		neck = neck,
-		rShoulder = rs,
-		lShoulder = ls,
-		rHip = rh,
-		lHip = lh,
+		j = joints,
 		phase = math.random() * math.pi * 2,
 		lastState = "IDLE",
 	}
@@ -93,103 +139,135 @@ local function unregister(model: Instance)
 	rigs[model] = nil
 end
 
+-- ─────────────────────────────────────────────────────────────────────────────
 -- Áp tư thế
-local function applyPose(rig: Rig, state: string, dt: number)
-	-- mặc định: trả hết về tư thế gốc
+-- ─────────────────────────────────────────────────────────────────────────────
+
+local function applyPose(rig: Rig, state: string, dt: number, clock: number)
+	local j = rig.j
+
+	-- Giá trị mặc định = đứng yên
 	local rootOff = Vector3.zero
-	local rootRot = Vector3.zero
+	local waistRot = Vector3.zero
 	local neckRot = Vector3.zero
-	local rsX, rsY, rsZ = 0, 0, 0
-	local lsX, lsY, lsZ = 0, 0, 0
-	local rhX, lhX = 0, 0
+	local sR = Vector3.zero
+	local sL = Vector3.zero
+	local eR = Vector3.zero
+	local eL = Vector3.zero
+	local hR = 0
+	local hL = 0
+	local kR = 0
+	local kL = 0
 
 	if state == "WALK" then
 		rig.phase += dt * 7.5
 		local s = math.sin(rig.phase)
 		local amp = 0.55
-		rhX = s * amp
-		lhX = -s * amp
-		rsX = -s * amp * 0.85
-		lsX = s * amp * 0.85
+		hR = s * amp
+		hL = -s * amp
+		sR = Vector3.new(-s * amp * 0.85, 0, 0)
+		sL = Vector3.new(s * amp * 0.85, 0, 0)
+		kR = math.max(0, -s) * 0.75
+		kL = math.max(0, s) * 0.75
 		rootOff = Vector3.new(0, math.abs(math.cos(rig.phase)) * 0.09, 0)
 		neckRot = Vector3.new(0, math.sin(rig.phase * 0.5) * 0.16, 0)
 	elseif state == "RUN" then
 		rig.phase += dt * 11.5
 		local s = math.sin(rig.phase)
 		local amp = 0.95
-		rhX = s * amp
-		lhX = -s * amp
-		rsX = -s * amp * 0.95
-		lsX = s * amp * 0.95
+		hR = s * amp
+		hL = -s * amp
+		sR = Vector3.new(-s * amp * 0.95, 0, 0)
+		sL = Vector3.new(s * amp * 0.95, 0, 0)
+		kR = math.max(0, -s) * 1.15
+		kL = math.max(0, s) * 1.15
 		rootOff = Vector3.new(0, math.abs(math.cos(rig.phase)) * 0.16, 0)
-		rootRot = Vector3.new(0.14, 0, 0) -- chúi người về trước
+		waistRot = Vector3.new(0.14, 0, 0)
 		neckRot = Vector3.new(-0.1, 0, 0)
 	elseif state == "SHOOT" then
-		-- hai tay nâng súng ngang ngực, giật theo nhịp bắn
-		local recoil = math.abs(math.sin(os.clock() * 6)) * 0.08
-		rsX = -1.45 - recoil
-		rsY = -0.18
-		lsX = -1.25
-		lsY = 0.55
+		local recoil = math.abs(math.sin(clock * 6)) * 0.08
+		sR = Vector3.new(-1.45 - recoil, -0.18, 0)
+		sL = Vector3.new(-1.25, 0.55, 0)
+		eR = Vector3.new(0, 0, -0.5)
 		neckRot = Vector3.new(-0.06, 0, 0)
 	elseif state == "PUNCH" then
-		-- đấm liên hoàn: tay phải ra vào nhanh
-		local punch = (math.sin(os.clock() * 9) + 1) * 0.5 -- 0..1
-		rsX = -0.55 - punch * 1.35
-		rsY = -0.1 * punch
-		lsX = -0.35
-		lsY = 0.3
-		rootRot = Vector3.new(0.06, -0.12 + punch * 0.24, 0)
+		local punch = (math.sin(clock * 9) + 1) * 0.5
+		sR = Vector3.new(-0.55 - punch * 1.35, -0.1 * punch, 0)
+		sL = Vector3.new(-0.35, 0.3, 0)
+		waistRot = Vector3.new(0.06, -0.12 + punch * 0.24, 0)
 	elseif state == "PHONE" then
-		-- tay phải giơ điện thoại lên ngang đầu (quay video)
-		rsX = -2.05
-		rsZ = 0.55
-		lsX = -0.15
+		sR = Vector3.new(-2.05, 0, 0.55)
+		sL = Vector3.new(-0.15, 0, 0)
 		neckRot = Vector3.new(-0.08, -0.22, 0)
-		rootOff = Vector3.new(0, math.sin(os.clock() * 1.6) * 0.02, 0)
+		rootOff = Vector3.new(0, math.sin(clock * 1.6) * 0.02, 0)
 	elseif state == "DRIVE" then
-		-- ngồi: đùi gập về trước, tay đặt lên vô lăng, người nhún nhẹ
-		rhX = -1.35
-		lhX = -1.35
-		rsX = -1.15
-		lsX = -1.15
-		rsY = -0.12
-		lsY = 0.12
-		rootOff = Vector3.new(0, math.sin(os.clock() * 5.5) * 0.02, 0)
-		neckRot = Vector3.new(0, math.sin(os.clock() * 0.6) * 0.12, 0)
+		hR = -1.35
+		hL = -1.35
+		kR = 1.3
+		kL = 1.3
+		sR = Vector3.new(-1.15, -0.12, 0)
+		sL = Vector3.new(-1.15, 0.12, 0)
+		eR = Vector3.new(0, 0, -0.35)
+		eL = Vector3.new(0, 0, 0.35)
+		rootOff = Vector3.new(0, math.sin(clock * 5.5) * 0.02, 0)
+		neckRot = Vector3.new(0, math.sin(clock * 0.6) * 0.12, 0)
 	elseif state == "DEAD" then
-		rsX = 2.1
-		lsX = 1.9
-		rsZ = 0.5
-		lsZ = -0.5
-		rhX = -0.9
-		lhX = 0.5
-		rootRot = Vector3.new(0, 0, 1.45)
+		sR = Vector3.new(2.1, 0, 0.5)
+		sL = Vector3.new(1.9, 0, -0.5)
+		hR = -0.9
+		hL = 0.5
+		kR = 0.6
+		kL = 0.3
+		waistRot = Vector3.new(0, 0, 1.45)
 		neckRot = Vector3.new(0, 0, 0.45)
 	else -- IDLE
 		rig.phase += dt * 1.6
 		local breathe = math.sin(rig.phase) * 0.045
-		rsX = breathe
-		lsX = -breathe
+		sR = Vector3.new(breathe, 0, 0.04)
+		sL = Vector3.new(-breathe, 0, -0.04)
 		rootOff = Vector3.new(0, breathe * 0.6, 0)
 		neckRot = Vector3.new(0, math.sin(rig.phase * 0.45) * 0.3, 0)
 	end
 
-	-- Ghi vào Transform (KHÔNG replicate, không giành C0 với server)
-	if rig.root then
-		rig.root.Transform = CFrame.new(rootOff) * CFrame.Angles(rootRot.X, rootRot.Y, rootRot.Z)
+	if j.root then
+		j.root.Transform = CFrame.new(rootOff)
 	end
-	if rig.neck then
-		rig.neck.Transform = CFrame.Angles(neckRot.X, neckRot.Y, neckRot.Z)
+	if j.waist then
+		j.waist.Transform = CFrame.Angles(waistRot.X, waistRot.Y, waistRot.Z)
 	end
-	rig.rShoulder.Transform = CFrame.Angles(rsX, rsY, rsZ)
-	rig.lShoulder.Transform = CFrame.Angles(lsX, lsY, lsZ)
-	rig.rHip.Transform = CFrame.Angles(rhX, 0, 0)
-	rig.lHip.Transform = CFrame.Angles(lhX, 0, 0)
+	if j.neck then
+		j.neck.Transform = CFrame.Angles(neckRot.X, neckRot.Y, neckRot.Z)
+	end
+	if j.shoulderR then
+		j.shoulderR.Transform = CFrame.Angles(sR.X, sR.Y, sR.Z)
+	end
+	if j.shoulderL then
+		j.shoulderL.Transform = CFrame.Angles(sL.X, sL.Y, sL.Z)
+	end
+	if j.elbowR then
+		j.elbowR.Transform = CFrame.Angles(eR.X, eR.Y, eR.Z)
+	end
+	if j.elbowL then
+		j.elbowL.Transform = CFrame.Angles(eL.X, eL.Y, eL.Z)
+	end
+	if j.hipR then
+		j.hipR.Transform = CFrame.Angles(hR, 0, 0)
+	end
+	if j.hipL then
+		j.hipL.Transform = CFrame.Angles(hL, 0, 0)
+	end
+	if j.kneeR then
+		j.kneeR.Transform = CFrame.Angles(kR, 0, 0)
+	end
+	if j.kneeL then
+		j.kneeL.Transform = CFrame.Angles(kL, 0, 0)
+	end
 end
 
--- Theo dõi 1 thư mục: NPC đi bộ nằm phẳng trong LosSantos_NPCs,
--- còn TÀI XẾ nằm SÂU trong xe (LosSantos_Traffic/Xe/Driver) -> cần quét đệ quy.
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Theo dõi thư mục (NPC đi bộ nằm phẳng, tài xế nằm sâu trong xe)
+-- ─────────────────────────────────────────────────────────────────────────────
+
 local function watchFolder(folder: Instance, recursive: boolean)
 	local function tryAdd(inst: Instance)
 		if inst:IsA("Model") and inst:GetAttribute("IsGTA_NPC") == true then
@@ -225,7 +303,7 @@ function NPCAnimator.mount()
 	end
 
 	task.spawn(function()
-		local trafficFolder = Workspace:WaitForChild("LosSantos_Traffic", 120)
+		local trafficFolder = Workspace:WaitForChild("LosSantos_Traffic", 200)
 		if trafficFolder then
 			watchFolder(trafficFolder, true)
 		end
@@ -244,6 +322,7 @@ function NPCAnimator.mount()
 
 		local cam = Workspace.CurrentCamera
 		local camPos = if cam then cam.CFrame.Position else Vector3.zero
+		local clock = os.clock()
 
 		for model, rig in pairs(rigs) do
 			if not model.Parent then
@@ -251,7 +330,6 @@ function NPCAnimator.mount()
 				continue
 			end
 
-			-- cull theo khoảng cách
 			local pivot = model:GetPivot().Position
 			if (pivot - camPos).Magnitude > CULL_DISTANCE then
 				continue
@@ -262,7 +340,16 @@ function NPCAnimator.mount()
 				state = "IDLE"
 			end
 			rig.lastState = state
-			applyPose(rig, state, frameDt)
+
+			-- LỚP 1: Roblox đang tự phát animation thật -> không vẽ đè.
+			-- Ngoại lệ DUY NHẤT là DRIVE: server đã dừng animation thật để
+			-- nhân vật ngồi gọn trong ghế, nên client phải vẽ tư thế ngồi.
+			local real = model:GetAttribute("UsesRealAnims") == true
+			if real and state ~= "DRIVE" then
+				continue
+			end
+
+			applyPose(rig, state, frameDt, clock)
 		end
 	end)
 end

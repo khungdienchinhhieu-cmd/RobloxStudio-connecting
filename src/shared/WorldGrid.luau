@@ -27,7 +27,9 @@ export type PlotDef = {
 
 local WorldGrid = {}
 
-WorldGrid.MAP_HALF_SIZE = 360
+-- Bản đồ mở rộng (Sync v21): 720 -> 1 120 stud chiều ngang (+65 %)
+WorldGrid.MAP_HALF_SIZE = 560
+WorldGrid.MAP_WIDTH = WorldGrid.MAP_HALF_SIZE * 2 -- 1 120 stud, dùng cho mọi dải nền/đồi/bờ biển
 WorldGrid.ROAD_Y = 0.5
 WorldGrid.ROAD_THICKNESS = 1.0
 WorldGrid.SIDEWALK_HEIGHT = 0.65
@@ -35,9 +37,9 @@ WorldGrid.SIDEWALK_WIDTH = 9.0
 
 -- 3 Đại lộ Đông - Tây (trải từ X = -340 đến X = +340)
 WorldGrid.EW_ROADS = {
-	{ id = "Road_Vinewood", name = "Vinewood Blvd", axis = "X", coord = -224, width = 32, min = -340, max = 340, lanes = 2 },
-	{ id = "Road_Olympic",  name = "Olympic Fwy",   axis = "X", coord = -36,  width = 36, min = -340, max = 340, lanes = 4 },
-	{ id = "Road_Vespucci", name = "Vespucci Blvd", axis = "X", coord = 148,  width = 32, min = -340, max = 340, lanes = 2 },
+	{ id = "Road_Vinewood", name = "Vinewood Blvd", axis = "X", coord = -224, width = 32, min = -560, max = 560, lanes = 2 },
+	{ id = "Road_Olympic",  name = "Olympic Fwy",   axis = "X", coord = -36,  width = 36, min = -560, max = 560, lanes = 4 },
+	{ id = "Road_Vespucci", name = "Vespucci Blvd", axis = "X", coord = 148,  width = 32, min = -560, max = 560, lanes = 2 },
 } :: { RoadDef }
 
 -- 4 Đại lộ Bắc - Nam đối xứng gương qua X = 0 (trải từ Z = -240 đến Z = +164)
@@ -46,6 +48,9 @@ WorldGrid.NS_ROADS = {
 	{ id = "Road_SanAndreas", name = "San Andreas Ave", axis = "Z", coord = -110, width = 36, min = -240, max = 164, lanes = 4 },
 	{ id = "Road_Alta",       name = "Alta St",         axis = "Z", coord = 110,  width = 36, min = -240, max = 164, lanes = 4 },
 	{ id = "Road_Elgin",      name = "Elgin Ave",       axis = "Z", coord = 324,  width = 32, min = -240, max = 164, lanes = 2 },
+	-- ▼ 2 đại lộ mới mở rộng thành phố về 2 phía (Sync v21)
+	{ id = "Road_PacificCoast", name = "Pacific Coast Hwy", axis = "Z", coord = -540, width = 32, min = -240, max = 164, lanes = 2 },
+	{ id = "Road_LaMesa",       name = "La Mesa Ave",       axis = "Z", coord = 540,  width = 32, min = -240, max = 164, lanes = 2 },
 } :: { RoadDef }
 
 -- 6 Ô Đất Đô Thị Đối Xứng Khít Tuyệt Đối (0.000-stud gap với toàn bộ mặt đường xung quanh)
@@ -100,6 +105,41 @@ WorldGrid.PLOTS = {
 		center = Vector3.new(218, 0, 57),
 		size = Vector3.new(180, 1, 150),
 		reservedForPhase = 3,
+	},
+
+	-- ▼ 4 Ô ĐẤT MỚI của bản đồ mở rộng (Sync v21) — nằm giữa đường Elgin/PacificCoast
+	--   Rìa trong của chúng khít đúng mép vỉa hè cũ, rìa ngoài khít đúng mép đại lộ mới.
+	{
+		id = "Plot_E1",
+		district = "PACIFIC BLUFFS",
+		subtitle = "Biệt Thự Ven Vịnh & Bến Tàu (Giai đoạn 4)",
+		center = Vector3.new(-432, 0, -131),
+		size = Vector3.new(180, 1, 154),
+		reservedForPhase = 4,
+	},
+	{
+		id = "Plot_E2",
+		district = "LA MESA",
+		subtitle = "Khu Công Nghiệp & Garage Độ Xe (Giai đoạn 4)",
+		center = Vector3.new(432, 0, -131),
+		size = Vector3.new(180, 1, 154),
+		reservedForPhase = 4,
+	},
+	{
+		id = "Plot_E3",
+		district = "LITTLE SEOUL",
+		subtitle = "Phố Ẩm Thực & Chợ Đêm (Giai đoạn 4)",
+		center = Vector3.new(-432, 0, 57),
+		size = Vector3.new(180, 1, 150),
+		reservedForPhase = 4,
+	},
+	{
+		id = "Plot_E4",
+		district = "RICHMAN GLEN",
+		subtitle = "Khu Mua Sắm Cao Cấp (Giai đoạn 4)",
+		center = Vector3.new(432, 0, 57),
+		size = Vector3.new(180, 1, 150),
+		reservedForPhase = 4,
 	},
 } :: { PlotDef }
 

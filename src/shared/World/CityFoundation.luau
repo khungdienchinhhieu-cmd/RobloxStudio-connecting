@@ -958,7 +958,7 @@ local function buildSidewalksAndLots(parent: Instance)
 		name = "NorthVinewoodWalkway",
 		parent = folder,
 		pos = Vector3.new(0, 0.575, -245),
-		size = Vector3.new(720, 1.15, 10),
+		size = Vector3.new(WorldGrid.MAP_WIDTH, 1.15, 10),
 		color = COLORS.SIDEWALK,
 		material = Enum.Material.Concrete,
 	})
@@ -977,7 +977,7 @@ local function buildVespucciCoastline(parent: Instance)
 		name = "BedrockApron",
 		parent = folder,
 		pos = Vector3.new(0, -2.0, -50),
-		size = Vector3.new(720, 3.0, 620),
+		size = Vector3.new(WorldGrid.MAP_WIDTH, 3.0, 620),
 		color = COLORS.HILL_FOOTHILL,
 		material = Enum.Material.Grass,
 	})
@@ -987,7 +987,7 @@ local function buildVespucciCoastline(parent: Instance)
 		name = "VespucciStonePromenade",
 		parent = folder,
 		pos = Vector3.new(0, 0.575, 175),
-		size = Vector3.new(720, 1.15, 22),
+		size = Vector3.new(WorldGrid.MAP_WIDTH, 1.15, 22),
 		color = COLORS.TRAVERTINE_A,
 		material = Enum.Material.Sandstone,
 	})
@@ -1051,7 +1051,7 @@ local function buildVespucciCoastline(parent: Instance)
 		name = "UpperBeachSandBase",
 		parent = folder,
 		pos = Vector3.new(0, -0.60, 206),
-		size = Vector3.new(720, 1.1, 40),
+		size = Vector3.new(WorldGrid.MAP_WIDTH, 1.1, 40),
 		color = COLORS.DRY_SAND,
 		material = Enum.Material.Sand,
 	})
@@ -1071,7 +1071,7 @@ local function buildVespucciCoastline(parent: Instance)
 		name = "MidBeachSunSand",
 		parent = folder,
 		pos = Vector3.new(0, -0.65, 232),
-		size = Vector3.new(720, 1.1, 20),
+		size = Vector3.new(WorldGrid.MAP_WIDTH, 1.1, 20),
 		color = COLORS.MID_SAND,
 		material = Enum.Material.Sand,
 	})
@@ -1079,7 +1079,7 @@ local function buildVespucciCoastline(parent: Instance)
 		name = "WetTidalShoreSand",
 		parent = folder,
 		pos = Vector3.new(0, -0.88, 249),
-		size = Vector3.new(720, 0.95, 18),
+		size = Vector3.new(WorldGrid.MAP_WIDTH, 0.95, 18),
 		color = COLORS.WET_SAND,
 		material = Enum.Material.Sand,
 	})
@@ -1112,7 +1112,7 @@ local function buildVespucciCoastline(parent: Instance)
 		name = "InnerSurfFoam",
 		parent = folder,
 		pos = Vector3.new(0, -0.46, 256),
-		size = Vector3.new(720, 0.16, 4.2),
+		size = Vector3.new(WorldGrid.MAP_WIDTH, 0.16, 4.2),
 		color = COLORS.SEA_FOAM,
 		material = Enum.Material.SmoothPlastic,
 		transparency = 0.22,
@@ -1122,7 +1122,7 @@ local function buildVespucciCoastline(parent: Instance)
 		name = "OuterWaveCrest",
 		parent = folder,
 		pos = Vector3.new(0, -0.48, 270),
-		size = Vector3.new(720, 0.12, 2.6),
+		size = Vector3.new(WorldGrid.MAP_WIDTH, 0.12, 2.6),
 		color = COLORS.SEA_FOAM,
 		material = Enum.Material.SmoothPlastic,
 		transparency = 0.42,
@@ -1132,7 +1132,7 @@ local function buildVespucciCoastline(parent: Instance)
 		name = "ShallowTurquoiseLagoon",
 		parent = folder,
 		pos = Vector3.new(0, -0.95, 272),
-		size = Vector3.new(720, 0.9, 34),
+		size = Vector3.new(WorldGrid.MAP_WIDTH, 0.9, 34),
 		color = COLORS.LAGOON_WATER,
 		material = Enum.Material.Glass,
 		transparency = 0.16,
@@ -1141,7 +1141,7 @@ local function buildVespucciCoastline(parent: Instance)
 		name = "MidCoastalAzureWater",
 		parent = folder,
 		pos = Vector3.new(0, -1.02, 306),
-		size = Vector3.new(720, 0.95, 36),
+		size = Vector3.new(WorldGrid.MAP_WIDTH, 0.95, 36),
 		color = COLORS.COAST_WATER,
 		material = Enum.Material.Glass,
 		transparency = 0.14,
@@ -1150,7 +1150,7 @@ local function buildVespucciCoastline(parent: Instance)
 		name = "DeepPacificSapphire",
 		parent = folder,
 		pos = Vector3.new(0, -1.1, 344),
-		size = Vector3.new(720, 1.0, 42),
+		size = Vector3.new(WorldGrid.MAP_WIDTH, 1.0, 42),
 		color = COLORS.DEEP_OCEAN,
 		material = Enum.Material.Glass,
 		transparency = 0.12,
@@ -1171,8 +1171,8 @@ local function buildSculptedVinewoodHills(parent: Instance)
 		parent = folder,
 		axis = "X",
 		fixedCoord = -250.8,
-		minCoord = -356,
-		maxCoord = 356,
+		minCoord = -(WorldGrid.MAP_HALF_SIZE - 4),
+		maxCoord = WorldGrid.MAP_HALF_SIZE - 4,
 		baseY = 0.6,
 		thickness = 2.2,
 		courses = 4,
@@ -1190,7 +1190,7 @@ local function buildSculptedVinewoodHills(parent: Instance)
 		name = "FoothillFrontSlope",
 		parent = folder,
 		cframe = CFrame.new(0, 9.5, -272) * CFrame.Angles(0, math.rad(180), 0),
-		size = Vector3.new(720, 11.0, 40),
+		size = Vector3.new(WorldGrid.MAP_WIDTH, 11.0, 40),
 		color = COLORS.HILL_FOOTHILL,
 		material = Enum.Material.Grass,
 	})
@@ -1198,7 +1198,7 @@ local function buildSculptedVinewoodHills(parent: Instance)
 		name = "FoothillUnderBase",
 		parent = folder,
 		pos = Vector3.new(0, 2.0, -272),
-		size = Vector3.new(720, 4.0, 40),
+		size = Vector3.new(WorldGrid.MAP_WIDTH, 4.0, 40),
 		color = COLORS.HILL_FOOTHILL,
 		material = Enum.Material.Grass,
 	})
@@ -1206,7 +1206,7 @@ local function buildSculptedVinewoodHills(parent: Instance)
 		name = "ScenicTrailBench",
 		parent = folder,
 		pos = Vector3.new(0, 7.5, -299),
-		size = Vector3.new(720, 15.0, 14),
+		size = Vector3.new(WorldGrid.MAP_WIDTH, 15.0, 14),
 		color = COLORS.HILL_FOOTHILL,
 		material = Enum.Material.Grass,
 	})
@@ -1215,13 +1215,13 @@ local function buildSculptedVinewoodHills(parent: Instance)
 		name = "VinewoodHikingTrail",
 		parent = folder,
 		pos = Vector3.new(0, 15.08, -298),
-		size = Vector3.new(560, 0.16, 8.0),
+		size = Vector3.new(WorldGrid.MAP_WIDTH - 160, 0.16, 8.0),
 		color = COLORS.TRAIL_DIRT,
 		material = Enum.Material.Sandstone,
 	})
 
 	-- 5 Mỏm đá vách núi sa thạch tự nhiên trồi ra khỏi sườn cỏ
-	for _, rx in ipairs({ -245, -115, 18, 135, 255 }) do
+	for _, rx in ipairs({ -470, -245, -115, 18, 135, 255, 470 }) do
 		PartBuilder.part({
 			name = "CliffOutcrop_" .. tostring(rx),
 			parent = folder,
@@ -1234,9 +1234,11 @@ local function buildSculptedVinewoodHills(parent: Instance)
 
 	-- Tầng núi trung tâm và 3 đỉnh núi vát chéo đa diện bằng WedgePart (West Peak, Central Vinewood Crest, East Peak)
 	local peaks = {
+		{ name = "PacificPeak", cx = -470, coreW = 130, flankW = 50, baseH = 15, peakH = 30, col = COLORS.HILL_CHAPARRAL },
 		{ name = "WestPeak", cx = -232, coreW = 140, flankW = 55, baseH = 15, peakH = 34, col = COLORS.HILL_CHAPARRAL },
 		{ name = "CentralVinewoodSummit", cx = 0, coreW = 168, flankW = 64, baseH = 15, peakH = 46, col = COLORS.HILL_SUMMIT },
 		{ name = "EastPeak", cx = 232, coreW = 140, flankW = 55, baseH = 15, peakH = 36, col = COLORS.HILL_CHAPARRAL },
+		{ name = "LaMesaRidge", cx = 470, coreW = 130, flankW = 50, baseH = 15, peakH = 31, col = COLORS.HILL_CHAPARRAL },
 	}
 	for _, pk in ipairs(peaks) do
 		-- Bệ chân đỉnh núi (từ Y = 0 đến baseH = 15 để không hở gầm sườn dốc)

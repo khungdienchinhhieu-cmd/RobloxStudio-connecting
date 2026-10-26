@@ -128,25 +128,61 @@ local function fractureWorldBlock(part: BasePart, impulse: Vector3)
 
 	part:Destroy()
 
-	local subCount = if (sz.X * sz.Y * sz.Z) > 12 then 4 else 2
-	for i = 1, subCount do
-		local sxSign = if (i % 2 == 0) then 1 else -1
-		local szSign = if i > 2 then 1 else -1
-		local chunkSz = Vector3.new(
-			math.max(0.45, sz.X * 0.46),
-			math.max(0.42, sz.Y * 0.72),
-			math.max(0.45, sz.Z * 0.46)
-		)
+	-- ═══════════════════════════════════════════════════════════════════════════
+	-- SỐ MẢNH VỠ TỈ LỆ VỚI KÍCH THƯỚC KHỐI  (kỹ thuật "ít part mà vẫn bể")
+	-- ---------------------------------------------------------------------------
+	-- Khối gạch nhỏ  (2×0.8×1 stud)   -> vỡ 2 mảnh  (như cũ)
+	-- Khối tường lớn (8×10×0.6 stud)  -> vỡ 12 mảnh (nhìn như mảng tường nổ tung)
+	-- Nhờ vậy 1 part lớn vẫn cho cảm giác "vỡ vụn" y như 60 viên gạch rời,
+	-- nhưng lúc CHƯA vỡ thì chỉ tốn 1 part -> tiết kiệm 60 lần.
+	-- ═══════════════════════════════════════════════════════════════════════════
+	local volume = sz.X * sz.Y * sz.Z
+	local longest = math.max(sz.X, sz.Y, sz.Z)
+	local shortest = math.max(0.3, math.min(sz.X, sz.Y, sz.Z))
+
+	-- 2 mảnh cho khối nhỏ, tối đa 14 mảnh cho mảng tường lớn
+	local subCount = math.clamp(math.floor(volume / 6) + 2, 2, 14)
+	-- Mảnh vỡ không nhỏ hơn 1 stud mỗi cạnh (tránh 60 mảnh bụi rác)
+	local maxBySize = math.floor((longest / math.max(1.0, shortest)) * 3)
+	if maxBySize >= 2 and subCount > maxBySize then
+		subCount = maxBySize
+	end
+
+	-- Chia theo LƯỚI 3D (nx × ny × nz) thay vì luôn 2×2 -> mảng tường phẳng
+	-- sẽ vỡ thành lưới ô đều nhau, rất giống tường gạch thật bị đục thủng.
+	local nx = math.max(1, math.min(3, math.floor(subCount ^ 0.5 + 0.5)))
+	local ny = math.max(1, math.min(3, math.ceil(subCount / (nx * 2))))
+	local nz = math.max(1, math.floor(subCount / (nx * ny)))
+	-- bù cho trường hợp chia hết chưa đủ số mảnh
+	while nx * ny * nz < subCount and nx < 4 do
+		nx += 1
+	end
+
+	local cellX = sz.X / nx
+	local cellY = math.max(0.42, (sz.Y / ny) * 0.86)
+	local cellZ = sz.Z / nz
+
+	local limit = math.min(subCount, nx * ny * nz)
+	for i = 1, limit do
+		local ix = (i - 1) % nx
+		local iy = math.floor((i - 1) / nx) % ny
+		local iz = math.floor((i - 1) / (nx * ny)) % nz
+
 		local localOff = Vector3.new(
-			sxSign * sz.X * 0.22,
-			(i % 2 == 0 and 0.1 or -0.1) * sz.Y,
-			szSign * sz.Z * 0.22
+			(ix + 0.5) * cellX - sz.X * 0.5,
+			(iy + 0.5) * (sz.Y / ny) - sz.Y * 0.5,
+			(iz + 0.5) * cellZ - sz.Z * 0.5
 		)
 
 		local chunk = Instance.new("Part")
 		chunk.Name = "RubbleChunk"
-		chunk.Size = chunkSz
-		chunk.CFrame = cf * CFrame.new(localOff) * CFrame.Angles(math.rad(math.random(-12, 12)), math.rad(math.random(-18, 18)), 0)
+		chunk.Size = Vector3.new(
+			math.max(0.42, cellX * 0.9),
+			cellY,
+			math.max(0.42, cellZ * 0.9)
+		)
+		chunk.CFrame = cf * CFrame.new(localOff)
+			* CFrame.Angles(math.rad(math.random(-11, 11)), math.rad(math.random(-16, 16)), 0)
 		chunk.Color = col:Lerp(Color3.new(0.18, 0.18, 0.18), 0.14)
 		chunk.Material = mat
 		chunk.TopSurface = Enum.SurfaceType.Smooth
@@ -154,9 +190,18 @@ local function fractureWorldBlock(part: BasePart, impulse: Vector3)
 		chunk.Anchored = false
 		chunk.CanCollide = true
 		chunk.CanQuery = false
+		-- Mảnh ở ngoài rìa văng mạnh hơn mảnh ở giữa
+		local radial = if math.abs(localOff.X) > 0.01 then (if localOff.X > 0 then 1 else -1) else 0
+		local radialZ = if math.abs(localOff.Z) > 0.01 then (if localOff.Z > 0 then 1 else -1) else 0
 		chunk.AssemblyLinearVelocity = impulse * 0.55
-			+ Vector3.new(sxSign * math.random(6, 15), math.random(8, 22), szSign * math.random(6, 15))
-		chunk.AssemblyAngularVelocity = Vector3.new(math.random(-10, 10), math.random(-14, 14), math.random(-10, 10))
+			+ Vector3.new(
+				radial * math.random(5, 14) + math.random(-3, 3),
+				math.random(8, 22),
+				radialZ * math.random(5, 14) + math.random(-3, 3)
+			)
+		chunk.AssemblyAngularVelocity = Vector3.new(
+			math.random(-10, 10), math.random(-14, 14), math.random(-10, 10)
+		)
 		spawnTrackedDebris(chunk, 7.5)
 	end
 

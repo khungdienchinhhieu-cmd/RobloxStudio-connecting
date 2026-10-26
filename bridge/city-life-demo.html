@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Los Santos — Thành phố sống động (Sync v20)</title>
+<title>Los Santos — Bản đồ mở rộng + NPC Roblox thật (Sync v21)</title>
 <style>
   :root {
     --bg: #06080b;
@@ -83,8 +83,8 @@
 <body>
 <header>
   <h1>Los Santos — mô phỏng thành phố sống động</h1>
-  <span class="pill">SYNC v20</span>
-  <span class="sub">46 NPC đi bộ · 4 xe có tài xế NPC · 8 tư thế animation</span>
+  <span class="pill">SYNC v21</span>
+  <span class="sub">1 120 stud · 84 NPC model R15 · 8 xe có tài xế · 9 đại lộ</span>
 </header>
 
 <main>
@@ -101,8 +101,8 @@
 
     <div class="card">
       <h2>Điều khiển</h2>
-      <label class="toggle"><input type="checkbox" id="cbVia" checked /> Hiện điểm vỉa hè (296)</label>
-      <label class="toggle"><input type="checkbox" id="cbRoad" checked /> Hiện 7 đại lộ</label>
+      <label class="toggle"><input type="checkbox" id="cbVia" checked /> Hiện điểm vỉa hè (<span id="viaCount">…</span>)</label>
+      <label class="toggle"><input type="checkbox" id="cbRoad" checked /> Hiện 9 đại lộ</label>
       <label class="toggle"><input type="checkbox" id="cbCars" checked /> Có xe cộ</label>
       <label class="toggle"><input type="checkbox" id="cbTrail" /> Vệt đi bộ</label>
       <div style="margin-top:9px; font-size:12px; color:var(--muted)">Tốc độ mô phỏng <b id="lblSpeed" style="color:var(--text)">1.0×</b></div>
@@ -146,15 +146,25 @@
 
   // ── Dữ liệu đúng như WorldGrid.luau ──────────────────────────────────────
   var EW = [
-    { id: "Vinewood", coord: -224, width: 32, min: -340, max: 340 },
-    { id: "Olympic", coord: -36, width: 36, min: -340, max: 340 },
-    { id: "Vespucci", coord: 148, width: 32, min: -340, max: 340 }
+    { id: "Vinewood", coord: -224, width: 32, min: -560, max: 560 },
+    { id: "Olympic", coord: -36, width: 36, min: -560, max: 560 },
+    { id: "Vespucci", coord: 148, width: 32, min: -560, max: 560 }
   ];
   var NS = [
+    { id: "PacificCoast", coord: -540, width: 32, min: -240, max: 164 },
     { id: "DelPerro", coord: -324, width: 32, min: -240, max: 164 },
     { id: "SanAndreas", coord: -110, width: 36, min: -240, max: 164 },
     { id: "Alta", coord: 110, width: 36, min: -240, max: 164 },
-    { id: "Elgin", coord: 324, width: 32, min: -240, max: 164 }
+    { id: "Elgin", coord: 324, width: 32, min: -240, max: 164 },
+    { id: "LaMesa", coord: 540, width: 32, min: -240, max: 164 }
+  ];
+
+  // 4 ô đất mới của bản đồ mở rộng (Sync v21)
+  var PLOTS = [
+    { id: "E1", x: -432, z: -131, w: 180, h: 154, color: "rgba(114,204,114,.10)", built: true },
+    { id: "E2", x: 432, z: -131, w: 180, h: 154, color: "rgba(120,140,160,.07)", built: false },
+    { id: "E3", x: -432, z: 57, w: 180, h: 150, color: "rgba(120,140,160,.07)", built: false },
+    { id: "E4", x: 432, z: 57, w: 180, h: 150, color: "rgba(120,140,160,.07)", built: false }
   ];
 
   // Sinh điểm vỉa hè y hệt buildSidewalkPoints() trong NPCManager.luau
@@ -174,6 +184,11 @@
     }
   });
 
+  // Lọc giống NPCManager: bỏ điểm ngoài mép bản đồ / ngoài dải phố đi bộ
+  walkPoints = walkPoints.filter(function (p) {
+    return Math.abs(p.x) <= 552 && p.z >= -232 && p.z <= 160;
+  });
+
   // 2 tuyến xe y hệt TRAFFIC_ROUTES
   var ROUTES = [
     [
@@ -183,6 +198,10 @@
     [
       { x: 330, z: 154 }, { x: 330, z: -230 },
       { x: -330, z: -230 }, { x: -330, z: 154 }
+    ],
+    [
+      { x: -548, z: 154 }, { x: -548, z: -230 },
+      { x: 548, z: -230 }, { x: 548, z: 154 }
     ]
   ];
 
@@ -202,7 +221,7 @@
   }
 
   // ── Khung nhìn thế giới ────────────────────────────────────────────────
-  var VIEW = { x0: -372, x1: 372, z0: -262, z1: 176 };
+  var VIEW = { x0: -578, x1: 578, z0: -262, z1: 178 };
   var view = { scale: 1, ox: 0, oy: 0 };
 
   function resize() {
@@ -262,15 +281,15 @@
   }
   function resetNpcs() {
     npcs = [];
-    for (var i = 0; i < 46; i++) npcs.push(makeNpc(i));
+    for (var i = 0; i < 84; i++) npcs.push(makeNpc(i));
   }
 
   // ── Xe ────────────────────────────────────────────────────────────────
   var cars = [];
   function resetCars() {
     cars = [];
-    var idxs = [0, 2, 1, 3];
-    for (var i = 0; i < 4; i++) {
+    var idxs = [0, 2, 1, 3, 0, 2, 1, 3];
+    for (var i = 0; i < 8; i++) {
       var route = ROUTES[i % ROUTES.length];
       var start = (idxs[i] % route.length);
       var a = route[start];
@@ -401,6 +420,26 @@
     });
   }
 
+  function drawPlots() {
+    PLOTS.forEach(function (p) {
+      var x = sx(p.x - p.w / 2), z = sz(p.z - p.h / 2);
+      var w = p.w * view.scale, h = p.h * view.scale;
+      ctx.fillStyle = p.color;
+      ctx.fillRect(x, z, w, h);
+      ctx.strokeStyle = p.built ? "rgba(114,204,114,.55)" : "rgba(140,160,180,.28)";
+      ctx.lineWidth = Math.max(1, view.scale * 1.2);
+      ctx.setLineDash(p.built ? [] : [6, 6]);
+      ctx.strokeRect(x, z, w, h);
+      ctx.setLineDash([]);
+      if (view.scale > 0.55) {
+        ctx.fillStyle = p.built ? "rgba(160,230,160,.85)" : "rgba(150,168,186,.55)";
+        ctx.font = "bold " + Math.max(9, 11 * view.scale) + "px Segoe UI, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("Plot " + p.id + (p.built ? " ✔" : ""), x + w / 2, z - 4);
+      }
+    });
+  }
+
   function drawRoutes() {
     ctx.save();
     ctx.strokeStyle = "rgba(90, 200, 255, .28)";
@@ -509,6 +548,7 @@
     ctx.fillRect(sx(VIEW.x0), sz(VIEW.z0),
       (VIEW.x1 - VIEW.x0) * view.scale, (VIEW.z1 - VIEW.z0) * view.scale);
 
+    drawPlots();
     if (cbRoad.checked) drawRoads();
     if (cbVia.checked) drawWalkPoints();
     drawRoutes();
@@ -594,6 +634,8 @@
     resize();
     drawFrame();
   });
+
+  document.getElementById("viaCount").textContent = String(walkPoints.length);
 
   resize();
   resetNpcs();

@@ -165,6 +165,45 @@ Và hạ `UPDATE_HZ` (24) trong `src/client/NPCAnimator.luau` xuống `16`, ho�
 Mở Output xem 2 dòng `[NPC] Đã dựng … NPC rải khắp vỉa hè thành phố` và
 `[NPC] Đã thả … xe có TÀI XẾ NPC chạy vòng quanh phố`.
 
+## 5.3. NGÂN SÁCH PART: BẢN ĐỒ RỘNG GẤP 1,6 LẦN MÀ KHÔNG TĂNG PART (Sync v21)
+
+Mở rộng bản đồ từ 720 → **1 120 stud** ngang sẽ nhân diện tích lên **2,4 lần**. Nếu vẫn xây
+kiểu "mỗi viên gạch một part" (3 462 part cho một toà nhà — xem LS Customs) thì chỉ 4 ô đất mới
+đã cần thêm **~14 000 part** → vượt xa ngưỡng tải của Roblox.
+
+**Cách giải:** chỉ 4 công trình trung tâm (đã nghiệm thu 9.0–9.2/10) giữ nguyên cách cũ;
+4 ô đất mới xây bằng `DestructibleShell` — kỹ thuật tấm vỏ.
+
+| | LS Customs (cách cũ) | Biệt thự Pacific Bluffs (cách mới) |
+|---|---:|---:|
+| Số part | 3 462 | **176** |
+| Part phá huỷ | 3 396 | 84 |
+| Hoa văn gạch | ~1 800 part | **0 part** (dùng `Texture`) |
+| Mảnh vỡ khi phá sạch | ~6 800 | 894 |
+
+Tiết kiệm **94,9 %** part cho cùng diện tích sàn. Chi tiết kỹ thuật + code mẫu:
+[`DESTRUCTIBLE_BUDGET.md`](DESTRUCTIBLE_BUDGET.md).
+
+### Chi phí NPC sau khi nâng lên model R15 (Sync v21)
+
+| | Rig R6 tự ghép (v20) | Model R15 + animation thật (v21) |
+|---|---|---|
+| Số part / NPC | 10 | **~17** (R15 có nhiều đốt hơn) |
+| Animation | Client tự vẽ `Motor6D` 24 Hz | **Roblox tự phát** (rẻ hơn, mượt hơn) |
+| Băng thông animation | 1 attribute / lần đổi tư thế | 1 attribute / lần đổi tư thế |
+| Số NPC | 50 (46 đi bộ + 4 xe) | **92** (84 đi bộ + 8 xe) |
+
+**Ngân sách:** 92 × 17 ≈ **1 560 part NPC** + ~1 200 part xe. Vẫn nằm dưới ngưỡng
+khuyến nghị nhờ `StreamingEnabled` (bán kính 64/1024) chỉ tải phần gần người chơi.
+
+Hạ tải nếu máy yếu (sửa 3 số ở đầu `src/server/NPCManager.luau`):
+
+```lua
+local MAX_NPCS = 150         -- trần NPC cùng lúc
+local AMBIENT_COUNT = 84     -- -> hạ về 40 nếu lag
+local TRAFFIC_COUNT = 8      -- -> hạ về 3 nếu lag
+```
+
 ## 6. Các bước tối ưu tiếp theo (chưa làm, xếp theo mức lợi)
 
 1. **Gom cụm tĩnh thành `MeshPart`/Union theo cụm 4×4 stud** cho phần *không phá huỷ*
