@@ -64,7 +64,9 @@ end
 local hashes = collectHashes(shared)
 
 -- Danh sách file tạo nên NỀN thành phố (đổi 1 trong số này -> phải dựng lại nền)
-local FOUNDATION_KEYS = { "World.CityFoundation", "World.WorldGrid", "World.PartBuilder" }
+-- BuildKit (v27) là bộ dựng dùng chung của MỌI công trình mới: đổi 1 dòng trong đó
+-- là hình học đổi ở nhiều ô, nên xếp vào nhóm nền để dựng lại cả thành phố.
+local FOUNDATION_KEYS = { "World.CityFoundation", "World.WorldGrid", "World.PartBuilder", "World.BuildKit" }
 
 local moduleNames: { string } = {}
 for key in pairs(hashes) do

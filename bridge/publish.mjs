@@ -10,15 +10,21 @@ import {
 	buildGitHubCommandBarOneLiner,
 } from "./compiler.mjs";
 
+// Tác vụ dựng thành phố trong Studio — chạy sau mỗi lần Sync.
+const REBUILD_ACTION_FILE = path.join("bridge", "rebuild_world_action.luau");
+
 function parseArgs(argv) {
 	let message = "chore: cập nhật đồng bộ Roblox Studio (Rojo + Bridge)";
 	let actionDesc = null;
 	let actionCode = null;
 	let actionFile = null;
+	let noAction = false;
 
 	for (let i = 0; i < argv.length; i++) {
 		const arg = argv[i];
-		if (arg === "--action-desc" && argv[i + 1]) {
+		if (arg === "--no-action") {
+			noAction = true;
+		} else if (arg === "--action-desc" && argv[i + 1]) {
 			actionDesc = argv[++i];
 		} else if (arg === "--action-code" && argv[i + 1]) {
 			actionCode = argv[++i];
@@ -27,6 +33,14 @@ function parseArgs(argv) {
 		} else if (!arg.startsWith("--")) {
 			message = arg;
 		}
+	}
+
+	// MẶC ĐỊNH: luôn kèm tác vụ dựng lại thành phố.
+	// Trước v29, publish không kèm tác vụ nào -> Studio chỉ nhận ModuleScript mới mà
+	// KHÔNG dựng lại gì, nên "tải bản mới nhất" vẫn ra y hệt bản cũ.
+	if (!actionFile && !actionCode && !noAction) {
+		actionFile = REBUILD_ACTION_FILE;
+		actionDesc = actionDesc || "Dựng lại thành phố (tăng dần theo mã băm từng module)";
 	}
 
 	if (actionFile && !actionCode) {
@@ -66,6 +80,13 @@ async function main() {
 	const headSha = fullSha.slice(0, 7);
 	console.log(`✅ Đã đồng bộ lên GitHub (${GITHUB_BRANCH} @ ${headSha}) — Sync v${bundle.version}`);
 	console.log(`📁 Số file Rojo: ${bundle.files.length} | Tác vụ Studio: ${bundle.actions.length}`);
+	const rebuild = bundle.actions.filter((a) => String(a.code || "").includes("DistrictRegistry"));
+	if (rebuild.length === 0) {
+		console.warn(
+			"⚠️  Gói sync KHÔNG có tác vụ dựng thành phố → Studio sẽ nhận script mới nhưng thành phố không đổi!"
+		);
+	}
+	console.log(`🏗  Tác vụ dựng thành phố trong gói: ${rebuild.length} (mới nhất: ${rebuild[rebuild.length - 1]?.id || "—"})`);
 	console.log(`🔗 Lệnh Command Bar:\n${buildGitHubCommandBarOneLiner(fullSha)}`);
 }
 
