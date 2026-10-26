@@ -57,6 +57,9 @@ WorldGrid.ROAD_Y = 0.5
 WorldGrid.ROAD_THICKNESS = 1.0
 WorldGrid.SIDEWALK_HEIGHT = 0.65
 -- (SIDEWALK_WIDTH nay khai báo phía trên, = 14 stud = 4,2 m)
+-- Mặt trên của vỉa hè = mặt đường + chiều dày vỉa hè. Mọi thứ đặt TRÊN vỉa hè
+-- (NPC, quầy dịch vụ, đồ nhặt được, biển hiệu) đều dùng cao độ này.
+WorldGrid.SIDEWALK_TOP_Y = WorldGrid.ROAD_Y + WorldGrid.SIDEWALK_HEIGHT -- 1.15
 
 -- 3 Đại lộ Đông - Tây (trải từ X = -340 đến X = +340)
 WorldGrid.EW_ROADS = {

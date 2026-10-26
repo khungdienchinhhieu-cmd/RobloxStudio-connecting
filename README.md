@@ -44,6 +44,13 @@ Dự án tái hiện thế giới mở **Grand Theft Auto V (Los Santos)** trên
 | **Plot E4** | **Richman Glen** (trống — chờ Agent, Giai đoạn 4) | `[+358, +536]` | `[-12, +128]` | 53 × 42 m | ☐ |
 | **South Coast** | **Vespucci Beach** (Kè đá ghép khối, cầu thang xuống biển, sàn gỗ, kè chắn sóng) | `[-580, +580]` | `[+168, +380]` | 348 × 64 m | ✅ Hoàn thành ở Nền v2 |
 
+> 🛎️ **Từ `Sync v25` — MỖI Ô ĐẤT CÓ ÍT NHẤT MỘT CHỨC NĂNG DÙNG ĐƯỢC.** Quầy dịch vụ đặt ngay trước cửa
+> công trình (suy từ toạ độ cửa thật, không đoán): C1 🔧 sửa xe $250 · C3W 🥤 snack $25 / 🛡️ giáp $250 /
+> 🔫 tiếp đạn $150 · C3E 🚔 bảo lãnh 500×sao / 🔓 mở kho vũ khí · D2 🏦 nạp / rút tiền · C2 🏁 chạy thử xe ·
+> D1 🏎️ showroom $2 000 · D3 🎬 rạp $50 · E1 💆 spa $400 · E2 🚗 garage $150 · E3 🍜 quán ăn $20 (+50 máu)
+> · E4 🛍️ TTTM $350. Ô chưa dựng thì quầy hiện "CHỜ DỰNG" và **tự bật** khi agent nạp module.
+> Xem bản đồ kiểm tra: `/services` (hoặc `/api/services` lấy JSON).
+
 **9 đại lộ (đo lại 1:1):**
 
 | Đại lộ | Hướng | Trục | Rộng | Quy đổi |
@@ -190,7 +197,37 @@ Dự án tái hiện thế giới mở **Grand Theft Auto V (Los Santos)** trên
   - **Tài liệu:** [`docs/NPC_BEHAVIOUR.md`](docs/NPC_BEHAVIOUR.md) (thiết kế + toàn bộ thông số) ·
     harness chạy lại bất cứ lúc nào: `node tools/npc_sim/run.cjs` → in `✅ PASS` khi thành phố có
     NPC sống, đi lại, làm việc và **0 cảnh báo**.
-- [ ] **Bước 15: QUÉT SẠCH THÀNH PHỐ — 3 Agent phụ × 2 vòng = 6 công trình chi tiết**
+- [x] **Bước 15: MỖI NHÀ MỘT CHỨC NĂNG + CƠ CHẾ TAY + SÚNG VỀ VÒNG CHỌN (`Sync v25`)** ✅
+  - **"MỖI NHÀ PHẢI CÓ CHỨC NĂNG"** — `src/shared/World/BuildingServices.luau` khai báo **15 quầy dịch vụ**
+    cho 10 ô đất (ô C3 tách West/East), **12 loại chức năng**: `REPAIR_CAR` · `SPAWN_CAR` · `HEAL` ·
+    `HEAL_FULL` · `ARMOR` · `AMMO` · `CLEAR_WANTED` · `UNLOCK_WEAPON` · `BANK_DEPOSIT` · `BANK_WITHDRAW`
+    · `CINEMA` · `CAR_WASH`. `ServiceManager` dựng quầy thật (đế bê tông + pad neon + cột sáng 58 stud
+    + biển hiệu BillboardGui) và **tự bật quầy ngay khi ô đất được nạp** — hết cảnh LS Customs có UI còn
+    LSPD/Maze Bank bấm không ra gì.
+  - **Quầy đặt theo CỬA THẬT, không dùng heuristic** (bản v25.0 từng đoán theo `center.Z` nên quầy
+    nhảy ra giữa đường). Offset giờ suy trực tiếp từ attribute của module:
+    C1 `PedestrianDoorPosition(−206,5 · Z 51)` → quầy `(−206,5 · 53,5)` · 24/7 `MainEntrance X=175 Z=92`
+    → 3 quầy `(169 / 175 / 181 · 94,5)` · LSPD `MainGate 255 · 69,4` → 2 quầy `(251 / 259 · 72)` ·
+    Maze Bank `MainEntrance X=0 Z=−65` (cổng rộng 16,4) → 2 quầy `(−11 / +11 · −61,5)`.
+  - **Kiểm tra bằng mắt trước khi mở Studio:** trang `/services`
+    ([`bridge/services-demo.html`](bridge/services-demo.html)) vẽ bản đồ 10 ô đất + 6 đại lộ, chấm phát
+    sáng ở từng quầy (xanh = đang hoạt động, xám = chờ công trình), kệ đồ, danh sách quầy + giá.
+    Dữ liệu lấy từ `/api/services` — server **đọc trực tiếp** `BuildingServices.luau` và
+    `Carryables.luau` nên trang không bao giờ lệch với game.
+  - **CƠ CHẾ TAY (vác đồ):** `src/shared/Carryables.luau` (5 loại: lốp · gạch · thùng · cọc · chai) +
+    `src/server/CarryManager.luau` (7 kệ, 36 món quanh các quầy). Lại gần → `[E]` nhặt, món đồ được
+    hàn vào **hai tay** bằng `Motor6D.Transform` (không phải tool), `[G]` thả, `[F]` hoặc chuột trái
+    **ném** (gạch 78 stud/s, chai 86, lốp 52 — ném trúng tường trừ máu khối, trúng người trừ máu).
+    HUD "ĐANG VÁC" hiện tên món + trọng lượng; chạy nhanh thì tay hạ thấp.
+  - **SÚNG RA KHỎI HOTBAR, VÀO VÒNG CHỌN:** `WeaponManager` thêm `WeaponEquip` (client → server),
+    `setEquipped`, `refillAmmo`, `grantWeapon`; `GtaWeaponWheel` phát `WeaponEquip` khi chọn ô, **khoá
+    chọn súng khi đang vác đồ**; hotbar mặc định của Roblox bị tắt (`Backpack` CoreGui).
+  - **`/api/services` cũng là hợp đồng QA:** `built[]` đọc `PlotId` trong `src/shared/World/Modules/*.luau`
+    → quầy nào chưa có công trình thì hiện "CHỜ DỰNG" thay vì bịa ra quầy lơ lửng.
+  - File: `BuildingServices.luau` (311 dòng) · `Carryables.luau` (129) · `ServiceManager.luau` (575) ·
+    `CarryManager.luau` (439) · `CarryClient.luau` (200) · `bridge/services-demo.html` (10,6 KB).
+
+- [ ] **Bước 16: QUÉT SẠCH THÀNH PHỐ — 3 Agent phụ × 2 vòng = 6 công trình chi tiết**
   (prompt: [`agents/WORKER_PROMPT_V6_CITY_SWEEP_3AGENTS.md`](agents/WORKER_PROMPT_V6_CITY_SWEEP_3AGENTS.md))
   - Agent A: `Plot_D1` Showroom Luxury Autos → `Plot_E3` Quán nướng Seoul Garden
   - Agent B: `Plot_D3` Rạp Vinewood Cinema → `Plot_E4` TTTM Richman Galleria

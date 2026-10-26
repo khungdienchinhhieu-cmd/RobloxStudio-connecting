@@ -1097,6 +1097,155 @@ const server = http.createServer(async (req, res) => {
 		res.end(fs.readFileSync(path.join(REPO_ROOT, "bridge", "npc-demo.html"), "utf8"));
 		return;
 	}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// SYNC v25 — MỖI CÔNG TRÌNH MỘT CHỨC NĂNG + CƠ CHẾ TAY
+// Đọc trực tiếp 2 file Luau để trang /services luôn khớp với game.
+// ══════════════════════════════════════════════════════════════════════════════
+const SIDEWALK_TOP_Y = 1.15;
+
+// ⚠ PLOTS / EW_ROADS / NS_ROADS ở trên nằm BÊN TRONG chuỗi HTML của trang chủ
+// (const HTML = `...`), nên phía server Node KHÔNG nhìn thấy chúng.
+// Đọc lại chính bảng đó từ HTML để /api/services luôn khớp với /city.
+const FALLBACK_PLOTS = [
+  { id: "E1", district: "PACIFIC BLUFFS",    cx: -447, cz: -132, sx: 178, sz: 144 },
+  { id: "D1", district: "ROCKFORD HILLS",    cx: -226, cz: -132, sx: 184, sz: 144 },
+  { id: "D2", district: "PILLBOX HILL",      cx: 0,    cz: -132, sx: 172, sz: 144 },
+  { id: "D3", district: "DOWNTOWN VINEWOOD", cx: 226,  cz: -132, sx: 184, sz: 144 },
+  { id: "E2", district: "LA MESA",           cx: 447,  cz: -132, sx: 178, sz: 144 },
+  { id: "E3", district: "LITTLE SEOUL",      cx: -447, cz: 58,   sx: 178, sz: 140 },
+  { id: "C1", district: "DEL PERRO",         cx: -226, cz: 58,   sx: 184, sz: 140 },
+  { id: "C2", district: "LEGION SQUARE",     cx: 0,    cz: 58,   sx: 172, sz: 140, plaza: true },
+  { id: "C3", district: "MISSION ROW",       cx: 226,  cz: 58,   sx: 184, sz: 140 },
+  { id: "E4", district: "RICHMAN GLEN",      cx: 447,  cz: 58,   sx: 178, sz: 140 },
+];
+
+let cachedPlots = null;
+function serverPlots() {
+  if (cachedPlots) return cachedPlots;
+  const found = [];
+  try {
+    const re = /\{ id: "(\w+)", district: "([^"]+)",\s*cx: (-?[\d.]+),\s*cz: (-?[\d.]+),\s*sx: (-?[\d.]+),\s*sz: (-?[\d.]+)(, plaza: true)? \}/g;
+    let m;
+    while ((m = re.exec(HTML)) !== null) {
+      found.push({
+        id: m[1], district: m[2],
+        cx: Number(m[3]), cz: Number(m[4]), sx: Number(m[5]), sz: Number(m[6]),
+        ...(m[7] ? { plaza: true } : {}),
+      });
+    }
+  } catch { /* dùng bảng dự phòng */ }
+  cachedPlots = found.length ? found : FALLBACK_PLOTS;
+  return cachedPlots;
+}
+
+const PLOT_ALIAS = { Plot_C1: "C1", Plot_C2: "C2", Plot_C3: "C3", Plot_C3_West: "C3", Plot_C3_East: "C3",
+  Plot_D1: "D1", Plot_D2: "D2", Plot_D3: "D3", Plot_E1: "E1", Plot_E2: "E2", Plot_E3: "E3", Plot_E4: "E4" };
+
+function builtPlotIds() {
+  const dir = path.join(REPO_ROOT, "src", "shared", "World", "Modules");
+  const set = new Set(["Plot_C2"]); // Quảng trường Legion do CityFoundation dựng sẵn
+  try {
+    for (const f of fs.readdirSync(dir)) {
+      if (!f.endsWith(".luau")) continue;
+      if (f === "RegistryHealthcheck.luau") continue; // PlotId = "NONE" — không phải công trình
+      const src = fs.readFileSync(path.join(dir, f), "utf8");
+      const m = src.match(/PlotId\s*=\s*"([\w]+)"/);
+      if (m && m[1] !== "NONE") set.add(m[1]);
+    }
+  } catch { /* bỏ qua */ }
+  return set;
+}
+
+function readBuildingServices() {
+  const file = path.join(REPO_ROOT, "src", "shared", "World", "BuildingServices.luau");
+  const src = fs.readFileSync(file, "utf8");
+  const re = /id = "(\w+)",\s*\n\s*plotId = "(\w+)",\s*\n\s*title = "([^"]*)",\s*\n\s*subtitle = "([^"]*)",\s*\n\s*icon = "([^"]*)",\s*\n\s*kind = "(\w+)",\s*\n\s*price = (\d+),\s*\n\s*prompt = "([^"]*)",\s*\n\s*offset = Vector3\.new\(([-\d.]+), [-\d.]+, ([-\d.]+)\)/g;
+  const built = builtPlotIds();
+  const out = [];
+  let m;
+  while ((m = re.exec(src)) !== null) {
+    const [, id, plotId, title, subtitle, icon, kind, price, prompt, ox, oz] = m;
+    const alias = PLOT_ALIAS[plotId];
+    const plot = serverPlots().find((p) => p.id === alias);
+    if (!plot) continue;
+    out.push({
+      id, plotId, title, subtitle, icon, kind, price: Number(price), prompt,
+      x: +(plot.cx + Number(ox)).toFixed(1),
+      z: +(plot.cz + Number(oz)).toFixed(1),
+      active: built.has(plotId),
+    });
+  }
+  return { services: out, built: [...built] };
+}
+
+function readCarryables() {
+  const file = path.join(REPO_ROOT, "src", "shared", "Carryables.luau");
+  const src = fs.readFileSync(file, "utf8");
+  const itemRe = /id = "(\w+)",\s*\n\s*display = "([^"]*)",\s*\n\s*icon = "([^"]*)",[\s\S]*?color = Color3\.fromRGB\((\d+), (\d+), (\d+)\)/g;
+  const items = [];
+  let m;
+  while ((m = itemRe.exec(src)) !== null) {
+    const [, id, display, icon, r, g, b] = m;
+    items.push({ id, display, icon, css: `rgb(${r},${g},${b})` });
+  }
+  const rackRe = /\{ anchor = "(\w+)", kind = "(\w+)", count = (\d+), spread = (\d+)/g;
+  const racks = [];
+  while ((m = rackRe.exec(src)) !== null) {
+    const [, anchor, kindId, count, spread] = m;
+    racks.push({ anchor, kind: kindId, count: Number(count), spread: Number(spread) });
+  }
+  return { items, racks };
+}
+
+function servicesPayload() {
+  const { services, built } = readBuildingServices();
+  const { items, racks } = readCarryables();
+  const byId = Object.fromEntries(services.map((s) => [s.id, s]));
+  const colorOf = Object.fromEntries(items.map((i) => [i.id, i.css]));
+  const itemIcon = Object.fromEntries(items.map((i) => [i.id, i.icon]));
+
+  // vị trí từng món đồ (xếp vòng quanh quầy như CarryManager)
+  const enrichedRacks = racks.map((r) => {
+    const svc = byId[r.anchor];
+    if (!svc) return { ...r, positions: [], color: colorOf[r.kind] };
+    const positions = [];
+    for (let i = 0; i < r.count; i++) {
+      const a = (i / r.count) * Math.PI * 2;
+      const rad = r.spread * (0.55 + 0.45 * ((i * 37) % 100) / 100);
+      positions.push({ x: svc.x + Math.cos(a) * rad, z: svc.z + Math.sin(a) * rad });
+    }
+    return { ...r, icon: itemIcon[r.kind], color: colorOf[r.kind], positions };
+  });
+
+  const plots = serverPlots().map((p) => ({
+    id: p.id, district: p.district, cx: p.cx, cz: p.cz, sx: p.sx, sz: p.sz,
+    built: built.some((b) => PLOT_ALIAS[b] === p.id),
+  }));
+
+  return { plots, services, items, racks: enrichedRacks, built, sidewalkTopY: SIDEWALK_TOP_Y };
+}
+
+	if (url.pathname === "/services" || url.pathname === "/city-services") {
+		res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" });
+		res.end(fs.readFileSync(path.join(REPO_ROOT, "bridge", "services-demo.html"), "utf8"));
+		return;
+	}
+	if (url.pathname === "/api/services") {
+		// ⚠ Tính payload TRƯỚC khi ghi header: nếu throw sau writeHead thì server chết
+		// với ERR_HTTP_HEADERS_SENT (đã từng xảy ra).
+		let body;
+		let status = 200;
+		try {
+			body = JSON.stringify(servicesPayload());
+		} catch (e) {
+			status = 500;
+			body = JSON.stringify({ error: String((e && e.message) || e) });
+		}
+		res.writeHead(status, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+		res.end(body);
+		return;
+	}
 	if (url.pathname === "/api/radar") {
 		res.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
 		res.end(JSON.stringify(cachedRadar));

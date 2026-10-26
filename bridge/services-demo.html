@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Los Santos — Mỗi công trình một chức năng (Sync v25)</title>
+<style>
+  :root {
+    --bg: #06080c; --panel: #0d1218; --panel2: #131b24; --line: #26303c;
+    --text: #e2e8f0; --muted: #94a3b8; --accent: #38bdf8; --gold: #facc15;
+    --green: #4ade80; --red: #ef4444; --violet: #a78bfa;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: radial-gradient(1200px 600px at 50% -10%, #0f1a26 0%, var(--bg) 60%);
+    color: var(--text); font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+  header {
+    padding: 18px 24px 10px; display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+    border-bottom: 1px solid var(--line);
+  }
+  h1 { font-size: 19px; margin: 0; letter-spacing: .3px; }
+  .pill {
+    background: linear-gradient(135deg, #0ea5e9, #6366f1); color: #fff; font-size: 11px;
+    font-weight: 700; padding: 3px 9px; border-radius: 999px; letter-spacing: .6px;
+  }
+  .sub { color: var(--muted); font-size: 13px; }
+  main { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 16px; padding: 16px 24px 40px; }
+  @media (max-width: 1080px) { main { grid-template-columns: 1fr; } }
+  .stage {
+    position: relative; background: var(--panel); border: 1px solid var(--line);
+    border-radius: 14px; overflow: hidden; min-height: 520px;
+  }
+  canvas { display: block; width: 100%; height: 100%; }
+  aside { display: flex; flex-direction: column; gap: 14px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
+  .card h2 { font-size: 13px; margin: 0 0 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; }
+  .svc { border-left: 3px solid var(--accent); padding: 7px 10px; margin-bottom: 8px; background: var(--panel2); border-radius: 8px; }
+  .svc.pending { border-left-color: #475569; opacity: .62; }
+  .svc .t { font-size: 13px; font-weight: 700; }
+  .svc .s { font-size: 12px; color: var(--muted); }
+  .svc .p { font-size: 12px; color: var(--gold); margin-top: 2px; }
+  .badge { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 999px; margin-left: 6px; }
+  .badge.on { background: rgba(74, 222, 128, .16); color: var(--green); }
+  .badge.off { background: rgba(148, 163, 184, .16); color: var(--muted); }
+  .row { display: flex; justify-content: space-between; font-size: 13px; padding: 3px 0; color: var(--muted); }
+  .row b { color: var(--text); }
+  footer { padding: 0 24px 30px; color: var(--muted); font-size: 12px; }
+  code { background: var(--panel2); padding: 1px 6px; border-radius: 5px; color: #cbd5e1; }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+  .legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Los Santos — Mỗi công trình một chức năng</h1>
+  <span class="pill">SYNC v25</span>
+  <span class="sub">quầy dịch vụ · [E] để dùng · biển hiệu neon + cột sáng chỉ đường</span>
+</header>
+
+<main>
+  <div class="stage"><canvas id="cv"></canvas></div>
+  <aside>
+    <div class="card">
+      <h2>Tổng quan</h2>
+      <div class="row"><span>Quầy đang hoạt động</span><b id="kOn">0</b></div>
+      <div class="row"><span>Quầy chờ công trình</span><b id="kOff">0</b></div>
+      <div class="row"><span>Món đồ nhặt được</span><b id="kItems">0</b></div>
+      <div class="row"><span>Kệ hàng</span><b id="kRacks">0</b></div>
+    </div>
+    <div class="card">
+      <h2>Đồ có thể nhặt bằng tay</h2>
+      <div class="legend" id="items"></div>
+      <div class="sub" style="margin-top:10px;line-height:1.5">
+        [E] nhặt · [G] thả · [F / chuột trái] ném. Gạch ném trúng tường trừ máu khối,
+        trúng người trừ máu, lốp xe và thùng hàng thì nặng tay hơn.
+      </div>
+    </div>
+    <div class="card" style="max-height: 380px; overflow: auto">
+      <h2>Danh sách quầy</h2>
+      <div id="list"></div>
+    </div>
+  </aside>
+</main>
+
+<footer>
+  Bản đồ đọc trực tiếp từ <code>src/shared/World/BuildingServices.luau</code> + <code>src/shared/Carryables.luau</code>
+  qua <code>/api/services</code> — dùng để kiểm tra bằng mắt trước khi mở Studio.
+</footer>
+
+<script>
+const cv = document.getElementById("cv");
+const ctx = cv.getContext("2d");
+let DATA = { plots: [], services: [], items: [], racks: [], built: [] };
+let hover = null;
+
+const VIEW = { x0: -620, x1: 620, z0: -290, z1: 200 };
+const view = { scale: 1, ox: 0, oy: 0 };
+
+function resize() {
+  const rect = cv.parentElement.getBoundingClientRect();
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  cv.width = Math.max(320, rect.width * dpr);
+  cv.height = Math.max(320, rect.height * dpr);
+  cv.style.width = rect.width + "px";
+  cv.style.height = rect.height + "px";
+  const w = cv.width, h = cv.height;
+  view.scale = Math.min(w / (VIEW.x1 - VIEW.x0), h / (VIEW.z1 - VIEW.z0));
+  view.ox = (w - (VIEW.x1 - VIEW.x0) * view.scale) / 2;
+  view.oy = (h - (VIEW.z1 - VIEW.z0) * view.scale) / 2;
+}
+const sx = x => view.ox + (x - VIEW.x0) * view.scale;
+const sz = z => view.oy + (z - VIEW.z0) * view.scale;
+
+// ── đường (khớp WorldGrid v22) ──
+const EW = [
+  { c: -224, w: 40, name: "Vinewood Blvd" },
+  { c: -36,  w: 48, name: "Olympic Fwy" },
+  { c: 148,  w: 40, name: "Vespucci Blvd" },
+];
+const NS = [
+  { c: -556, w: 40 }, { c: -338, w: 40 }, { c: -110, w: 48 },
+  { c: 110, w: 48 }, { c: 338, w: 40 }, { c: 556, w: 40 },
+];
+
+function draw() {
+  ctx.clearRect(0, 0, cv.width, cv.height);
+
+  // nền
+  ctx.fillStyle = "#0a0f15";
+  ctx.fillRect(0, 0, cv.width, cv.height);
+
+  // đại lộ
+  ctx.fillStyle = "#12161c";
+  for (const r of EW) ctx.fillRect(sx(VIEW.x0), sz(r.c - r.w / 2), cv.width, r.w * view.scale);
+  for (const r of NS) ctx.fillRect(sx(r.c - r.w / 2), sz(VIEW.z0), r.w * view.scale, cv.height);
+
+  // ô đất
+  for (const p of DATA.plots) {
+    const x = sx(p.cx - p.sx / 2), z = sz(p.cz - p.sz / 2);
+    const w = p.sx * view.scale, h = p.sz * view.scale;
+    ctx.fillStyle = p.built ? "rgba(56,189,248,.09)" : "rgba(148,163,184,.05)";
+    ctx.fillRect(x, z, w, h);
+    ctx.strokeStyle = p.built ? "rgba(56,189,248,.45)" : "rgba(148,163,184,.22)";
+    ctx.lineWidth = Math.max(1, view.scale * 0.6);
+    ctx.strokeRect(x, z, w, h);
+
+    ctx.fillStyle = p.built ? "rgba(226,232,240,.92)" : "rgba(148,163,184,.55)";
+    ctx.font = (Math.max(10, view.scale * 12)).toFixed(0) + "px system-ui";
+    ctx.textAlign = "center";
+    ctx.fillText(p.id, x + w / 2, z + h / 2 + 4);
+    ctx.font = (Math.max(8, view.scale * 8)).toFixed(0) + "px system-ui";
+    ctx.fillStyle = "rgba(148,163,184,.5)";
+    ctx.fillText(p.district, x + w / 2, z + h / 2 + 4 + Math.max(11, view.scale * 13));
+  }
+
+  // quầy
+  for (const s of DATA.services) {
+    const px = sx(s.x), py = sz(s.z);
+    const R = Math.max(5, view.scale * 5.5);
+    const isHover = hover && hover.id === s.id;
+
+    // cột sáng
+    if (s.active) {
+      const g = ctx.createRadialGradient(px, py, 0, px, py, R * 4);
+      g.addColorStop(0, "rgba(56,189,248,.55)");
+      g.addColorStop(1, "rgba(56,189,248,0)");
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(px, py, R * 4, 0, Math.PI * 2); ctx.fill();
+    }
+
+    ctx.beginPath();
+    ctx.fillStyle = s.active ? "#38bdf8" : "rgba(100,116,139,.55)";
+    ctx.arc(px, py, isHover ? R * 1.25 : R, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(8,12,20,.9)";
+    ctx.lineWidth = Math.max(1.5, view.scale);
+    ctx.stroke();
+
+    ctx.font = (Math.max(9, view.scale * 9)).toFixed(0) + "px system-ui";
+    ctx.textAlign = "center";
+    ctx.fillStyle = s.active ? "#e2e8f0" : "rgba(148,163,184,.75)";
+    ctx.fillText(s.icon, px, py - R - 4);
+  }
+
+  // kệ đồ
+  for (const r of DATA.racks) {
+    if (!r.positions) continue;
+    for (const pos of r.positions) {
+      ctx.beginPath();
+      ctx.fillStyle = r.color || "#facc15";
+      ctx.arc(sx(pos.x), sz(pos.z), Math.max(2, view.scale * 2.2), 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  requestAnimationFrame(draw);
+}
+
+function renderList() {
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+  const groups = {};
+  for (const s of DATA.services) (groups[s.plotId + "|" + s.title] ||= []).push(s);
+  const order = [...DATA.services].sort((a, b) => (b.active - a.active) || a.plotId.localeCompare(b.plotId));
+  const seen = new Set();
+  for (const s of order) {
+    const key = s.plotId + "|" + s.title;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const items = groups[key];
+    const wrap = document.createElement("div");
+    wrap.className = "svc" + (s.active ? "" : " pending");
+    wrap.innerHTML =
+      `<div class="t">${s.icon} ${s.title}<span class="badge ${s.active ? "on" : "off"}">${s.active ? "HOẠT ĐỘNG" : "CHỜ DỰNG"}</span></div>` +
+      `<div class="s">${s.plotId.replace("Plot_", "")} · ${s.subtitle}</div>` +
+      `<div class="p">${items.map(i => "[" + i.kind + "] " + i.prompt).join(" · ")}</div>`;
+    list.appendChild(wrap);
+  }
+
+  const on = DATA.services.filter(s => s.active).length;
+  document.getElementById("kOn").textContent = on;
+  document.getElementById("kOff").textContent = DATA.services.length - on;
+  document.getElementById("kItems").textContent = DATA.items.length;
+  document.getElementById("kRacks").textContent = DATA.racks.length;
+
+  document.getElementById("items").innerHTML = DATA.items
+    .map(i => `<span><i style="background:${i.css}"></i>${i.icon} ${i.display}</span>`)
+    .join("");
+}
+
+cv.addEventListener("mousemove", (e) => {
+  const rect = cv.getBoundingClientRect();
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const mx = (e.clientX - rect.left) * dpr, my = (e.clientY - rect.top) * dpr;
+  let best = null, bestD = Infinity;
+  for (const s of DATA.services) {
+    const d = Math.hypot(sx(s.x) - mx, sz(s.z) - my);
+    if (d < bestD && d < 22) { bestD = d; best = s; }
+  }
+  hover = best;
+  cv.style.cursor = best ? "pointer" : "default";
+  cv.title = best ? `${best.icon} ${best.title} — ${best.prompt}` : "";
+});
+
+async function load() {
+  try {
+    const res = await fetch("/api/services");
+    DATA = await res.json();
+  } catch (e) {
+    console.error(e);
+  }
+  renderList();
+}
+
+window.addEventListener("resize", () => { resize(); });
+resize();
+load();
+requestAnimationFrame(draw);
+</script>
+</body>
+</html>

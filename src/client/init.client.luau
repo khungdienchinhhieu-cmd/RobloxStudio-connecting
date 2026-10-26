@@ -17,6 +17,7 @@ local WeaponClient = require(script:WaitForChild("WeaponClient"))
 local GtaWeaponWheel = require(script:WaitForChild("UI"):WaitForChild("GtaWeaponWheel"))
 local NPCAnimator = require(script:WaitForChild("NPCAnimator"))
 local CityCuller = require(script:WaitForChild("CityCuller"))
+local CarryClient = require(script:WaitForChild("CarryClient"))
 
 GtaHud.mount(localPlayer, hudRemote)
 VehiclePromptUI.mount(localPlayer)
@@ -30,3 +31,14 @@ NPCAnimator.mount()
 -- CHỈ RENDER THỨ CÓ TRONG MÀN HÌNH: cất công trình ở xa / sau lưng camera khỏi Workspace
 -- (engine thôi render + thôi xử lý vật lý) -> hết khựng khi đi qua ranh giới ô đất.
 CityCuller.mount()
+
+-- CƠ CHẾ TAY (nhặt · tha · ném) + HUD "ĐANG VÁC"
+CarryClient.mount()
+
+-- ⚠ VŨ KHÍ KHÔNG CÒN LÀ "ITEM" TRONG TÚI ĐỒ ROBLOX.
+-- Tắt hẳn giao diện Backpack (thanh item + phím 1..9 mặc định) — người chơi chỉ
+-- chọn súng bằng VÒNG CHỌN (giữ TAB) đúng chuẩn GTA V.
+local StarterGui = game:GetService("StarterGui")
+pcall(function()
+	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, false)
+end)

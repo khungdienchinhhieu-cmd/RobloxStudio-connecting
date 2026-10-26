@@ -11,6 +11,8 @@ local VehicleManager = require(script:WaitForChild("VehicleManager"))
 local WeaponManager = require(script:WaitForChild("WeaponManager"))
 local NPCManager = require(script:WaitForChild("NPCManager"))
 local LSCustomsService = require(script:WaitForChild("LSCustomsService"))
+local ServiceManager = require(script:WaitForChild("ServiceManager"))
+local CarryManager = require(script:WaitForChild("CarryManager"))
 
 -- Tạo thư mục RemoteEvents phục vụ HUD, Xe & Vũ khí GTA V
 local remotesFolder = ReplicatedStorage:FindFirstChild("GtaRemotes")
@@ -50,6 +52,14 @@ VehicleManager.init()
 WeaponManager.init(activeRemotes)
 NPCManager.init(activeHudRemote)
 
+-- 2.1. MỖI CÔNG TRÌNH MỘT CHỨC NĂNG (Sync v25): quầy dịch vụ + biển hiệu + prompt [E]
+--      (quầy ở ô đất chưa dựng sẽ tự bật lên khi agent dựng xong module)
+ServiceManager.bind(WeaponManager, VehicleManager)
+ServiceManager.init(activeRemotes, activeHudRemote, losSantosRoot)
+
+-- 2.2. CƠ CHẾ TAY: lốp xe / gạch / thùng hàng / cọc / chai — nhặt, tha, ném
+CarryManager.init(activeRemotes, activeHudRemote, losSantosRoot)
+
 -- 3. Kích hoạt dịch vụ ĐỘ XE THẬT của Los Santos Customs (Plot_C1): 2 khoang + sửa/sơn/turbo
 LSCustomsService.init(activeRemotes, activeHudRemote, losSantosRoot)
 
@@ -59,6 +69,8 @@ local function setupPlayer(player: Player)
 	player:SetAttribute("Cash", STARTING_CASH)
 	player:SetAttribute("Armor", 65)
 	player:SetAttribute("WantedLevel", 0)
+	player:SetAttribute("Bank", 0)
+	player:SetAttribute("Carrying", false)
 
 	local leaderstats = Instance.new("Folder")
 	leaderstats.Name = "leaderstats"

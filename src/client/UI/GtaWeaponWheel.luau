@@ -13,6 +13,7 @@
 ]]
 
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -613,6 +614,12 @@ function GtaWeaponWheel.mount(localPlayer: Player, syncRemote: RemoteEvent, relo
 	--========================================================================
 	-- E. TRANG BỊ
 	--========================================================================
+	-- Sync v25: VÒNG CHỌN SÚNG là ĐƯỜNG DUY NHẤT để đổi vũ khí.
+	-- Không còn hotbar / túi đồ Roblox nào hiện ra nữa (đã tắt CoreGui Backpack),
+	-- nên mọi thay đổi vũ khí đều đi qua remote `WeaponEquip` -> server trang bị.
+	local remotesFolder = ReplicatedStorage:WaitForChild("GtaRemotes")
+	local equipRemote = remotesFolder:WaitForChild("WeaponEquip") :: RemoteEvent
+
 	local function equipSlot(index: number)
 		local w = bySlot[index]
 		if not w then
@@ -623,17 +630,12 @@ function GtaWeaponWheel.mount(localPlayer: Player, syncRemote: RemoteEvent, relo
 		if not hum then
 			return
 		end
-		if w.name == "Unarmed" then
-			hum:UnequipTools()
-			equippedName = "Unarmed"
-		else
-			local backpack = localPlayer:FindFirstChild("Backpack")
-			local tool = (char and char:FindFirstChild(w.name)) or (backpack and backpack:FindFirstChild(w.name))
-			if tool and tool:IsA("Tool") then
-				hum:EquipTool(tool)
-				equippedName = w.name
-			end
+		if localPlayer:GetAttribute("Carrying") == true then
+			-- Hai tay đang vác đồ -> không rút súng (server cũng chặn)
+			return
 		end
+		equipRemote:FireServer(w.name)
+		equippedName = w.name
 		updateCard()
 	end
 

@@ -193,6 +193,11 @@ function DistrictRegistry.buildAll(losSantosRoot: Instance): BuildSummary
 		local okBuild, err = pcall(function()
 			local node = item.spec.build(container)
 			if node then
+				-- Sync v25: đóng dấu PlotId lên model để ServiceManager biết ô đất nào
+				-- ĐÃ CÓ công trình (quầy dịch vụ chỉ bật ở ô đã dựng xong).
+				if item.spec.PlotId and node:IsA("Instance") and node:GetAttribute("PlotId") == nil then
+					node:SetAttribute("PlotId", item.spec.PlotId)
+				end
 				applyRelocation(node, item.spec.PlotId)
 			end
 		end)
@@ -241,7 +246,10 @@ function DistrictRegistry.buildOne(losSantosRoot: Instance, moduleName: string):
 	clearPlotPlaceholders(losSantosRoot, s.PlotId)
 
 	local okBuild, err = pcall(function()
-		s.build(container)
+		local node = s.build(container)
+		if node and s.PlotId and node:IsA("Instance") and node:GetAttribute("PlotId") == nil then
+			node:SetAttribute("PlotId", s.PlotId)
+		end
 	end)
 	if not okBuild then
 		return false, tostring(err)

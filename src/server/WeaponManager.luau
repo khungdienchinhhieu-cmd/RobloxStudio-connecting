@@ -500,6 +500,28 @@ function WeaponManager.init(remotesFolder: Instance)
 		})
 	end
 
+	pushAmmoHook = pushAmmo
+	pushStateHook = pushState
+	giveLoadoutHook = giveLoadout
+
+	--=================================================================
+	-- CHỌN SÚNG TỪ VÒNG CHỌN (GTA V) — KHÔNG CÒN HOTBAR ROBLOX
+	--=================================================================
+	local equipRemote = remotesFolder:FindFirstChild("WeaponEquip") :: RemoteEvent?
+	if not equipRemote then
+		local created = Instance.new("RemoteEvent")
+		created.Name = "WeaponEquip"
+		created.Parent = remotesFolder
+		equipRemote = created
+	end
+	(equipRemote :: RemoteEvent).OnServerEvent:Connect(function(player, weaponName)
+		if type(weaponName) ~= "string" then
+			return
+		end
+		WeaponManager.setEquipped(player, weaponName)
+		pushState(player)
+	end)
+
 	local function hookPlayer(player: Player)
 		local function onChar()
 			task.wait(0.15)
@@ -884,6 +906,99 @@ function WeaponManager.init(remotesFolder: Instance)
 			activeFireRemote:FireClient(player, "hit", shatteredAny)
 		end
 	end)
+end
+
+--=====================================================================
+-- API CHO CÁC HỆ THỐNG KHÁC (quầy dịch vụ, vòng chọn súng, cơ chế tay)
+--=====================================================================
+-- `pushAmmo` / `pushStatePayload` được gán trong init() (chúng cần remote).
+local pushAmmoHook: ((Player, string, boolean?) -> ())? = nil
+local pushStateHook: ((Player) -> ())? = nil
+local giveLoadoutHook: ((Player) -> ())? = nil
+
+--- Trang bị vũ khí theo lựa chọn của VÒNG CHỌN SÚNG (GTA V).
+--- Đây là ĐƯỜNG DUY NHẤT để đổi súng: client không còn hotbar Roblox nào cả.
+function WeaponManager.setEquipped(player: Player, weaponName: string): boolean
+	local char = player.Character
+	local hum = char and char:FindFirstChildOfClass("Humanoid")
+	if not hum then
+		return false
+	end
+
+	-- Đang vác đồ bằng tay thì không rút súng (hai tay bận)
+	if player:GetAttribute("Carrying") == true then
+		pcall(function()
+			hum:UnequipTools()
+		end)
+		return false
+	end
+
+	if weaponName == "" or weaponName == "Unarmed" then
+		pcall(function()
+			hum:UnequipTools()
+		end)
+		if pushStateHook then
+			pushStateHook(player)
+		end
+		return true
+	end
+
+	local spec = SPECS[weaponName]
+	if not spec then
+		return false
+	end
+
+	local charTool = char and char:FindFirstChild(weaponName)
+	if charTool and charTool:IsA("Tool") then
+		return true -- đã cầm sẵn
+	end
+	local backpack = player:FindFirstChild("Backpack")
+	local tool = (backpack and backpack:FindFirstChild(weaponName)) or charTool
+	if not tool or not tool:IsA("Tool") then
+		return false
+	end
+	pcall(function()
+		hum:EquipTool(tool)
+	end)
+	return true
+end
+
+--- Nạp đầy đạn dự phòng cho MỌI súng (dùng ở quầy 24/7 Supermarket / LSPD).
+function WeaponManager.refillAmmo(player: Player): number
+	local st = getState(player)
+	local n = 0
+	for name, spec in pairs(SPECS) do
+		if spec.mag > 0 then
+			st.ammo[name] = { mag = spec.mag, reserve = spec.reserve }
+			n += 1
+			if pushAmmoHook then
+				pushAmmoHook(player, name, false)
+			end
+		end
+	end
+	if pushStateHook then
+		pushStateHook(player)
+	end
+	return n
+end
+
+--- Cấp một vũ khí (nếu chưa có) + đầy đạn.
+function WeaponManager.grantWeapon(player: Player, weaponName: string): boolean
+	local spec = SPECS[weaponName]
+	if not spec then
+		return false
+	end
+	if giveLoadoutHook then
+		giveLoadoutHook(player)
+	end
+	local st = getState(player)
+	if spec.mag > 0 then
+		st.ammo[weaponName] = { mag = spec.mag, reserve = spec.reserve }
+	end
+	if pushStateHook then
+		pushStateHook(player)
+	end
+	return true
 end
 
 WeaponManager.SPECS = SPECS
