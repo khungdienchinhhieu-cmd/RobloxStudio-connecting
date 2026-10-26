@@ -137,7 +137,12 @@ node bridge/publish.mjs \
 
 ## 6. CÁC PROMPT MẪU COPY-PASTE CHO TỪNG TAB ARENA.AI SONG SONG
 
-> ⚠️ **BẢN MỚI NHẤT (v3) đã chuyển sang file riêng: [`agents/WORKER_PROMPT_V3.md`](agents/WORKER_PROMPT_V3.md)**
+> ⚠️ **BẢN MỚI NHẤT (v4) — dùng 2 file tuỳ hạng mục:**
+> - Công trình / nền / hạ tầng: [`agents/WORKER_PROMPT_V3.md`](agents/WORKER_PROMPT_V3.md)
+> - **UI/UX + model vũ khí: [`agents/WORKER_PROMPT_V4_UI_WEAPONS.md`](agents/WORKER_PROMPT_V4_UI_WEAPONS.md)**
+>   (khoá phạm vi file, tỉ lệ 1:1 `1 m = 3,33 stud`, bắt buộc demo HTML + bảng số liệu QA)
+>
+> Bản v3 (giữ nguyên hiệu lực cho công trình):
 > Bản v3 bổ sung 3 luật bắt buộc: đọc `docs/PERFORMANCE.md` (part nhỏ không va chạm, sàn/mái giữ va chạm),
 > đọc `docs/UI_GUIDE.md` (đồng bộ bảng màu HUD mới), và nghiệm thu bằng **số liệu** (0 tràn biên ·
 > 0 Z-fighting · 0 khối lơ lửng · ≥ 10 ảnh render). Prompt dưới đây chỉ giữ để tham khảo lịch sử.

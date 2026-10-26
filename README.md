@@ -23,22 +23,34 @@ Dự án tái hiện thế giới mở **Grand Theft Auto V (Los Santos)** trên
 
 ---
 
-## 🗺️ Quy Hoạch Bản Đồ Đối Xứng (`WorldGrid.luau` — `720 × 720 studs`)
+## 🗺️ Quy Hoạch Bản Đồ Đối Xứng (`WorldGrid.luau` — `1 160 × 1 160 studs` · **tỉ lệ 1:1 ngoài đời**)
 
-| Mã Khu | Tên Khu Vực (Los Santos) | Tọa độ X (`studs`) | Tọa độ Z (`studs`) | Trạng thái |
-| :--- | :--- | :---: | :---: | :--- |
-| **North Ridge** | **Vinewood Hills** (Đồi vát nghiêng tự nhiên, vách đá & tường chắn ghép khối) | `[-360, +360]` | `[-360, -240]` | ✅ Hoàn thành ở Nền v2 |
-| **Plot D1** | **Rockford Hills** (Ô móng kỹ thuật sạch chờ công trình) | `[-308, -128]` | `[-208, -54]` | ⏳ Chờ dựng từng công trình |
-| **Plot D2** | **Pillbox Hill** (Ô móng kỹ thuật sạch chờ Tháp Maze Bank) | `[-92, +92]` | `[-208, -54]` | ⏳ Chờ dựng từng công trình |
-| **Plot D3** | **Downtown Vinewood** (Ô móng kỹ thuật sạch chờ công trình) | `[+128, +308]` | `[-208, -54]` | ⏳ Chờ dựng từng công trình |
-| **Plot C1** | **Del Perro — Los Santos Customs** (`3,462` parts, `98.1%` máu ẩn, 2 khoang độ xe **có chức năng thật** `[E]`) | `[-308, -128]` | `[-18, +132]` | ✅ Nghiệm thu v10 — đã lên Studio (`Sync v9`) |
-| **Plot C2** | **Legion Square** (Nền quảng trường bậc cấp, hồ nước & tường gạch ghép khối) | `[-92, +92]` | `[-18, +132]` | ✅ Hoàn thành ở Nền v2 |
-| **Plot C3** | **Mission Row** (Nửa Tây: Siêu thị 24/7 `934` parts • Nửa Đông: **Đồn LSPD Mission Row `4 639` parts, `99.6%` máu ẩn**) | `[+128, +308]` | `[-18, +132]` | ✅ **Cả 2 nửa nghiệm thu** — `Sync v13` |
-| **Plot E1** | **Pacific Bluffs** — Biệt thự ven vịnh mẫu **"ít part"** (`176` part vs `3 462` của LS Customs, `−94,9 %`) | `[-522, -342]` | `[-208, -54]` | ✅ **Sync v21** |
-| **Plot E2** | **La Mesa** (trống — chờ Agent, Giai đoạn 4) | `[+342, +522]` | `[-208, -54]` | ☐ |
-| **Plot E3** | **Little Seoul** (trống — chờ Agent, Giai đoạn 4) | `[-522, -342]` | `[-33, +132]` | ☐ |
-| **Plot E4** | **Richman Glen** (trống — chờ Agent, Giai đoạn 4) | `[+342, +522]` | `[-33, +132]` | ☐ |
-| **South Coast** | **Vespucci Beach** (Kè đá ghép khối, cầu thang xuống biển, sàn gỗ, kè chắn sóng) | `[-360, +360]` | `[+164, +360]` | ✅ Hoàn thành ở Nền v2 |
+> **Thước đo chuẩn (từ `Sync v22`):** `1 m = 3,33 stud` (1 stud = 0,30 m). Mọi kích thước đều suy ra từ hằng số
+> `WorldGrid.STUDS_PER_METER` — **không đặt số stud tuỳ hứng nữa**.
+> Đại lộ 4 làn = **48 stud (14,4 m)** · đại lộ 2 làn = **40 stud (12 m)** · vỉa hè = **14 stud (4,2 m)** · tầng nhà = **11 stud (3,3 m)**.
+
+| Mã Khu | Tên Khu Vực (Los Santos) | Tọa độ X (`studs`) | Tọa độ Z (`studs`) | Kích thước thật | Trạng thái |
+| :--- | :--- | :---: | :---: | :---: | :--- |
+| **North Ridge** | **Vinewood Hills** (Đồi vát nghiêng tự nhiên, vách đá & tường chắn ghép khối) | `[-580, +580]` | `[-380, -244]` | 348 × 41 m | ✅ Hoàn thành ở Nền v2 |
+| **Plot E1** | **Pacific Bluffs** — Biệt thự ven vịnh mẫu **"ít part"** (`176` part, `−94,9 %`) | `[-536, -358]` | `[-204, -60]` | 53 × 43 m | ✅ **Sync v22** (dời + co theo lưới mới) |
+| **Plot D1** | **Rockford Hills** (Ô móng kỹ thuật sạch chờ công trình) | `[-318, -134]` | `[-204, -60]` | 55 × 43 m | ⏳ Chờ dựng từng công trình |
+| **Plot D2** | **Pillbox Hill** — **Tháp Maze Bank** (`2 312` part, `99.1%` máu ẩn) | `[-86, +86]` | `[-204, -60]` | 52 × 43 m | ✅ Nghiệm thu 9.2/10 — **Sync v22** |
+| **Plot D3** | **Downtown Vinewood** (Ô móng kỹ thuật sạch chờ công trình) | `[+134, +318]` | `[-204, -60]` | 55 × 43 m | ⏳ Chờ dựng từng công trình |
+| **Plot E2** | **La Mesa** (trống — chờ Agent, Giai đoạn 4) | `[+358, +536]` | `[-204, -60]` | 53 × 43 m | ☐ |
+| **Plot E3** | **Little Seoul** (trống — chờ Agent, Giai đoạn 4) | `[-536, -358]` | `[-12, +128]` | 53 × 42 m | ☐ |
+| **Plot C1** | **Del Perro — Los Santos Customs** (`3 462` part, `98.1%` máu ẩn, 2 khoang độ xe thật `[E]`) | `[-318, -134]` | `[-12, +128]` | 55 × 42 m | ✅ Nghiệm thu v10 — **Sync v22** |
+| **Plot C2** | **Legion Square** (Quảng trường bậc cấp, hồ nước & tường gạch ghép khối) | `[-86, +86]` | `[-12, +128]` | 52 × 42 m | ✅ Hoàn thành ở Nền v2 |
+| **Plot C3** | **Mission Row** (Nửa Tây: Siêu thị 24/7 `934` part • Nửa Đông: **Đồn LSPD `4 639` part**) | `[+134, +318]` | `[-12, +128]` | 55 × 42 m | ✅ Cả 2 nửa — **Sync v22** |
+| **Plot E4** | **Richman Glen** (trống — chờ Agent, Giai đoạn 4) | `[+358, +536]` | `[-12, +128]` | 53 × 42 m | ☐ |
+| **South Coast** | **Vespucci Beach** (Kè đá ghép khối, cầu thang xuống biển, sàn gỗ, kè chắn sóng) | `[-580, +580]` | `[+168, +380]` | 348 × 64 m | ✅ Hoàn thành ở Nền v2 |
+
+**9 đại lộ (đo lại 1:1):**
+
+| Đại lộ | Hướng | Trục | Rộng | Quy đổi |
+| :--- | :---: | :---: | :---: | :---: |
+| Vinewood Blvd · Olympic Fwy · Vespucci Blvd | Đông–Tây | `Z = −224 / −36 / +148` | 40 / **48** / 40 stud | 12 / **14,4** / 12 m |
+| Pacific Coast Hwy · Del Perro Fwy · San Andreas Ave | Bắc–Nam | `X = −556 / −338 / −110` | 40 / 40 / **48** stud | 12 / 12 / **14,4** m |
+| Alta St · Elgin Ave · La Mesa Ave | Bắc–Nam | `X = +110 / +338 / +556` | **48** / 40 / 40 stud | **14,4** / 12 / 12 m |
 
 ---
 
@@ -115,4 +127,18 @@ Dự án tái hiện thế giới mở **Grand Theft Auto V (Los Santos)** trên
   - **Nhiều NPC hơn:** `MAX_NPCS 74 → 150`, ambient `46 → 84`, xe có tài xế `4 → 8`. Điểm đi bộ sinh tự động nay là **9 đại lộ → 344 điểm** thay vì 296.
   - **★ KỸ THUẬT "NHÀ ÍT PART MÀ VẪN BỂ":** module mới `DestructibleShell.luau` chia công trình thành **4 tầng** — kết cấu chịu lực (~14 part) · **tấm vỏ = 1 ô cửa sổ** (~52 part) · **hoa văn gạch/ngói bằng `Texture` (0 part)** · trang trí (~9 part). Kèm đó `DestructionManager.fractureWorldBlock` được nâng cấp: **số mảnh vỡ tự co giãn theo kích thước khối** (viên gạch → 2 mảnh, tấm tường → 10–14 mảnh, chia theo lưới 3D). Kết quả đo bằng harness: **176 part (so với 3 462 của LS Customs) = −94,9 %**, mà phá sạch vẫn sinh **894 mảnh vỡ**. Chi tiết đầy đủ: [`docs/DESTRUCTIBLE_BUDGET.md`](docs/DESTRUCTIBLE_BUDGET.md).
   - **Công trình mẫu:** **Biệt thự Pacific Bluffs** (`Plot_E1`) — 3 tầng, 44 × 28 stud, hồ bơi, sân hiên, cổng sắt bể được, 7 cây cọ, hàng rào cây. Harness xác nhận `0` part dưới mặt đất, `0` part tràn biên X/Z.
-- [ ] **Bước 12: 3 ô đất còn lại (E2 La Mesa · E3 Little Seoul · E4 Richman Glen)**
+- [x] **Bước 12: TỈ LỆ 1:1 VỚI NGOÀI ĐỜI — ĐƯỜNG & MỌI THỨ ĐÚNG KÍCH THƯỚC THẬT (`Sync v22`)** ✅
+  - **Vấn đề:** sau khi mở rộng bản đồ, mặt đường vẫn 32–36 stud (9,6–10,8 m) trong khi xe rộng 7,1 stud (2,1 m) → nhìn như **đường hẻm**, không ra đại lộ.
+  - **Chuẩn mới:** `WorldGrid.STUDS_PER_METER = 3.33` (1 stud = 0,30 m, khớp chiều cao nhân vật R15 ~5 stud ≈ 1,65 m) + helper `WorldGrid.meters(m)`. **Mọi** con số kích thước suy ra từ đây.
+  - **Đường rộng đúng luật:** 4 làn → **48 stud (14,4 m)**, 2 làn + làn đỗ → **40 stud (12 m)**; vỉa hè **9 → 14 stud (4,2 m)**. Xe 7,1 stud vẫn chiếm ~60 % bề rộng làn → đúng tỉ lệ thật.
+  - **Lưới lại toàn bộ:** bản đồ 1 120 → **1 160 stud (±580)**; 10 ô đất xếp **khít tuyệt đối** với mép đường (gap = **0,000 stud**, kiểm bằng script); ô đất 52–55 m × 42–43 m — đúng cỡ block downtown Los Santos.
+  - **Không sửa tay 4 module công trình 3 000–4 600 dòng:** thêm `WorldGrid.RELOCATION` + `DistrictRegistry.applyRelocation()` — dựng xong rồi biến đổi cả model `X' = (X − oldCX)·k + newCX`, giữ nguyên trục Y (tầng vẫn 3,3 m). Harness xác nhận cả **4 công trình** (LS Customs, Maze Bank, LSPD + Supermarket, Biệt thự Pacific Bluffs) sau khi dời **vẫn nằm trọn trong ô đất mới**.
+  - **Hết hardcode:** chỗ chia đôi `Plot_C3` (trước ghi cứng `217.5 / 218.5`) nay đọc tâm ô đất từ `WorldGrid.PLOTS`; 2 dải vỉa hè vành đai (trước ghi cứng `X = ±350` → rơi vào lòng đường Elgin mới) nay suy ra từ mép đại lộ ngoài cùng.
+  - **NPC & xe:** điểm đi bộ sinh lại theo vỉa hè 14 stud → **267 điểm** (bỏ cả điểm rơi vào lòng đường tại giao lộ); vành đai giữa dời `±330 → ±338`. 3 tuyến xe kiểm bằng harness: **0 bước ra ngoài đường**.
+  - Demo browser `/` và `/city` cập nhật đúng số liệu mới (1 m = 3,33 stud).
+> **Agent phụ chuyên UI/UX + model súng:** prompt copy-paste đầy đủ ở
+> [`agents/WORKER_PROMPT_V4_UI_WEAPONS.md`](agents/WORKER_PROMPT_V4_UI_WEAPONS.md) — 6 thẻ việc
+> (`UI_W1_GUN_MODEL_FACTORY`, `UI_W2_HUD_RADAR`, `UI_W3_WEAPON_WHEEL_V2`, `UI_W4_INVENTORY`,
+> `UI_W5_COMBAT_FX`, `UI_W6_PHONE`) đã có sẵn trong [`agents/AGENT_TASK_BOARD.json`](agents/AGENT_TASK_BOARD.json).
+
+- [ ] **Bước 13: 3 ô đất còn lại (E2 La Mesa · E3 Little Seoul · E4 Richman Glen)**

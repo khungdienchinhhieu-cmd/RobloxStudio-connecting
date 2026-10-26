@@ -363,29 +363,38 @@ const HTML = `<!DOCTYPE html>
 
 <script>
 // === 1. DỮ LIỆU QUY HOẠCH ĐỐI XỨNG CHUẨN WORLDGRID.LUAU ===
+// Sync v22 — tỉ lệ 1:1 ngoài đời: 1 m = 3,33 stud
+const STUDS_PER_M = 3.33;
+const SIDEWALK_W = 14; // 4,2 m
 const EW_ROADS = [
-  { name: "Vinewood Blvd", coord: -224, width: 32, lanes: 2 },
-  { name: "Olympic Fwy",   coord: -36,  width: 36, lanes: 4 },
-  { name: "Vespucci Blvd", coord: 148,  width: 32, lanes: 2 },
+  { name: "Vinewood Blvd", coord: -224, width: 40, lanes: 2 },
+  { name: "Olympic Fwy",   coord: -36,  width: 48, lanes: 4 },
+  { name: "Vespucci Blvd", coord: 148,  width: 40, lanes: 2 },
 ];
 const NS_ROADS = [
-  { name: "Del Perro Fwy",   coord: -324, width: 32, lanes: 2 },
-  { name: "San Andreas Ave", coord: -110, width: 36, lanes: 4 },
-  { name: "Alta St",         coord: 110,  width: 36, lanes: 4 },
-  { name: "Elgin Ave",       coord: 324,  width: 32, lanes: 2 },
+  { name: "Pacific Coast Hwy", coord: -556, width: 40, lanes: 2 },
+  { name: "Del Perro Fwy",     coord: -338, width: 40, lanes: 2 },
+  { name: "San Andreas Ave",   coord: -110, width: 48, lanes: 4 },
+  { name: "Alta St",           coord: 110,  width: 48, lanes: 4 },
+  { name: "Elgin Ave",         coord: 338,  width: 40, lanes: 2 },
+  { name: "La Mesa Ave",       coord: 556,  width: 40, lanes: 2 },
 ];
 const PLOTS = [
-  { id: "D1", district: "ROCKFORD HILLS",    cx: -218, cz: -131, sx: 180, sz: 154 },
-  { id: "D2", district: "PILLBOX HILL",      cx: 0,    cz: -131, sx: 184, sz: 154 },
-  { id: "D3", district: "DOWNTOWN VINEWOOD", cx: 218,  cz: -131, sx: 180, sz: 154 },
-  { id: "C1", district: "DEL PERRO",         cx: -218, cz: 57,   sx: 180, sz: 150 },
-  { id: "C2", district: "LEGION SQUARE",     cx: 0,    cz: 57,   sx: 184, sz: 150, plaza: true },
-  { id: "C3", district: "MISSION ROW",       cx: 218,  cz: 57,   sx: 180, sz: 150 },
+  { id: "E1", district: "PACIFIC BLUFFS",    cx: -447, cz: -132, sx: 178, sz: 144 },
+  { id: "D1", district: "ROCKFORD HILLS",    cx: -226, cz: -132, sx: 184, sz: 144 },
+  { id: "D2", district: "PILLBOX HILL",      cx: 0,    cz: -132, sx: 172, sz: 144 },
+  { id: "D3", district: "DOWNTOWN VINEWOOD", cx: 226,  cz: -132, sx: 184, sz: 144 },
+  { id: "E2", district: "LA MESA",           cx: 447,  cz: -132, sx: 178, sz: 144 },
+  { id: "E3", district: "LITTLE SEOUL",      cx: -447, cz: 58,   sx: 178, sz: 140 },
+  { id: "C1", district: "DEL PERRO",         cx: -226, cz: 58,   sx: 184, sz: 140 },
+  { id: "C2", district: "LEGION SQUARE",     cx: 0,    cz: 58,   sx: 172, sz: 140, plaza: true },
+  { id: "C3", district: "MISSION ROW",       cx: 226,  cz: 58,   sx: 184, sz: 140 },
+  { id: "E4", district: "RICHMAN GLEN",      cx: 447,  cz: 58,   sx: 178, sz: 140 },
 ];
 
 const state = {
   px: -12, pz: 118, heading: 0,
-  camYaw: -0.45, camPitch: 0.38, camDist: 145,
+  camYaw: -0.45, camPitch: 0.38, camDist: 210,
   cash: 5000, hp: 100, armor: 65, stamina: 100, wanted: 0,
   drivingCar: null, tracerTimer: 0, tracerEnd: null, hitShatter: false,
 };
@@ -539,9 +548,9 @@ window.simCmd = function(cmd) {
 
 function getLocationInfo(x, z) {
   let district = "LOS SANTOS";
-  if (z < -240) district = "VINEWOOD HILLS";
-  else if (z >= 250) district = "PACIFIC OCEAN";
-  else if (z >= 164) district = "VESPUCCI BEACH";
+  if (z < -244) district = "VINEWOOD HILLS";
+  else if (z >= 254) district = "PACIFIC OCEAN";
+  else if (z >= 168) district = "VESPUCCI BEACH";
   else {
     for (const p of PLOTS) {
       if (Math.abs(x - p.cx) <= p.sx/2 + 18 && Math.abs(z - p.cz) <= p.sz/2 + 18) { district = p.district; break; }
@@ -578,7 +587,7 @@ wCanvas.addEventListener("pointermove", e => {
 wCanvas.addEventListener("pointerup", () => { dragging = false; });
 wCanvas.addEventListener("wheel", e => {
   e.preventDefault();
-  state.camDist = Math.max(85, Math.min(460, state.camDist + e.deltaY * 0.22));
+  state.camDist = Math.max(85, Math.min(620, state.camDist + e.deltaY * 0.22));
 }, { passive: false });
 
 const SLABS = [
@@ -847,9 +856,10 @@ function tick(now) {
   rCtx.scale(S, S);
   rCtx.translate(-state.px, -state.pz);
 
-  rCtx.fillStyle = "#2480c6"; rCtx.fillRect(-360, 246, 720, 120);
-  rCtx.fillStyle = "#d6c08e"; rCtx.fillRect(-360, 174, 720, 72);
-  rCtx.fillStyle = "#3a6036"; rCtx.fillRect(-360, -360, 720, 120);
+  // v22: bản đồ rộng 1 160 stud (±580)
+  rCtx.fillStyle = "#2480c6"; rCtx.fillRect(-580, 250, 1160, 140);
+  rCtx.fillStyle = "#d6c08e"; rCtx.fillRect(-580, 174, 1160, 76);
+  rCtx.fillStyle = "#3a6036"; rCtx.fillRect(-580, -380, 1160, 136);
   for (const p of PLOTS) {
     rCtx.fillStyle = p.plaza ? "#4e9254" : "#343c48";
     rCtx.fillRect(p.cx - p.sx/2, p.cz - p.sz/2, p.sx, p.sz);
@@ -858,8 +868,8 @@ function tick(now) {
   rCtx.fillRect(-14, 57-66, 28, 132); rCtx.fillRect(-83, 57-12, 166, 24); rCtx.fillRect(-48, 57-43, 96, 86);
   rCtx.fillStyle = "#2ea8ce"; rCtx.fillRect(-20, 49-14, 40, 28);
   rCtx.fillStyle = "#ccd6e2";
-  for (const r of EW_ROADS) rCtx.fillRect(-340, r.coord - r.width/2, 680, r.width);
-  for (const r of NS_ROADS) rCtx.fillRect(r.coord - r.width/2, -240, r.width, 404);
+  for (const r of EW_ROADS) rCtx.fillRect(-580, r.coord - r.width/2, 1160, r.width);
+  for (const r of NS_ROADS) rCtx.fillRect(r.coord - r.width/2, -244, r.width, 412);
   rCtx.fillStyle = "#facc15"; rCtx.beginPath(); rCtx.arc(0, 49, 8, 0, Math.PI*2); rCtx.fill();
   for (const c of CARS) {
     rCtx.fillStyle = "#38bdf8"; rCtx.fillRect(c.cx - 5, c.cz - 5, 10, 10);

@@ -739,7 +739,8 @@ local function buildSidewalkPoints(): { Vector3 }
 
 	-- 3 đại lộ Đông–Tây (Vinewood / Olympic / Vespucci): vỉa hè 2 bên
 	for _, r in ipairs(WorldGrid.EW_ROADS) do
-		local off = (r.width / 2) + 5
+		-- Tâm vỉa hè = mép đường + nửa chiều rộng vỉa hè (v22: 14 stud = 4,2 m)
+		local off = (r.width / 2) + WorldGrid.SIDEWALK_WIDTH * 0.5
 		for x = r.min + 14, r.max - 14, 24 do
 			table.insert(pts, Vector3.new(x, 0, r.coord + off))
 			table.insert(pts, Vector3.new(x + 12, 0, r.coord - off))
@@ -748,7 +749,7 @@ local function buildSidewalkPoints(): { Vector3 }
 
 	-- 6 đại lộ Bắc–Nam (Pacific Coast / Del Perro / San Andreas / Alta / Elgin / La Mesa)
 	for _, r in ipairs(WorldGrid.NS_ROADS) do
-		local off = (r.width / 2) + 5
+		local off = (r.width / 2) + WorldGrid.SIDEWALK_WIDTH * 0.5
 		for z = r.min + 14, r.max - 14, 24 do
 			table.insert(pts, Vector3.new(r.coord + off, 0, z))
 			table.insert(pts, Vector3.new(r.coord - off, 0, z + 12))
@@ -761,9 +762,25 @@ local function buildSidewalkPoints(): { Vector3 }
 	local minZ = WorldGrid.ZONES.VINEWOOD_Z_MAX + 8
 	local maxZ = WorldGrid.ZONES.BEACH_BOARDWALK_Z_MIN - 4
 
+	-- Điểm nằm trong LÒNG đường (khi tuyến vỉa hè này cắt ngang tuyến khác) cũng bỏ:
+	-- không để NPC đứng giữa đại lộ 14 m.
+	local function insideAnyRoad(p: Vector3): boolean
+		for _, r in ipairs(WorldGrid.EW_ROADS) do
+			if p.Z > r.coord - r.width * 0.5 and p.Z < r.coord + r.width * 0.5 then
+				return true
+			end
+		end
+		for _, r in ipairs(WorldGrid.NS_ROADS) do
+			if p.X > r.coord - r.width * 0.5 and p.X < r.coord + r.width * 0.5 then
+				return true
+			end
+		end
+		return false
+	end
+
 	local filtered: { Vector3 } = {}
 	for _, p in ipairs(pts) do
-		if math.abs(p.X) <= maxX and p.Z >= minZ and p.Z <= maxZ then
+		if math.abs(p.X) <= maxX and p.Z >= minZ and p.Z <= maxZ and not insideAnyRoad(p) then
 			table.insert(filtered, p)
 		end
 	end
@@ -1202,7 +1219,7 @@ end
 
 -- Toạ độ đã canh ĐÚNG LÀN BÊN PHẢI của từng đại lộ trong WorldGrid:
 --   Olympic Fwy (Z=-36) · Vespucci Blvd (Z=148) · San Andreas (X=-110) · Alta St (X=110)
---   Vinewood Blvd (Z=-224) · Del Perro (X=-324) · Elgin Ave (X=324)
+--   Vinewood Blvd (Z=-224) · Del Perro (X=-338) · Elgin Ave (X=338)
 local TRAFFIC_ROUTES = {
 	{
 		-- vòng trung tâm
@@ -1212,14 +1229,14 @@ local TRAFFIC_ROUTES = {
 		Vector3.new(-98, 0, 138),
 	},
 	{
-		-- vòng vành đai giữa
-		Vector3.new(330, 0, 154),
-		Vector3.new(330, 0, -230),
-		Vector3.new(-330, 0, -230),
-		Vector3.new(-330, 0, 154),
+		-- vòng vành đai giữa (Del Perro X=-338 · Elgin X=+338)
+		Vector3.new(338, 0, 154),
+		Vector3.new(338, 0, -230),
+		Vector3.new(-338, 0, -230),
+		Vector3.new(-338, 0, 154),
 	},
 	{
-		-- vòng vành đai ngoài cùng (2 đại lộ mới X = ±540)
+		-- vòng vành đai ngoài cùng (Pacific Coast X=-556 · La Mesa X=+556)
 		Vector3.new(-548, 0, 154),
 		Vector3.new(-548, 0, -230),
 		Vector3.new(548, 0, -230),

@@ -211,6 +211,66 @@
       "plotId": "N/A",
       "modulePath": "src/server/NPCManager.luau",
       "spec": "RPG-7 ở ô 9 của vòng chọn súng (40°/ô, phím 9, rocket bay thật 145 stud/s, nổ bán kính 22 stud gọi DestructionManager.damageRadius). NPC 6 tính cách (CIVILIAN/BUSINESS/TOURIST/GANGSTER/BRAWLER/COP) phản ứng khi bị tấn công: bắn trả / chạy trốn / quay video + gọi 911 (tăng WantedLevel, điều cảnh sát tới) / đánh tay không. Ma trận trọng số kiểm thử 4000 lần/ô khớp 100%. Demo /npc."
+    },
+    {
+      "taskId": "UI_W1_GUN_MODEL_FACTORY",
+      "order": 40,
+      "status": "open",
+      "title": "Model súng 1:1 cho cả 9 khẩu (GunModelFactory)",
+      "district": "SHARED WEAPONS",
+      "plotId": "N/A",
+      "modulePath": "src/shared/Weapons/GunModelFactory.luau",
+      "spec": "Thay 9 mô hình súng khối hộp thô (Pistol 1,12 stud = 0,34 m, to gấp đôi ngoài đời) bằng model dựng từ dữ liệu theo tỉ lệ 1:1 (1 m = 3,33 stud). Giữ nguyên hợp đồng GUN_MODELS (handle + parts[name,size,off,color]) để WeaponManager chạy được. Mỗi khẩu 6-18 part, có part Muzzle/EjectPort/Handle, CanCollide=false, Massless. Ngoại lệ duy nhất được sửa: đúng khối GUN_MODELS trong WeaponManager."
+    },
+    {
+      "taskId": "UI_W2_HUD_RADAR",
+      "order": 41,
+      "status": "open",
+      "title": "HUD 2.0 — radar vẽ bản đồ thật + chỉ số mượt",
+      "district": "CLIENT UI",
+      "plotId": "N/A",
+      "modulePath": "src/client/UI/GtaHud.luau",
+      "spec": "Radar 258x168 vẽ đường/ô đất/biển/đồi từ toạ độ thật, xoay theo camera, có blip NPC/xe, kim Bắc. 3 thanh Máu/Giáp/Thể lực lerp + đổi màu <30%/<15%. Cụm tiền chạy số 0,6s. Feed 4 dòng tự mờ. Thanh truy nã 5 sao. Menu H thêm tab Cài đặt. Không che 4 vùng khoá."
+    },
+    {
+      "taskId": "UI_W3_WEAPON_WHEEL_V2",
+      "order": 42,
+      "status": "open",
+      "title": "Vòng chọn súng v2 + thẻ vũ khí",
+      "district": "CLIENT UI",
+      "plotId": "N/A",
+      "modulePath": "src/client/UI/GtaWeaponWheel.luau",
+      "spec": "9 ô có silhouette vẽ bằng Frame, tên tiếng Việt, mag/reserve, viền accent theo loại; ô đang chọn phóng 1,18x; ô hết đạn mờ 45% + gạch chéo. Giữ nguyên điều khiển đã nghiệm thu (TAB, dead-zone 54, bán kính 196, ô 108, phím 1-9, R). Thêm âm thanh UI có công tắc."
+    },
+    {
+      "taskId": "UI_W4_INVENTORY",
+      "order": 43,
+      "status": "open",
+      "title": "Màn hình kho đồ / chọn trang bị",
+      "district": "CLIENT UI",
+      "plotId": "N/A",
+      "modulePath": "src/client/UI/InventoryUI.luau",
+      "spec": "Lưới 4x3 + cột chi tiết (sát thương, tốc độ bắn, tầm, băng đạn, so sánh với khẩu đang cầm). Chuột phải ghim vào vòng chọn nhanh, chuột trái trang bị. Dữ liệu lấy từ RemoteEvent WeaponSync sẵn có. Mở/đóng animation 0,18s, không tạo remote mới."
+    },
+    {
+      "taskId": "UI_W5_COMBAT_FX",
+      "order": 44,
+      "status": "open",
+      "title": "Hiệu ứng bắn: reticle, flash, tracer, vỏ đạn, rung",
+      "district": "CLIENT FX",
+      "plotId": "N/A",
+      "modulePath": "src/client/WeaponClient.luau",
+      "spec": "Reticle động + hitmarker; muzzle flash tại part Muzzle; tracer 0,06s; hắt vỏ đạn tại EjectPort 0,8s; camera shake theo damage 0,15s (tắt được); recoil client 0,08 stud. Toàn bộ dùng pooling 24 part, 0 allocation trong RenderStepped."
+    },
+    {
+      "taskId": "UI_W6_PHONE",
+      "order": 45,
+      "status": "open",
+      "title": "Điện thoại iFruit (phím P)",
+      "district": "CLIENT UI",
+      "plotId": "N/A",
+      "modulePath": "src/client/UI/PhoneUI.luau",
+      "spec": "Khung máy 0,5 stud, 4 app có chức năng: Danh bạ, Tin nhắn (log sự kiện), Bản đồ (radar toàn màn hình tạm thời), Cài đặt (âm lượng, rung camera). Icon vẽ bằng Frame, không ảnh ngoài. Animation trượt 0,2s, P bật/tắt, ESC đóng."
     }
   ],
   "uiContract": {
@@ -235,5 +295,23 @@
       "che 4 vùng reservedScreenAreas"
     ]
   },
-  "workerPrompt": "agents/WORKER_PROMPT_V3.md"
+  "workerPrompt": "agents/WORKER_PROMPT_V3.md",
+  "uiWeaponAgentContract": {
+    "prompt": "agents/WORKER_PROMPT_V4_UI_WEAPONS.md",
+    "allowedPaths": [
+      "src/client/UI/*.luau",
+      "src/client/WeaponClient.luau",
+      "src/shared/Weapons/**",
+      "bridge/<name>-demo.html",
+      "agents/notes/SUBMIT_*.md",
+      "agents/reviews/*"
+    ],
+    "singleSurgicalEdit": "src/server/WeaponManager.luau — CHỈ khối `local GUN_MODELS = {...}` -> require GunModelFactory",
+    "scaleContract": {
+      "studsPerMeter": 3.33,
+      "helper": "WorldGrid.meters(m)",
+      "readabilityFloorStuds": 0.3,
+      "minGripStuds": 0.55
+    }
+  }
 }

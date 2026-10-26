@@ -937,28 +937,39 @@ local function buildSidewalksAndLots(parent: Instance)
 		end
 	end
 
-	-- Vỉa hè vành đai ngoài (Tây, Đông, Bắc)
-	PartBuilder.part({
-		name = "WestPerimeterSidewalk",
-		parent = folder,
-		pos = Vector3.new(-350, 0.575, -38),
-		size = Vector3.new(20, 1.15, 404),
-		color = COLORS.SIDEWALK,
-		material = Enum.Material.Concrete,
-	})
-	PartBuilder.part({
-		name = "EastPerimeterSidewalk",
-		parent = folder,
-		pos = Vector3.new(350, 0.575, -38),
-		size = Vector3.new(20, 1.15, 404),
-		color = COLORS.SIDEWALK,
-		material = Enum.Material.Concrete,
-	})
+	-- ── Vỉa hè vành đai ngoài (Sync v22: suy ra từ bản đồ, KHÔNG hardcode ±350) ──
+	-- Trước đây đặt cứng ở X = ±350 vì đại lộ ngoài cùng nằm ở X = ±324. Nay đại lộ
+	-- ngoài cùng ở X = ±556 nên ±350 rơi thẳng vào lòng đường Elgin/La Mesa.
+	-- Dải vỉa hè hẹp còn lại giữa mép ngoài đại lộ và mép bản đồ:
+	local outerEdge = 0
+	for _, r in ipairs(WorldGrid.NS_ROADS) do
+		outerEdge = math.max(outerEdge, math.abs(r.coord) + r.width * 0.5)
+	end
+	local rimW = WorldGrid.MAP_HALF_SIZE - outerEdge
+	local rimCenterZ = (WorldGrid.ZONES.VINEWOOD_Z_MAX + WorldGrid.ZONES.BEACH_BOARDWALK_Z_MIN) * 0.5
+	local rimLen = WorldGrid.ZONES.BEACH_BOARDWALK_Z_MIN - WorldGrid.ZONES.VINEWOOD_Z_MAX
+
+	if rimW >= 2 then
+		for _, sign in ipairs({ -1, 1 }) do
+			PartBuilder.part({
+				name = if sign < 0 then "WestPerimeterSidewalk" else "EastPerimeterSidewalk",
+				parent = folder,
+				pos = Vector3.new(sign * (outerEdge + rimW * 0.5), 0.575, rimCenterZ),
+				size = Vector3.new(rimW, 1.15, rimLen),
+				color = COLORS.SIDEWALK,
+				material = Enum.Material.Concrete,
+				canCollide = false,
+			})
+		end
+	end
+
+	-- Vỉa hè phía Bắc đại lộ Vinewood: khít đúng mép ngoài đường (Z = -244)
+	local northSwW = WorldGrid.SIDEWALK_WIDTH
 	PartBuilder.part({
 		name = "NorthVinewoodWalkway",
 		parent = folder,
-		pos = Vector3.new(0, 0.575, -245),
-		size = Vector3.new(WorldGrid.MAP_WIDTH, 1.15, 10),
+		pos = Vector3.new(0, 0.575, WorldGrid.ZONES.VINEWOOD_Z_MAX - northSwW * 0.5),
+		size = Vector3.new(WorldGrid.MAP_WIDTH, 1.15, northSwW),
 		color = COLORS.SIDEWALK,
 		material = Enum.Material.Concrete,
 	})

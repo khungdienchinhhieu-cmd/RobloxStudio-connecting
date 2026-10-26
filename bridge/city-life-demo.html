@@ -84,7 +84,7 @@
 <header>
   <h1>Los Santos — mô phỏng thành phố sống động</h1>
   <span class="pill">SYNC v21</span>
-  <span class="sub">1 120 stud · 84 NPC model R15 · 8 xe có tài xế · 9 đại lộ</span>
+  <span class="sub">1 160 stud (348 m) · 1:1 ngoài đời (1 m = 3,33 stud) · 267 điểm vỉa hè · 84 NPC R15 · 8 xe · 9 đại lộ</span>
 </header>
 
 <main>
@@ -145,48 +145,61 @@
   var ctx = canvas.getContext("2d");
 
   // ── Dữ liệu đúng như WorldGrid.luau ──────────────────────────────────────
+  // ── Tỉ lệ 1:1 ngoài đời (Sync v22): 1 m = 3,33 stud ─────────────────────
+  var STUDS_PER_M = 3.33;
+  var SIDEWALK_W = 14;              // 4,2 m
   var EW = [
-    { id: "Vinewood", coord: -224, width: 32, min: -560, max: 560 },
-    { id: "Olympic", coord: -36, width: 36, min: -560, max: 560 },
-    { id: "Vespucci", coord: 148, width: 32, min: -560, max: 560 }
+    { id: "Vinewood", coord: -224, width: 40, min: -580, max: 580 },
+    { id: "Olympic", coord: -36, width: 48, min: -580, max: 580 },
+    { id: "Vespucci", coord: 148, width: 40, min: -580, max: 580 }
   ];
   var NS = [
-    { id: "PacificCoast", coord: -540, width: 32, min: -240, max: 164 },
-    { id: "DelPerro", coord: -324, width: 32, min: -240, max: 164 },
-    { id: "SanAndreas", coord: -110, width: 36, min: -240, max: 164 },
-    { id: "Alta", coord: 110, width: 36, min: -240, max: 164 },
-    { id: "Elgin", coord: 324, width: 32, min: -240, max: 164 },
-    { id: "LaMesa", coord: 540, width: 32, min: -240, max: 164 }
+    { id: "PacificCoast", coord: -556, width: 40, min: -244, max: 168 },
+    { id: "DelPerro", coord: -338, width: 40, min: -244, max: 168 },
+    { id: "SanAndreas", coord: -110, width: 48, min: -244, max: 168 },
+    { id: "Alta", coord: 110, width: 48, min: -244, max: 168 },
+    { id: "Elgin", coord: 338, width: 40, min: -244, max: 168 },
+    { id: "LaMesa", coord: 556, width: 40, min: -244, max: 168 }
   ];
 
-  // 4 ô đất mới của bản đồ mở rộng (Sync v21)
+  // 10 ô đất (khít tuyệt đối với mép đường, gap = 0)
   var PLOTS = [
-    { id: "E1", x: -432, z: -131, w: 180, h: 154, color: "rgba(114,204,114,.10)", built: true },
-    { id: "E2", x: 432, z: -131, w: 180, h: 154, color: "rgba(120,140,160,.07)", built: false },
-    { id: "E3", x: -432, z: 57, w: 180, h: 150, color: "rgba(120,140,160,.07)", built: false },
-    { id: "E4", x: 432, z: 57, w: 180, h: 150, color: "rgba(120,140,160,.07)", built: false }
+    { id: "E1", x: -447, z: -132, w: 178, h: 144, color: "rgba(114,204,114,.10)", built: true },
+    { id: "E2", x: 447, z: -132, w: 178, h: 144, color: "rgba(120,140,160,.07)", built: false },
+    { id: "E3", x: -447, z: 58, w: 178, h: 140, color: "rgba(120,140,160,.07)", built: false },
+    { id: "E4", x: 447, z: 58, w: 178, h: 140, color: "rgba(120,140,160,.07)", built: false },
+    { id: "D1", x: -226, z: -132, w: 184, h: 144, color: "rgba(120,140,160,.07)", built: false },
+    { id: "D2", x: 0, z: -132, w: 172, h: 144, color: "rgba(120,140,160,.07)", built: true },
+    { id: "D3", x: 226, z: -132, w: 184, h: 144, color: "rgba(120,140,160,.07)", built: false },
+    { id: "C1", x: -226, z: 58, w: 184, h: 140, color: "rgba(120,140,160,.07)", built: true },
+    { id: "C2", x: 0, z: 58, w: 172, h: 140, color: "rgba(120,140,160,.07)", built: true },
+    { id: "C3", x: 226, z: 58, w: 184, h: 140, color: "rgba(120,140,160,.07)", built: false }
   ];
 
   // Sinh điểm vỉa hè y hệt buildSidewalkPoints() trong NPCManager.luau
   var walkPoints = [];
   EW.forEach(function (r) {
-    var off = r.width / 2 + 5;
+    var off = r.width / 2 + SIDEWALK_W / 2;
     for (var x = r.min + 14; x <= r.max - 14; x += 24) {
       walkPoints.push({ x: x, z: r.coord + off });
       walkPoints.push({ x: x + 12, z: r.coord - off });
     }
   });
   NS.forEach(function (r) {
-    var off = r.width / 2 + 5;
+    var off = r.width / 2 + SIDEWALK_W / 2;
     for (var z = r.min + 14; z <= r.max - 14; z += 24) {
       walkPoints.push({ x: r.coord + off, z: z });
       walkPoints.push({ x: r.coord - off, z: z + 12 });
     }
   });
 
-  // Lọc giống NPCManager: bỏ điểm ngoài mép bản đồ / ngoài dải phố đi bộ
+  // Lọc giống NPCManager: bỏ điểm ngoài mép bản đồ và điểm nằm trong lòng đường
+  function insideAnyRoad(p) {
+    return EW.some(function (r) { return p.z > r.coord - r.width / 2 && p.z < r.coord + r.width / 2; }) ||
+           NS.some(function (r) { return p.x > r.coord - r.width / 2 && p.x < r.coord + r.width / 2; });
+  }
   walkPoints = walkPoints.filter(function (p) {
-    return Math.abs(p.x) <= 552 && p.z >= -232 && p.z <= 160;
+    return Math.abs(p.x) <= 572 && p.z >= -236 && p.z <= 164 && !insideAnyRoad(p);
   });
 
   // 2 tuyến xe y hệt TRAFFIC_ROUTES
@@ -196,8 +209,8 @@
       { x: 98, z: 138 }, { x: -98, z: 138 }
     ],
     [
-      { x: 330, z: 154 }, { x: 330, z: -230 },
-      { x: -330, z: -230 }, { x: -330, z: 154 }
+      { x: 338, z: 154 }, { x: 338, z: -230 },
+      { x: -338, z: -230 }, { x: -338, z: 154 }
     ],
     [
       { x: -548, z: 154 }, { x: -548, z: -230 },
@@ -221,7 +234,7 @@
   }
 
   // ── Khung nhìn thế giới ────────────────────────────────────────────────
-  var VIEW = { x0: -578, x1: 578, z0: -262, z1: 178 };
+  var VIEW = { x0: -598, x1: 598, z0: -266, z1: 182 };
   var view = { scale: 1, ox: 0, oy: 0 };
 
   function resize() {

@@ -22,7 +22,56 @@ export type BuildSummary = {
 	failedCount: number,
 }
 
+local WorldGrid = require(script.Parent.Parent:WaitForChild("WorldGrid"))
+
 local DistrictRegistry = {}
+
+-- ══════════════════════════════════════════════════════════════════════════════
+-- DI DỜI CÔNG TRÌNH ĐÃ DỰNG THEO LƯỚI ĐƯỜNG CŨ (Sync v22)
+-- ------------------------------------------------------------------------------
+-- Lưới đường v22 rộng hơn (đại lộ 4 làn 36 -> 48 stud, vỉa hè 9 -> 14 stud...)
+-- nên các ô đất xê dịch vài stud và hẹp lại ~4 %. Thay vì sửa tay 4 file module
+-- 3 000–4 600 dòng, ta dựng xong rồi biến đổi cả model:
+--     X' = (X - oldCenter.X) * k + newCenter.X
+--     Z' = (Z - oldCenter.Z) * k + newCenter.Z
+--     Y  giữ nguyên (chiều cao tầng 11 stud = 3,3 m vẫn đúng tỉ lệ 1:1)
+-- Bảng cấu hình nằm ở `WorldGrid.RELOCATION`.
+-- ══════════════════════════════════════════════════════════════════════════════
+
+local function applyRelocation(node: Instance, plotId: string?): boolean
+	local oldCenter, newCenter, k = WorldGrid.relocateTransform(plotId)
+	if not oldCenter or not newCenter or not k then
+		return false
+	end
+	if math.abs(k - 1) < 0.001 and (oldCenter - newCenter).Magnitude < 0.01 then
+		return false
+	end
+
+	local moved = 0
+	for _, d in ipairs(node:GetDescendants()) do
+		if d:IsA("BasePart") then
+			local pos = d.Position
+			d.Size = Vector3.new(d.Size.X * k, d.Size.Y, d.Size.Z * k)
+			local target = Vector3.new(
+				newCenter.X + (pos.X - oldCenter.X) * k,
+				pos.Y,
+				newCenter.Z + (pos.Z - oldCenter.Z) * k
+			)
+			d.CFrame = CFrame.new(target) * (d.CFrame - d.CFrame.Position)
+			moved += 1
+		end
+	end
+
+	print(string.format(
+		"[DistrictRegistry] ↪ Dời %s về lưới mới: Δ(%.1f, %.1f) · tỉ lệ %.3f · %d khối",
+		tostring(plotId),
+		newCenter.X - oldCenter.X,
+		newCenter.Z - oldCenter.Z,
+		k,
+		moved
+	))
+	return true
+end
 
 local function clearPlotPlaceholders(losSantosRoot: Instance, rawPlotId: string?)
 	if not rawPlotId or rawPlotId == "" or rawPlotId == "StreetProps" then
@@ -35,6 +84,15 @@ local function clearPlotPlaceholders(losSantosRoot: Instance, rawPlotId: string?
 	end
 
 	-- Hỗ trợ cả Plot_C3_West / Plot_C3_East ánh xạ về thư mục Plot_C3_*
+	-- Tâm chia đôi ô Plot_C3 lấy trực tiếp từ WorldGrid (trước đây hardcode 218)
+	local splitX = 218
+	for _, pl in ipairs(WorldGrid.PLOTS) do
+		if pl.id == "Plot_C3" then
+			splitX = pl.center.X
+			break
+		end
+	end
+
 	local basePlotId = rawPlotId
 	local halfMode: string? = nil
 	if rawPlotId == "Plot_C3_West" then
@@ -56,13 +114,13 @@ local function clearPlotPlaceholders(losSantosRoot: Instance, rawPlotId: string?
 					else
 						-- Với ô đôi Plot_C3 (tâm X = 218), chỉ xoá các khối nằm bên nửa Tây (<218) hoặc Đông (>=218)
 						if item:IsA("BasePart") then
-							if (halfMode == "WEST" and item.Position.X <= 218.5) or (halfMode == "EAST" and item.Position.X >= 217.5) then
+							if (halfMode == "WEST" and item.Position.X <= splitX + 0.5) or (halfMode == "EAST" and item.Position.X >= splitX - 0.5) then
 								item:Destroy()
 							end
 						else
 							for _, sub in ipairs(item:GetDescendants()) do
 								if sub:IsA("BasePart") then
-									if (halfMode == "WEST" and sub.Position.X <= 218.5) or (halfMode == "EAST" and sub.Position.X >= 217.5) then
+									if (halfMode == "WEST" and sub.Position.X <= splitX + 0.5) or (halfMode == "EAST" and sub.Position.X >= splitX - 0.5) then
 										sub:Destroy()
 									end
 								end
@@ -133,7 +191,10 @@ function DistrictRegistry.buildAll(losSantosRoot: Instance): BuildSummary
 	for _, item in ipairs(entries) do
 		clearPlotPlaceholders(losSantosRoot, item.spec.PlotId)
 		local okBuild, err = pcall(function()
-			item.spec.build(container)
+			local node = item.spec.build(container)
+			if node then
+				applyRelocation(node, item.spec.PlotId)
+			end
 		end)
 		if okBuild then
 			summary.loadedCount += 1
