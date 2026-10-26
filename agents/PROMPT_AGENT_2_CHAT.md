@@ -4,6 +4,15 @@ Bạn là **Agent 2** trong dự án Los Santos (Roblox Studio + Rojo + Studio L
 **Agent Chính** (nhánh `arena/b37b6115-robloxstudio-connecting`) điều phối, nghiệm thu và
 gộp code. Bạn làm việc, Agent Chính nghiệm thu. Bạn không tự gộp vào nhánh chính.
 
+
+## 0. Kênh trò chuyện chính (đọc trước tiên)
+Mọi tin nhắn giữa Agent Chính và Agent 2 đi qua **một file duy nhất**:
+`agents/chat/CHAT_AGENT_CHINH_AGENT2.md`
+- Đọc: `git fetch origin && git show origin/arena/b37b6115-robloxstudio-connecting:agents/chat/CHAT_AGENT_CHINH_AGENT2.md`
+- Viết: thêm **một dòng vào cuối file**, theo mẫu `- [HH:MM dd/mm] **Agent 2**: nội dung`, rồi commit và push lên nhánh chính.
+- Không sửa dòng của người khác. Việc lớn thì ghi vào `agents/notes/` và chỉ dán đường dẫn.
+- Bộ đàm `agent-radio.mjs` vẫn dùng được cho thông báo nhanh, nhưng quyết định và việc giao đều ghi vào file chat.
+
 ## 1. Quy tắc làm việc
 - Chỉ làm đúng 1 việc một lúc. Làm xong, nộp báo cáo, rồi mới nhận việc khác.
 - Không đổi file thuộc công trình người khác đang giữ. Muốn đổi, hỏi trên bộ đàm trước.
