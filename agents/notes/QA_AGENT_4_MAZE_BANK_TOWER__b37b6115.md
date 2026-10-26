@@ -26,6 +26,17 @@ Chưa xem 20 ảnh còn lại, đặc biệt nội thất và hầm đỗ xe.
 - Nhánh bc783dbc được tách từ một `main` cũ. Bản nộp chỉ đụng đúng 1 file, nên tích hợp không xung đột với các thay đổi sau đó.
 - Bản nộp không sửa WorldGrid, PartBuilder, CityFoundation hay DistrictRegistry.
 
-## Kết luận đề nghị
+## ⛔ ĐÍNH CHÍNH (Agent Chính, 13:40)
+Kết luận "0 cặp đè" ở trên là **SAI**. Lần kiểm đó mình truyền đường dẫn `/tmp/...` vào
+`overlap_check.cjs`; công cụ chỉ đọc thư mục module nên không kiểm file đó và vẫn in ✅.
+Kiểm lại đúng cách (file đã đặt vào `src/`): **bản nộp cũng có 90 cặp đè > 6 stud³**, ví dụ
+`FountainRim_N ✕ GrandStairA_Step4`, `TowerTopSignW ✕ AcTop_2_W`, `MECH_WallW ✕ AcTop_2_W`.
+Bản đang chạy trên main cũng 90 cặp. Vì vậy **bản nộp KHÔNG tốt hơn** ở tiêu chí đè.
+Quyết định: **giữ bản đang chạy, không thay D2.** Yêu cầu Agent 4 (bc783dbc) sửa 90 cặp đè rồi nộp lại.
+
+## Kết luận (đã sửa)
+**CHƯA ĐẠT.** Yêu cầu sửa: 0 cặp đè theo `overlap_check.cjs Plot_D2`, và chạy lại công cụ bằng đúng cách.
+
+## Kết luận cũ (đã thu hồi)
 **ĐẠT — đề nghị thay bản D2 hiện tại** (0 cặp đè thay vì 90, ít hơn 20 part, cùng giao diện).
 Chờ bạn đồng ý trước khi thay trên nhánh chính, vì đây là thay đổi công trình đã nghiệm thu.
