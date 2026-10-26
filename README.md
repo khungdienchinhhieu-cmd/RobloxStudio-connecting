@@ -32,7 +32,7 @@ Dự án tái hiện thế giới mở **Grand Theft Auto V (Los Santos)** trên
 | Mã Khu | Tên Khu Vực (Los Santos) | Tọa độ X (`studs`) | Tọa độ Z (`studs`) | Kích thước thật | Trạng thái |
 | :--- | :--- | :---: | :---: | :---: | :--- |
 | **North Ridge** | **Vinewood Hills** (Đồi vát nghiêng tự nhiên, vách đá & tường chắn ghép khối) | `[-580, +580]` | `[-380, -244]` | 348 × 41 m | ✅ Hoàn thành ở Nền v2 |
-| **Plot E1** | **Pacific Bluffs** — Biệt thự ven vịnh mẫu **"ít part"** (`176` part, `−94,9 %`) | `[-536, -358]` | `[-204, -60]` | 53 × 43 m | ✅ **Sync v22** (dời + co theo lưới mới) |
+| **Plot E1** | **Pacific Bluffs** — biệt thự ven vịnh (bản "ít part" đã **gỡ** ở v23, chờ dựng lại **chi tiết** như LS Customs) | `[-536, -358]` | `[-204, -60]` | 53 × 43 m | ☐ **Trống — Agent 3 vòng 2** |
 | **Plot D1** | **Rockford Hills** (Ô móng kỹ thuật sạch chờ công trình) | `[-318, -134]` | `[-204, -60]` | 55 × 43 m | ⏳ Chờ dựng từng công trình |
 | **Plot D2** | **Pillbox Hill** — **Tháp Maze Bank** (`2 312` part, `99.1%` máu ẩn) | `[-86, +86]` | `[-204, -60]` | 52 × 43 m | ✅ Nghiệm thu 9.2/10 — **Sync v22** |
 | **Plot D3** | **Downtown Vinewood** (Ô móng kỹ thuật sạch chờ công trình) | `[+134, +318]` | `[-204, -60]` | 55 × 43 m | ⏳ Chờ dựng từng công trình |
@@ -126,13 +126,13 @@ Dự án tái hiện thế giới mở **Grand Theft Auto V (Los Santos)** trên
   - **NPC MANG SKIN CỦA NGƯỜI CHƠI:** mỗi khi có người vào game, hệ thống lấy `Humanoid:GetAppliedDescription()` của chính họ rồi dựng một **bản sao y hệt** (kể cả phụ kiện, áo quần, khuôn mặt) thả xuống vỉa hè cách họ `40–160` stud. Chat Output: `[NPC] Đã thả bản sao của <tên> vào thành phố`.
   - **Nhiều NPC hơn:** `MAX_NPCS 74 → 150`, ambient `46 → 84`, xe có tài xế `4 → 8`. Điểm đi bộ sinh tự động nay là **9 đại lộ → 344 điểm** thay vì 296.
   - **★ KỸ THUẬT "NHÀ ÍT PART MÀ VẪN BỂ":** module mới `DestructibleShell.luau` chia công trình thành **4 tầng** — kết cấu chịu lực (~14 part) · **tấm vỏ = 1 ô cửa sổ** (~52 part) · **hoa văn gạch/ngói bằng `Texture` (0 part)** · trang trí (~9 part). Kèm đó `DestructionManager.fractureWorldBlock` được nâng cấp: **số mảnh vỡ tự co giãn theo kích thước khối** (viên gạch → 2 mảnh, tấm tường → 10–14 mảnh, chia theo lưới 3D). Kết quả đo bằng harness: **176 part (so với 3 462 của LS Customs) = −94,9 %**, mà phá sạch vẫn sinh **894 mảnh vỡ**. Chi tiết đầy đủ: [`docs/DESTRUCTIBLE_BUDGET.md`](docs/DESTRUCTIBLE_BUDGET.md).
-  - **Công trình mẫu:** **Biệt thự Pacific Bluffs** (`Plot_E1`) — 3 tầng, 44 × 28 stud, hồ bơi, sân hiên, cổng sắt bể được, 7 cây cọ, hàng rào cây. Harness xác nhận `0` part dưới mặt đất, `0` part tràn biên X/Z.
+  - **Công trình mẫu:** **Biệt thự Pacific Bluffs** (`Plot_E1`) — 3 tầng, 44 × 28 stud. ⚠️ **Đã gỡ ở `Sync v23`** vì kiểu "ít part" nhìn không đẹp bằng công trình chi tiết; kỹ thuật vẫn giữ trong `DestructibleShell.luau` cho khối vỏ phá huỷ, `Plot_E1` chờ Agent dựng lại **biệt thự chi tiết**.
 - [x] **Bước 12: TỈ LỆ 1:1 VỚI NGOÀI ĐỜI — ĐƯỜNG & MỌI THỨ ĐÚNG KÍCH THƯỚC THẬT (`Sync v22`)** ✅
   - **Vấn đề:** sau khi mở rộng bản đồ, mặt đường vẫn 32–36 stud (9,6–10,8 m) trong khi xe rộng 7,1 stud (2,1 m) → nhìn như **đường hẻm**, không ra đại lộ.
   - **Chuẩn mới:** `WorldGrid.STUDS_PER_METER = 3.33` (1 stud = 0,30 m, khớp chiều cao nhân vật R15 ~5 stud ≈ 1,65 m) + helper `WorldGrid.meters(m)`. **Mọi** con số kích thước suy ra từ đây.
   - **Đường rộng đúng luật:** 4 làn → **48 stud (14,4 m)**, 2 làn + làn đỗ → **40 stud (12 m)**; vỉa hè **9 → 14 stud (4,2 m)**. Xe 7,1 stud vẫn chiếm ~60 % bề rộng làn → đúng tỉ lệ thật.
   - **Lưới lại toàn bộ:** bản đồ 1 120 → **1 160 stud (±580)**; 10 ô đất xếp **khít tuyệt đối** với mép đường (gap = **0,000 stud**, kiểm bằng script); ô đất 52–55 m × 42–43 m — đúng cỡ block downtown Los Santos.
-  - **Không sửa tay 4 module công trình 3 000–4 600 dòng:** thêm `WorldGrid.RELOCATION` + `DistrictRegistry.applyRelocation()` — dựng xong rồi biến đổi cả model `X' = (X − oldCX)·k + newCX`, giữ nguyên trục Y (tầng vẫn 3,3 m). Harness xác nhận cả **4 công trình** (LS Customs, Maze Bank, LSPD + Supermarket, Biệt thự Pacific Bluffs) sau khi dời **vẫn nằm trọn trong ô đất mới**.
+  - **Không sửa tay 3 module công trình 3 000–4 600 dòng:** thêm `WorldGrid.RELOCATION` + `DistrictRegistry.applyRelocation()` — dựng xong rồi biến đổi cả model `X' = (X − oldCX)·k + newCX`, giữ nguyên trục Y (tầng vẫn 3,3 m). Harness xác nhận cả **3 công trình** (LS Customs, Maze Bank, LSPD + Supermarket) sau khi dời **vẫn nằm trọn trong ô đất mới**.
   - **Hết hardcode:** chỗ chia đôi `Plot_C3` (trước ghi cứng `217.5 / 218.5`) nay đọc tâm ô đất từ `WorldGrid.PLOTS`; 2 dải vỉa hè vành đai (trước ghi cứng `X = ±350` → rơi vào lòng đường Elgin mới) nay suy ra từ mép đại lộ ngoài cùng.
   - **NPC & xe:** điểm đi bộ sinh lại theo vỉa hè 14 stud → **267 điểm** (bỏ cả điểm rơi vào lòng đường tại giao lộ); vành đai giữa dời `±330 → ±338`. 3 tuyến xe kiểm bằng harness: **0 bước ra ngoài đường**.
   - Demo browser `/` và `/city` cập nhật đúng số liệu mới (1 m = 3,33 stud).
@@ -141,4 +141,24 @@ Dự án tái hiện thế giới mở **Grand Theft Auto V (Los Santos)** trên
 > (`UI_W1_GUN_MODEL_FACTORY`, `UI_W2_HUD_RADAR`, `UI_W3_WEAPON_WHEEL_V2`, `UI_W4_INVENTORY`,
 > `UI_W5_COMBAT_FX`, `UI_W6_PHONE`) đã có sẵn trong [`agents/AGENT_TASK_BOARD.json`](agents/AGENT_TASK_BOARD.json).
 
-- [ ] **Bước 13: 3 ô đất còn lại (E2 La Mesa · E3 Little Seoul · E4 Richman Glen)**
+- [x] **Bước 13: DỌN DẸP + CHỈ RENDER THỨ TRONG MÀN HÌNH (`Sync v23`)** ✅
+  - **Gỡ biệt thự "ít part" ở `Plot_E1`** theo yêu cầu Chủ dự án (kiểu dựng mới nhìn không đẹp bằng
+    công trình chi tiết). `DestructibleShell.luau` vẫn giữ để dùng cho **tấm vỏ / panel kính**,
+    nhưng **không dùng để dựng cả khối nhà** nữa. `Plot_E1` chờ Agent dựng lại **biệt thự chi tiết**.
+  - **NPC không còn biến mất:** thêm `findGroundSoft()` (tia chiếu trượt thì rơi về đúng cao độ
+    vỉa hè `Y = 1.15` thay vì bỏ qua), phương án dự phòng thả NPC quanh Legion Square nếu lưới
+    vỉa hè sinh 0 điểm, **55 % NPC thả trong bán kính 320 stud quanh điểm hồi sinh** (luôn thấy phố
+    đông), và **vòng nạp lại dân số mỗi 8 giây** (dưới 70 % mục tiêu thì thả bù). Có log chẩn đoán:
+    `spawnAmbient: 84/84 NPC · 267 điểm vỉa hè · tia chiếu trượt N lần`.
+  - **Chỉ render thứ có trong màn hình** — `src/client/CityCuller.luau`: cất công trình ở xa
+    (> 900 stud) hoặc sau lưng camera (> 460 stud) ra khỏi `Workspace`, quay lại thì gắn về.
+    Chi tiết nghiên cứu + thông số: [`docs/PERFORMANCE.md` §5.4](docs/PERFORMANCE.md).
+  - **Bộ poll nghiệm thu tự động** — `bridge/agent-watch.mjs`: poll bản tin `agents/notes/`,
+    nhánh `origin/arena/*`, rồi tự biên dịch module, đo quy mô (KB / vòng lặp / máu ẩn),
+    chặn sửa file lõi và chặn commit `studio-sync.json`.
+- [ ] **Bước 14: QUÉT SẠCH THÀNH PHỐ — 3 Agent phụ × 2 vòng = 6 công trình chi tiết**
+  (prompt: [`agents/WORKER_PROMPT_V6_CITY_SWEEP_3AGENTS.md`](agents/WORKER_PROMPT_V6_CITY_SWEEP_3AGENTS.md))
+  - Agent A: `Plot_D1` Showroom Luxury Autos → `Plot_E3` Quán nướng Seoul Garden
+  - Agent B: `Plot_D3` Rạp Vinewood Cinema → `Plot_E4` TTTM Richman Galleria
+  - Agent C: `Plot_E2` Garage La Mesa Customs → `Plot_E1` Biệt thự Pacific Bluffs (bản chi tiết)
+  - Xong 6 công trình này là **10/10 ô đất có công trình** → thành phố hoàn chỉnh.

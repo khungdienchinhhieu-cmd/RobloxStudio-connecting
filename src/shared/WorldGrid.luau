@@ -170,7 +170,7 @@ WorldGrid.PLOTS = {
 -- ══════════════════════════════════════════════════════════════════════════════
 -- BẢNG DI DỜI CÔNG TRÌNH (Sync v22)
 -- ------------------------------------------------------------------------------
--- 4 công trình đã nghiệm thu được dựng ở lưới đường CŨ (mỗi viên gạch đặt theo
+-- 3 công trình đã nghiệm thu (LS Customs · LSPD + Supermarket · Maze Bank) được dựng ở lưới đường CŨ (mỗi viên gạch đặt theo
 -- toạ độ tuyệt đối trong file module 3 000–4 600 dòng). Khi lưới đường đổi kích
 -- thước, ta KHÔNG sửa từng file — mà dựng xong rồi biến đổi cả model:
 --     CFrame mới = (P - oldCenter) * k + newCenter      (co giãn theo X/Z, giữ nguyên Y)
@@ -180,7 +180,6 @@ WorldGrid.RELOCATION = {
 	Plot_C3_West = { oldCenter = Vector3.new(174.5, 0, 57), oldSize = Vector3.new(75, 1, 150) },
 	Plot_C3_East = { oldCenter = Vector3.new(260.5, 0, 57), oldSize = Vector3.new(77, 1, 150) },
 	Plot_D2 = { oldCenter = Vector3.new(0, 0, -131), oldSize = Vector3.new(184, 1, 154) },
-	Plot_E1 = { oldCenter = Vector3.new(-432, 0, -131), oldSize = Vector3.new(180, 1, 154) },
 }
 
 local function findPlot(id: string): PlotDef?

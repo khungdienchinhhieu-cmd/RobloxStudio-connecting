@@ -144,7 +144,7 @@
     {
       "taskId": "AGENT_5_ROCKFORD_LUXURY_AUTOS",
       "order": 60,
-      "status": "ready_for_parallel_agent",
+      "status": "superseded",
       "title": "Showroom Siêu Xe Luxury Autos (Simeon / Rockford Hills)",
       "district": "ROCKFORD HILLS",
       "plotId": "Plot_D1",
@@ -156,12 +156,13 @@
         "groundY": 1.15
       },
       "modulePath": "src/shared/World/Modules/Plot_D1_RockfordShowroom.luau",
-      "spec": "Showroom kính cong cao cấp nhìn ra đại lộ Olympic Fwy (+Z): Mặt dựng kính tấm lớn chia ô có máu ẩn integrity = 40 (xe tông xuyên kính giống nhiệm vụ mở đầu GTA V!), sàn đá bóng + 2 bục xoay trưng bày siêu xe có đèn rọi trần, phòng làm việc kính của quản lý, bàn tiếp khách sofa da."
+      "spec": "Showroom kính cong cao cấp nhìn ra đại lộ Olympic Fwy (+Z): Mặt dựng kính tấm lớn chia ô có máu ẩn integrity = 40 (xe tông xuyên kính giống nhiệm vụ mở đầu GTA V!), sàn đá bóng + 2 bục xoay trưng bày siêu xe có đèn rọi trần, phòng làm việc kính của quản lý, bàn tiếp khách sofa da.",
+      "supersededBy": "A1_ROCKFORD_LUXURY_AUTOS"
     },
     {
       "taskId": "AGENT_6_VINEWOOD_THEATER",
       "order": 70,
-      "status": "ready_for_parallel_agent",
+      "status": "superseded",
       "title": "Rạp Chiếu Phim Oriental / Vinewood Cinema",
       "district": "DOWNTOWN VINEWOOD",
       "plotId": "Plot_D3",
@@ -173,12 +174,13 @@
         "groundY": 1.15
       },
       "modulePath": "src/shared/World/Modules/Plot_D3_VinewoodCinema.luau",
-      "spec": "Rạp phim Art Deco biểu tượng Vinewood: Bảng đèn Marquee Neon rực rỡ phía trước ghi tên phim đang chiếu, quầy vé tròn ngoài sảnh, thảm đỏ, quầy bắp rang bơ + nước ngọt bên trong và khán phòng màn chiếu lớn kèm các hàng ghế nhung đỏ xếp bậc thang (có máu ẩn integrity)."
+      "spec": "Rạp phim Art Deco biểu tượng Vinewood: Bảng đèn Marquee Neon rực rỡ phía trước ghi tên phim đang chiếu, quầy vé tròn ngoài sảnh, thảm đỏ, quầy bắp rang bơ + nước ngọt bên trong và khán phòng màn chiếu lớn kèm các hàng ghế nhung đỏ xếp bậc thang (có máu ẩn integrity).",
+      "supersededBy": "B1_VINEWOOD_CINEMA"
     },
     {
       "taskId": "AGENT_7_STREET_INFRASTRUCTURE",
       "order": 80,
-      "status": "ready_for_parallel_agent",
+      "status": "superseded",
       "title": "Đèn Giao Thông Ngã Tư, Đèn Đường & Hàng Cọ California",
       "district": "CITYWIDE SIDEWALKS",
       "plotId": "StreetProps",
@@ -190,7 +192,8 @@
         "groundY": 1.15
       },
       "modulePath": "src/shared/World/Modules/Infra_StreetLightsAndPalms.luau",
-      "spec": "Đặt trụ đèn tín hiệu Đỏ-Vàng-Xanh vươn cần ngang tại các ngã tư chính (mép vỉa hè Y = 1.15, tuyệt đối không lấn xuống lòng đường nhựa hay chặn cổng garage/chỗ đậu xe của các ô khác — đọc kỹ agent-radio trước khi đặt!), hàng cây cọ thân đốt cong nhẹ dọc Vespucci Blvd & lối dạo biển, ghế đá & thùng rác công cộng — tất cả gắn máu ẩn integrity để siêu xe tông gãy vỡ."
+      "spec": "Đặt trụ đèn tín hiệu Đỏ-Vàng-Xanh vươn cần ngang tại các ngã tư chính (mép vỉa hè Y = 1.15, tuyệt đối không lấn xuống lòng đường nhựa hay chặn cổng garage/chỗ đậu xe của các ô khác — đọc kỹ agent-radio trước khi đặt!), hàng cây cọ thân đốt cong nhẹ dọc Vespucci Blvd & lối dạo biển, ghế đá & thùng rác công cộng — tất cả gắn máu ẩn integrity để siêu xe tông gãy vỡ.",
+      "supersededBy": null
     },
     {
       "taskId": "UI_WEAPON_WHEEL",
@@ -271,6 +274,78 @@
       "plotId": "N/A",
       "modulePath": "src/client/UI/PhoneUI.luau",
       "spec": "Khung máy 0,5 stud, 4 app có chức năng: Danh bạ, Tin nhắn (log sự kiện), Bản đồ (radar toàn màn hình tạm thời), Cài đặt (âm lượng, rung camera). Icon vẽ bằng Frame, không ảnh ngoài. Animation trượt 0,2s, P bật/tắt, ESC đóng."
+    },
+    {
+      "taskId": "A1_ROCKFORD_LUXURY_AUTOS",
+      "order": 50,
+      "status": "open",
+      "title": "Showroom siêu xe Luxury Autos 2 tầng + tầng lửng, kính cong 2 lớp tông xuyên được, 2 bục xoay, sân 6 ô đỗ",
+      "district": "ROCKFORD HILLS",
+      "plotId": "PLOT_D1",
+      "modulePath": "src/shared/World/Modules/Plot_D1_RockfordShowroom.luau",
+      "spec": "Showroom siêu xe Luxury Autos 2 tầng + tầng lửng, kính cong 2 lớp tông xuyên được, 2 bục xoay, sân 6 ô đỗ. Bounds X -318..-134, Z -204..-60. 2 000-3 200 khối, >=95% máu ẩn. Vòng 1 của Agent A.",
+      "round": 1,
+      "dependsOn": null
+    },
+    {
+      "taskId": "A2_LITTLE_SEOUL_DINER",
+      "order": 51,
+      "status": "open",
+      "title": "Quán nướng Hàn Seoul Garden 2 tầng + sân hiên mái",
+      "district": "LITTLE SEOUL",
+      "plotId": "PLOT_E3",
+      "modulePath": "src/shared/World/Modules/Plot_E3_LittleSeoulDiner.luau",
+      "spec": "Quán nướng Hàn Seoul Garden 2 tầng + sân hiên mái. 12 bàn nướng, 8 phòng riêng, biển Neon song ngữ. Bounds X -536..-358, Z -12..128. 1 800-2 800 khối. Vòng 2 của Agent A (sau khi A1 duyệt).",
+      "round": 2,
+      "dependsOn": "A1_ROCKFORD_LUXURY_AUTOS"
+    },
+    {
+      "taskId": "B1_VINEWOOD_CINEMA",
+      "order": 52,
+      "status": "open",
+      "title": "Rạp Vinewood Cinema Art Deco đối xứng, marquee Neon đổi chữ bằng attribute, khán phòng 6 hàng ghế bậc thang, màn >=26x12",
+      "district": "DOWNTOWN VINEWOOD",
+      "plotId": "PLOT_D3",
+      "modulePath": "src/shared/World/Modules/Plot_D3_VinewoodCinema.luau",
+      "spec": "Rạp Vinewood Cinema Art Deco đối xứng, marquee Neon đổi chữ bằng attribute, khán phòng 6 hàng ghế bậc thang, màn >=26x12. Bounds X 134..318, Z -204..-60. 2 400-3 600 khối. Vòng 1 của Agent B.",
+      "round": 1,
+      "dependsOn": null
+    },
+    {
+      "taskId": "B2_RICHMAN_GALLERIA",
+      "order": 53,
+      "status": "open",
+      "title": "TTTM Richman Galleria 3 tầng + giếng trời mái kính, 8 gian hàng, cầu thang cuốn 2 chiều, 10 ma-nơ-canh, food court",
+      "district": "RICHMAN GLEN",
+      "plotId": "PLOT_E4",
+      "modulePath": "src/shared/World/Modules/Plot_E4_RichmanGalleria.luau",
+      "spec": "TTTM Richman Galleria 3 tầng + giếng trời mái kính, 8 gian hàng, cầu thang cuốn 2 chiều, 10 ma-nơ-canh, food court. Bounds X 358..536, Z -12..128. 2 800-4 500 khối. Vòng 2 của Agent B.",
+      "round": 2,
+      "dependsOn": "B1_VINEWOOD_CINEMA"
+    },
+    {
+      "taskId": "C1_LA_MESA_GARAGE",
+      "order": 54,
+      "status": "open",
+      "title": "Garage độ xe công nghiệp La Mesa Customs: nhà xưởng khung thép, 3 khoang nâng xe, phòng sơn kín, 2 cửa cuốn >=15x11",
+      "district": "LA MESA",
+      "plotId": "PLOT_E2",
+      "modulePath": "src/shared/World/Modules/Plot_E2_LaMesaGarage.luau",
+      "spec": "Garage độ xe công nghiệp La Mesa Customs: nhà xưởng khung thép, 3 khoang nâng xe, phòng sơn kín, 2 cửa cuốn >=15x11. Bounds X 358..536, Z -204..-60. 2 000-3 200 khối. Vòng 1 của Agent C.",
+      "round": 1,
+      "dependsOn": null
+    },
+    {
+      "taskId": "C2_PACIFIC_BLUFFS_VILLA",
+      "order": 55,
+      "status": "open",
+      "title": "DỰNG LẠI biệt thự Pacific Bluffs CHI TIẾT (bản ít part đã bị gỡ ở v23): 2 tầng chữ L gạch ghép từng viên, hồ bơi vô cực 26x12, gara 2 xe, sân teak",
+      "district": "PACIFIC BLUFFS",
+      "plotId": "PLOT_E1",
+      "modulePath": "src/shared/World/Modules/Plot_E1_PacificBluffsVilla.luau",
+      "spec": "DỰNG LẠI biệt thự Pacific Bluffs CHI TIẾT (bản ít part đã bị gỡ ở v23): 2 tầng chữ L gạch ghép từng viên, hồ bơi vô cực 26x12, gara 2 xe, sân teak. Bounds X -536..-358, Z -204..-60. 2 200-3 400 khối. Vòng 2 của Agent C.",
+      "round": 2,
+      "dependsOn": "C1_LA_MESA_GARAGE"
     }
   ],
   "uiContract": {
@@ -313,5 +388,31 @@
       "readabilityFloorStuds": 0.3,
       "minGripStuds": 0.55
     }
+  },
+  "citySweep": {
+    "promptFile": "agents/WORKER_PROMPT_V6_CITY_SWEEP_3AGENTS.md",
+    "agents": {
+      "A": [
+        "A1_ROCKFORD_LUXURY_AUTOS",
+        "A2_LITTLE_SEOUL_DINER"
+      ],
+      "B": [
+        "B1_VINEWOOD_CINEMA",
+        "B2_RICHMAN_GALLERIA"
+      ],
+      "C": [
+        "C1_LA_MESA_GARAGE",
+        "C2_PACIFIC_BLUFFS_VILLA"
+      ]
+    },
+    "rule": "Mỗi agent chỉ dựng MỘT công trình chi tiết mỗi lượt; xong PR -> Agent Chính nghiệm thu -> mới sang vòng 2.",
+    "targetPlotsRemaining": [
+      "Plot_D1",
+      "Plot_D3",
+      "Plot_E1",
+      "Plot_E2",
+      "Plot_E3",
+      "Plot_E4"
+    ]
   }
 }

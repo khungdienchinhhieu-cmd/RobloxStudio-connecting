@@ -204,6 +204,55 @@ local AMBIENT_COUNT = 84     -- -> hạ về 40 nếu lag
 local TRAFFIC_COUNT = 8      -- -> hạ về 3 nếu lag
 ```
 
+## 5.4. "CHỈ RENDER THỨ CÓ TRONG MÀN HÌNH" (Sync v23) — hết khựng khi đứng chỗ khác
+
+### Nghiên cứu: Roblox đã cull gì, và KHÔNG cull gì
+
+| Cơ chế | Roblox tự làm? | Ghi chú |
+| :--- | :---: | :--- |
+| **Frustum culling** (ngoài khung hình → không vẽ) | ✅ có | engine tự động, không can thiệp được |
+| **Occlusion culling** (bị vật khác che → không vẽ) | ✅ có | chạy theo ô không gian |
+| **Instance streaming** (part ở xa → không tồn tại trên client) | ⚠️ có nhưng… | `StreamingTargetRadius` mặc định **1024 stud**, bản đồ ta chỉ **1 160** ⇒ gần như **không stream-out gì** |
+| **Bỏ xử lý part ở xa** (physics/CFrame/culling list) | ❌ không | part vẫn nằm trong `Workspace` là vẫn tốn CPU & bộ nhớ |
+
+⇒ Đó chính là lý do "đứng ở vị trí khác vẫn khựng": mỗi khung hình engine vẫn phải duyệt
+qua **toàn bộ** part của LS Customs (3 462) + LSPD (4 639) + Maze Bank (2 312) dù đang ở đầu kia bản đồ.
+
+Kiến thức then chốt (theo tài liệu `create.roblox.com/docs/performance-optimization/improve`,
+`/workspace/streaming/techniques` và devforum):
+* `StreamingTargetRadius` / `StreamingMinRadius` / `StreamingEnabled` **chỉ đặt được trong Studio**,
+  script không đổi được ⇒ không thể "bật streaming mạnh hơn" từ code.
+* Muốn *thật sự* ngừng render một cụm part thì **phải bỏ nó ra khỏi `Workspace`**
+  (đổi `Parent` sang nơi khác). Khi quay lại thì gắn về — **không `Destroy()`**.
+* Đổi `Parent` hàng loạt rất rẻ so với việc render/di chuyển 10 000 part mỗi frame, nhưng
+  **không nên làm mỗi frame** — dùng nhịp 4 Hz + dải trễ (hysteresis) để không bật/tắt liên tục.
+
+### Đã làm: `src/client/CityCuller.luau`
+
+| Tham số | Giá trị | Ý nghĩa |
+| :--- | ---: | :--- |
+| `NEAR_RADIUS` | 380 stud (114 m) | trong bán kính này **luôn giữ** → không bao giờ thấy "pop" |
+| `FAR_RADIUS` | 900 stud (270 m) | ngoài bán kính này **luôn cất** |
+| `BEHIND_RADIUS` | 460 stud | sau lưng camera (`WorldToViewportPoint` = false) thì cất sớm |
+| `HYSTERESIS` | 40 stud | chống bật/tắt liên tục ở ranh giới |
+| Nhịp quét | 4 Hz (0,25 s) | ~10–20 phép đo khoảng cách mỗi nhịp ≈ 0,01 ms/khung |
+
+* Chỉ cull **model công trình** trong `LosSantos/DistrictModules` (nơi nặng nhất).
+  Mặt đường / vỉa hè / đồi / biển **không bao giờ bị cất** → người chơi không rơi.
+* "Cất" = cha vào `ReplicatedStorage.__CityCullCache` — Folder do **client tự tạo** nên
+  không replicate, server không thấy, không phá logic gameplay.
+* Có `CityCuller.getStats()` để in ra `total / kept / culled`.
+
+### Việc cần làm 1 lần trong Studio (script không làm hộ được)
+
+`Workspace` → Properties: `StreamingTargetRadius` **1024 → 640**, `StreamingMinRadius` 64,
+`StreamOutBehavior = Opportunistic`. Sau đó F9 → MicroProfiler để xác nhận draw call giảm.
+
+> ⚠️ Đừng đặt `ModelStreamingMode = Atomic` cho công trình 4 000 part: devforum ghi nhận
+> reparent model atomic cực lớn gây spike; chia nhỏ như `DistrictModules` là an toàn hơn.
+
+---
+
 ## 6. Các bước tối ưu tiếp theo (chưa làm, xếp theo mức lợi)
 
 1. **Gom cụm tĩnh thành `MeshPart`/Union theo cụm 4×4 stud** cho phần *không phá huỷ*

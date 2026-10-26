@@ -1,4 +1,9 @@
 # NHÀ "ÍT PART" MÀ VẪN BỂ ĐƯỢC — Nghiên cứu kỹ thuật
+> ⚠️ **Cập nhật `Sync v23`:** biệt thự mẫu `Plot_E1_PacificBluffs` đã được **gỡ khỏi thành phố**
+> (Chủ dự án: kiểu "ít part" nhìn không đẹp bằng công trình chi tiết). Tài liệu này giữ lại
+> vì **kỹ thuật** vẫn dùng: `DestructibleShell.luau` tiếp tục là chuẩn cho tấm vỏ / panel kính
+> phá huỷ của mọi công trình do Agent phụ dựng.
+
 
 > Sync v21 · Trả lời câu hỏi: *"cách nào làm nhà bằng ít part nhưng vẫn có cơ chế bể như vậy được không?"*
 > **Trả lời ngắn: ĐƯỢC. Cùng một căn nhà, từ 3 462 part xuống 176 part (−94,9 %), bề mặt vẫn bể 100 %.**

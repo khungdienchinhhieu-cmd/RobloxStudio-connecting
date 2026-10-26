@@ -720,12 +720,30 @@ local function rayFilter(): RaycastParams
 	return p
 end
 
+-- Mặt trên vỉa hè / nền ô đất (PartBuilder.part: pos.Y 0.575, size.Y 1.15)
+local SIDEWALK_TOP_Y = 1.15
+
 local function findGround(x: number, z: number): Vector3?
 	local hit = Workspace:Raycast(Vector3.new(x, 90, z), Vector3.new(0, -120, 0), rayFilter())
 	if hit and hit.Position.Y > 0.3 and hit.Position.Y < 4.2 then
 		return hit.Position
 	end
 	return nil
+end
+
+--- Như `findGround` nhưng KHÔNG BAO GIỜ trả nil: khi tia chiếu trượt (thành phố chưa
+--- dựng xong, part nền đang bị cull, hoặc điểm nằm trên mặt nước) thì rơi về đúng cao
+--- độ vỉa hè. Nhờ vậy NPC luôn xuất hiện thay vì biến mất cả loạt.
+local groundMisses = 0
+local groundHits = 0
+local function findGroundSoft(x: number, z: number): Vector3
+	local g = findGround(x, z)
+	if g then
+		groundHits += 1
+		return g
+	end
+	groundMisses += 1
+	return Vector3.new(x, SIDEWALK_TOP_Y, z)
 end
 
 -- ══════════════════════════════════════════════════════════════════════════════
@@ -1002,6 +1020,8 @@ local function tickOne(st: NPCState)
 	end
 end
 
+local REFILL_INTERVAL = 8
+local refillClock = 0
 local loopRunning = false
 local function startLoop()
 	if loopRunning then
@@ -1015,6 +1035,29 @@ local function startLoop()
 				local ok, err = pcall(tickOne, st)
 				if not ok then
 					warn("[NPC] lỗi tick:", err)
+				end
+			end
+			-- ── NẠP LẠI DÂN SỐ (Sync v23) ────────────────────────────────────────
+			-- Trước đây NPC chết đi là mất luôn, không ai sinh bù. Giờ mỗi 8 giây kiểm
+			-- tra: nếu dân số tụt dưới 70 % mục tiêu thì thả bù (tối đa 10 con/lần),
+			-- để thành phố không bao giờ "trống trơn" sau khi bị bắn phá.
+			refillClock += HEARTBEAT
+			if refillClock >= REFILL_INTERVAL then
+				refillClock = 0
+				if ambientSpawned then
+					local living = 0
+					for _, st in pairs(states) do
+						if st.model.Parent and st.state ~= "DEAD" then
+							living += 1
+						end
+					end
+					local floor = math.floor(AMBIENT_COUNT * 0.7)
+					if living < floor then
+						local added = NPCManager.spawnAmbient(math.min(10, floor - living))
+						if added > 0 then
+							print(string.format("[NPC] Nạp lại %d NPC (đang có %d / mục tiêu %d)", added, living + added, AMBIENT_COUNT))
+						end
+					end
 				end
 			end
 		end
@@ -1045,7 +1088,7 @@ function NPCManager.spawn(archetypeId: string, position: Vector3, forceCF: CFram
 	end
 
 	local ground = findGround(position.X, position.Z)
-	local baseY = if ground then ground.Y else position.Y
+	local baseY = if ground then ground.Y else SIDEWALK_TOP_Y
 	-- Rig R6: HumanoidRootPart nằm ngang Torso, chân dài 2 stud ở DƯỚI -> tâm HRP cách đất 3 stud.
 	-- Cộng 0,06 để bàn chân không xuyên vào mặt đường ngay khung hình đầu.
 	local cf = forceCF
@@ -1183,17 +1226,36 @@ function NPCManager.spawnAmbient(count: number?): number
 	local target = count or AMBIENT_COUNT
 	local points = buildSidewalkPoints()
 	if #points == 0 then
-		return 0
+		-- Cứu hộ tuyệt đối: nếu vì lý do gì đó lưới đường không sinh được điểm nào,
+		-- vẫn thả NPC quanh Quảng trường Legion để thành phố không bao giờ "trống trơn".
+		warn("[NPC] Không sinh được điểm vỉa hè — dùng phương án dự phòng quanh Legion Square")
+		local c = WorldGrid.SPAWN_POS
+		for i = 1, 40 do
+			local ang = (i / 40) * math.pi * 2
+			table.insert(points, Vector3.new(c.X + math.cos(ang) * (18 + i), 0, c.Z + math.sin(ang) * (18 + i)))
+		end
+	end
+
+	-- 55 % NPC thả gần khu trung tâm (bán kính 320 stud quanh điểm hồi sinh) để người chơi
+	-- luôn thấy phố đông; 45 % còn lại rải đều toàn thành phố.
+	local center = WorldGrid.SPAWN_POS
+	local near: { Vector3 } = {}
+	for _, pt in ipairs(points) do
+		if (Vector3.new(pt.X, 0, pt.Z) - Vector3.new(center.X, 0, center.Z)).Magnitude <= 320 then
+			table.insert(near, pt)
+		end
 	end
 
 	local made = 0
 	local tries = 0
-	local maxTries = target * 9
+	local maxTries = target * 12
+	local beforeMiss = groundMisses
 
 	while made < target and tries < maxTries do
 		tries += 1
-		local pt = points[math.random(1, #points)]
-		local g = findGround(pt.X, pt.Z)
+		local pool = if #near > 0 and math.random() < 0.55 then near else points
+		local pt = pool[math.random(1, #pool)]
+		local g = findGroundSoft(pt.X, pt.Z)
 		if g then
 			-- Không dồn cục: cách NPC khác tối thiểu 9 stud
 			local tooClose = false
@@ -1210,6 +1272,15 @@ function NPCManager.spawnAmbient(count: number?): number
 	end
 
 	ambientSpawned = true
+	print(string.format(
+		"[NPC] spawnAmbient: %d/%d NPC · %d điểm vỉa hè (%d gần trung tâm) · tia chiếu trượt %d lần (đã dùng cao độ vỉa hè %.2f)",
+		made,
+		target,
+		#points,
+		#near,
+		groundMisses - beforeMiss,
+		SIDEWALK_TOP_Y
+	))
 	return made
 end
 
