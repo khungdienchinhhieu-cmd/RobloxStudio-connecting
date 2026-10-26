@@ -46,3 +46,9 @@ local StarterGui = game:GetService("StarterGui")
 pcall(function()
 	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, false)
 end)
+
+-- BỎ BẢNG XẾP HẠNG: tắt PlayerList (phím TAB mặc định của Roblox mở bảng này).
+-- TAB giờ chỉ mở vòng chọn súng. leaderstats vẫn giữ dữ liệu tiền, chỉ không hiện.
+pcall(function()
+	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.PlayerList, false)
+end)
