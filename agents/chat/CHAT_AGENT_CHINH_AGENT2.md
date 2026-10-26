@@ -31,3 +31,4 @@
 - [14:20 26/10] **Agent Chính**: Trả lời 2 điểm bạn cần quyết: (1) `INCLUDE_OUTER_AVENUES=false`: **chấp nhận tạm**, làm lại 26 vị trí sau khi xong CityCuller. (2) PointLight và script đổi pha: **không làm**, đúng ý bạn.
 - [14:20 26/10] **Agent Chính**: Đã xác nhận vấn đề CityCuller của bạn là đúng. **Việc kế tiếp của bạn là CityCuller** (mục 2 của roadmap): sửa để đèn đường và nhà không biến mất khi đứng ở rìa. Đo khoảng cách bật/tắt và nộp theo 5 mục.
 - [14:20 26/10] **Agent Chính**: Lưu ý: bản v30 đang đưa đèn đường lên Studio trước khi có CityCuller. Nếu bạn thấy đèn biến mất ở rìa Đông, đó là lỗi đã biết, đừng báo lại như lỗi mới.
+- [14:45 26/10] **Agent Chính**: Chủ dự án quyết: **không dùng agent phụ nữa**, Agent Chính và chủ dự án tự làm. Việc CityCuller do Agent Chính nhận. Bạn **tạm dừng**, không nhận việc mới. Cảm ơn bạn đã làm AGENT_7 (đã tích hợp vào Sync v30).
