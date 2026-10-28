@@ -20,9 +20,10 @@ TerrainZone.ORIGIN = Vector3.new(4000, 0, 0)
 TerrainZone.HALF = 512 -- nửa cạnh khu (stud)
 TerrainZone.VOXEL = 4 -- Roblox Terrain voxel = 4 stud
 TerrainZone.WATER = 3 -- mực nước sông
-TerrainZone.ROAD_Y = 12 -- cao độ mặt đường / cầu
+TerrainZone.ROAD_Y = 12 -- cao độ cầu mặc định
+TerrainZone.ROAD_MIN = 10 -- đường không thấp hơn mức này
 TerrainZone.Y_MIN = -16
-TerrainZone.Y_MAX = 160
+TerrainZone.Y_MAX = 240 -- trần tối đa; mỗi chunk tự cắt theo đỉnh của nó
 TerrainZone.RIVER_BED = -2
 TerrainZone.SPAWN_LOCAL = Vector3.new(-420, 0, 0)
 
@@ -72,14 +73,30 @@ local function fbm(x: number, z: number): number
 	return s / norm
 end
 
+-- Cao độ nền (chưa tính đường/sông). Có núi: vùng noise cao nâng thêm tới ~120 stud (~40 m).
+local function baseAt(x: number, z: number): number
+	local m = smooth((vnoise(x / 450, z / 450) - 0.55) / 0.25)
+	return 18 + 110 * fbm(x / 400, z / 400) + 6 * (vnoise(x / 60, z / 60) - 0.5) + 120 * m
+end
+
+-- Cao độ mặt đường tại x (z=0): trung bình nền quanh x => đường đi theo dáng đất, thoải.
+local function roadY(x: number): number
+	local sum = 0
+	for k = -3, 3 do
+		sum += baseAt(x + k * 30, 0)
+	end
+	return math.max(TerrainZone.ROAD_MIN, sum / 7)
+end
+
 -- Toạ độ LOCAL (x,z trong [-HALF, HALF]); y là cao độ stud.
 local function heightAt(x: number, z: number): number
-	local base = 18 + 110 * fbm(x / 400, z / 400) + 6 * (vnoise(x / 60, z / 60) - 0.5)
+	local base = baseAt(x, z)
 	local rx = 80 * math.sin(z / 140)
 	local d = math.abs(x - rx)
+	local ry = roadY(x)
 	-- độ ảnh hưởng của đường (1 trên đường, mờ dần ra hai bên)
 	local ro = 1 - smooth((math.abs(z) - 7) / 9)
-	local target = base + (TerrainZone.ROAD_Y - base) * ro
+	local target = base + (ry - base) * ro
 	if d < 18 then
 		return TerrainZone.RIVER_BED
 	elseif d < 32 then
@@ -89,6 +106,7 @@ local function heightAt(x: number, z: number): number
 end
 
 TerrainZone.heightAt = heightAt
+TerrainZone.roadY = roadY
 
 local function isRoad(x: number, z: number): boolean
 	local rx = 80 * math.sin(z / 140)
@@ -135,7 +153,6 @@ local function buildVoxels(folder: Folder)
 	local V = TerrainZone.VOXEL
 	local half = TerrainZone.HALF
 	local n = (half * 2) // V -- số cột voxel mỗi cạnh (256)
-	local sy = (TerrainZone.Y_MAX - TerrainZone.Y_MIN) // V
 	local origin = TerrainZone.ORIGIN
 
 	-- cache cao độ tại tâm mỗi cột voxel
@@ -153,13 +170,24 @@ local function buildVoxels(folder: Folder)
 	local CHUNK = 64
 	for i0 = 1, n, CHUNK do
 		for k0 = 1, n, CHUNK do
-			local cx = CHUNK
-			local cz = CHUNK
+			-- đỉnh của chunk quyết định trần Y: không tốn voxel cho khoảng trống phía trên núi
+			local top = TerrainZone.Y_MIN
+			for gi = i0, i0 + CHUNK - 1 do
+				for gk = k0, k0 + CHUNK - 1 do
+					if H[gi][gk] > top then
+						top = H[gi][gk]
+					end
+				end
+			end
+			local yMax = math.min(TerrainZone.Y_MAX, math.ceil((top + 8) / V) * V)
+			local sy = (yMax - TerrainZone.Y_MIN) // V
+
+			local cx, cz = CHUNK, CHUNK
 			local minX = origin.X - half + (i0 - 1) * V
 			local minZ = origin.Z - half + (k0 - 1) * V
 			local region = Region3.new(
 				Vector3.new(minX, TerrainZone.Y_MIN + origin.Y, minZ),
-				Vector3.new(minX + cx * V, TerrainZone.Y_MAX + origin.Y, minZ + cz * V)
+				Vector3.new(minX + cx * V, yMax + origin.Y, minZ + cz * V)
 			)
 			local mats = {}
 			local occ = {}
@@ -177,13 +205,13 @@ local function buildVoxels(folder: Folder)
 				for zk = 1, cz do
 					local gk = k0 + zk - 1
 					local z = -half + (gk - 0.5) * V
-					local top = H[gi][gk]
+					local colTop = H[gi][gk]
 					local slope = math.abs(H[math.min(n, gi + 1)][gk] - H[math.max(1, gi - 1)][gk]) / (2 * V)
 					for yj = 1, sy do
 						local yc = TerrainZone.Y_MIN + (yj - 0.5) * V
 						local m, o
-						if yc < top then
-							m = materialFor(x, z, yc, top, slope)
+						if yc < colTop then
+							m = materialFor(x, z, yc, colTop, slope)
 							o = 1
 						elseif yc < TerrainZone.WATER then
 							m = Enum.Material.Water
@@ -218,7 +246,7 @@ local function buildRoadAndBridge(folder: Folder)
 		dash.Size = Vector3.new(10, 0.2, 0.6)
 		local rx = 80 * math.sin(0 / 140)
 		if math.abs(x - rx) >= 34 then
-			dash.CFrame = CFrame.new(origin + Vector3.new(x, TerrainZone.ROAD_Y + 0.15, 0))
+			dash.CFrame = CFrame.new(origin + Vector3.new(x, heightAt(x, 0) + 0.15, 0))
 			dash.Parent = folder
 		else
 			dash:Destroy()
@@ -232,7 +260,8 @@ local function buildRoadAndBridge(folder: Folder)
 	deck.Material = Enum.Material.Concrete
 	deck.Color = Color3.fromRGB(150, 150, 150)
 	deck.Size = Vector3.new(64, 2, 14)
-	deck.CFrame = CFrame.new(origin + Vector3.new(0, TerrainZone.ROAD_Y - 1, 0))
+	local deckY = TerrainZone.roadY(0)
+	deck.CFrame = CFrame.new(origin + Vector3.new(0, deckY - 1, 0))
 	deck.Parent = folder
 	for _, sx in ipairs({ -26, 26 }) do
 		local pier = Instance.new("Part")
@@ -240,7 +269,7 @@ local function buildRoadAndBridge(folder: Folder)
 		pier.Anchored = true
 		pier.Material = Enum.Material.Concrete
 		pier.Color = Color3.fromRGB(128, 128, 128)
-		local h = TerrainZone.ROAD_Y - 1 - TerrainZone.RIVER_BED
+		local h = deckY - 1 - TerrainZone.RIVER_BED
 		pier.Size = Vector3.new(4, h, 10)
 		pier.CFrame = CFrame.new(origin + Vector3.new(sx, TerrainZone.RIVER_BED + h / 2, 0))
 		pier.Parent = folder

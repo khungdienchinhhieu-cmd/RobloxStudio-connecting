@@ -28,11 +28,16 @@ def fbm(x, z):
         s += amp * vnoise(x * f, z * f); norm += amp; amp *= 0.5; f *= 2
     return s / norm
 def river_x(z): return 80 * math.sin(z / 140)
+def baseAt(x, z):
+    m = smooth((vnoise(x / 450, z / 450) - 0.55) / 0.25)
+    return 18 + 110 * fbm(x / 400, z / 400) + 6 * (vnoise(x / 60, z / 60) - 0.5) + 120 * m
+def roadY(x):
+    return max(10, sum(baseAt(x + k * 30, 0) for k in range(-3, 4)) / 7)
 def heightAt(x, z):
-    base = 18 + 110 * fbm(x / 400, z / 400) + 6 * (vnoise(x / 60, z / 60) - 0.5)
+    base = baseAt(x, z)
     d = abs(x - river_x(z))
     ro = 1 - smooth((abs(z) - 7) / 9)
-    target = base + (ROAD_Y - base) * ro
+    target = base + (roadY(x) - base) * ro
     if d < 18: return RIVER_BED
     if d < 32: return RIVER_BED + (target - RIVER_BED) * smooth((d - 18) / 14)
     return target
@@ -44,8 +49,8 @@ def main():
     grid = [[heightAt(-HALF + (i + .5) * V, -HALF + (k + .5) * V) for k in range(n)] for i in range(n)]
     flat = [h for row in grid for h in row]
     print(f"cao độ: min {min(flat):.1f}  max {max(flat):.1f} stud  (≈ {max(flat)/3.33:.1f} m đỉnh)")
-    road = [heightAt(x, 0.0) for x in range(-500, 501, 20) if isRoad(x, 0.0)]
-    print(f"đường tại z=0: {len(road)} điểm, cao {min(road):.1f}–{max(road):.1f} stud")
+    road = [roadY(x) for x in range(-500, 501, 20) if isRoad(x, 0.0)]
+    print(f"đường tại z=0: {len(road)} điểm, cao {min(road):.1f}–{max(road):.1f} stud (≈ {min(road)/3.33:.0f}–{max(road)/3.33:.0f} m)")
     # cây: cùng quy tắc như Luau (mật độ theo fbm)
     forest = sum(1 for i in range(n) for k in range(n)
                  if fbm((-HALF + (i+.5)*V) / 140, (-HALF + (k+.5)*V) / 140) > 0.56
@@ -67,7 +72,7 @@ def main():
             elif fbm(x/140, z/140) > 0.56 and 8 < h < 90: c = (30, 90, 40)
             else: c = (120, 170, 80) if h > 14 else (200, 185, 130)
             px[i, n-1-k] = c
-    out = os.path.join(os.path.dirname(__file__), "terrain_preview.png")
+    out = os.environ.get("TERRAIN_PREVIEW_OUT", os.path.join(os.path.dirname(__file__), "terrain_preview.png"))
     img.save(out); print("đã ghi", out)
 
 if __name__ == "__main__":
