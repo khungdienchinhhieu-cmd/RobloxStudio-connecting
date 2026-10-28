@@ -60,6 +60,12 @@ if BUILD_DISTRICT_MODULES then
 	DistrictRegistry.buildAll(losSantosRoot)
 end
 
+-- KHU ĐỊA HÌNH THỬ NGHIỆM (1:1): đồi, sông, cầu, đường, rừng ở xa thành phố.
+-- Người chơi được đưa tới đó khi vào game.
+local TerrainZone = require(Shared:WaitForChild("World"):WaitForChild("TerrainZone"))
+TerrainZone.build()
+TerrainZone.bindSpawn()
+
 -- 1.1. TỐI ƯU HIỆU NĂNG: cắt CanCollide/CanTouch/CanQuery/CastShadow cho part trang trí,
 -- giảm ~9.000 attribute trùng lặp, giới hạn SurfaceGui. Chạy 1 lần duy nhất sau khi dựng xong.
 PerfOptimizer.optimize(losSantosRoot)
