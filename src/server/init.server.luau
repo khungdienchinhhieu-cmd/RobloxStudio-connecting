@@ -53,7 +53,12 @@ end)
 
 -- 1. Dựng Nền Thành Phố ghép khối có máu ẩn + Tự động nạp mọi Công Trình Đa-Agent trong World/Modules
 local losSantosRoot = CityFoundation.build(false)
-DistrictRegistry.buildAll(losSantosRoot)
+-- XOÁ NHÀ (theo yêu cầu): không dựng các module công trình nữa. Nền đường/địa hình vẫn giữ.
+-- Đặt true để bật lại toàn bộ công trình (git giữ bản cũ).
+local BUILD_DISTRICT_MODULES = false
+if BUILD_DISTRICT_MODULES then
+	DistrictRegistry.buildAll(losSantosRoot)
+end
 
 -- 1.1. TỐI ƯU HIỆU NĂNG: cắt CanCollide/CanTouch/CanQuery/CastShadow cho part trang trí,
 -- giảm ~9.000 attribute trùng lặp, giới hạn SurfaceGui. Chạy 1 lần duy nhất sau khi dựng xong.

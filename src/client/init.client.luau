@@ -19,6 +19,7 @@ local NPCAnimator = require(script:WaitForChild("NPCAnimator"))
 local CityCuller = require(script:WaitForChild("CityCuller"))
 local CarryClient = require(script:WaitForChild("CarryClient"))
 local MugClient = require(script:WaitForChild("MugClient"))
+local FirstPersonCamera = require(script:WaitForChild("FirstPersonCamera"))
 
 GtaHud.mount(localPlayer, hudRemote)
 VehiclePromptUI.mount(localPlayer)
@@ -38,6 +39,9 @@ CarryClient.mount()
 
 -- CƯỚP VÍ (phím T) gần dân thường
 MugClient.mount(localPlayer)
+
+-- GÓC NHÌN THỨ NHẤT; ESC mở chuột
+FirstPersonCamera.mount(localPlayer)
 
 -- ⚠ VŨ KHÍ KHÔNG CÒN LÀ "ITEM" TRONG TÚI ĐỒ ROBLOX.
 -- Tắt hẳn giao diện Backpack (thanh item + phím 1..9 mặc định) — người chơi chỉ
